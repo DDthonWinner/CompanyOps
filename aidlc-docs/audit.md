@@ -159,3 +159,21 @@
 **Approval response**: User approved — "Approved". System NFR Requirements complete. Proceeding to System NFR Design.
 
 ---
+
+## CONSTRUCTION - System NFR Design (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote system-nfr-design-plan.md with D1–D6 pre-filled: resilience patterns (timeouts+fallback+idempotency+409+restart-BLOCKED+write-lock; circuit breaker N/A); scalability (in-process async worker + persisted queue, sequential writes); performance (snapshot-invalidation + single-tx snapshot + 3D throttle + hot indices); security (env secrets + path-safety + Pydantic, no auth); logical components (revision/activity/receipts/snapshot/SSE/write-lock/queue/provider/QA/publish/backup/health/error-envelope); DR (periodic SQLite backup + restore runbook + version rollback + lightweight IR). Artifacts: nfr-design-patterns.md, logical-components.md.
+**Approval prompt (logged before asking)**: "Approve the system NFR design plan (defaults D1–D6) to generate artifacts, or edit any [Answer]. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting plan approval before artifact generation.
+**Approval response**: User approved — "Approved." Generating System NFR Design artifacts with defaults D1–D6.
+
+---
+
+## CONSTRUCTION - System NFR Design (Artifacts Generated)
+**Timestamp**: 2026-09-08
+**Artifacts**: construction/system/nfr-design/nfr-design-patterns.md (resilience/scalability/performance/security/DR/testing patterns mapped to NFR-S* + RESILIENCY-*; no blocking findings), logical-components.md (backend platform components + frontend store/api/sse components + integration notes).
+**System-level design complete** (Functional Design U1 + system NFR Req + system NFR Design). Next: per-unit Code Generation starting with U1 backend-pm.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine construction/system/nfr-design/. WHAT'S NEXT: Request Changes / Approve & Continue to U1 Code Generation."
+**Gate**: Awaiting approval before U1 Code Generation.
+
+---

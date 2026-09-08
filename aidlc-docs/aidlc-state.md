@@ -54,11 +54,11 @@ _Decided at Requirements Analysis (2026-09-08) via requirement-verification-ques
 
 ### 🟢 CONSTRUCTION PHASE
 _Sequence: U1 Functional Design → System NFR Requirements → System NFR Design → U1 Code Gen/Build&Test → U2 → U4 → U5 → U3 (each FD→CodeGen→Build&Test)._
-- [ ] Functional Design (per unit) - EXECUTE — U1 IN PROGRESS
-- [ ] NFR Requirements (system-level, once) - EXECUTE
-- [ ] NFR Design (system-level, once) - EXECUTE (resolves deferred RESILIENCY-03/04/08/14/15)
+- [~] Functional Design (per unit) - U1 DONE; U2/U4/U5/U3 pending
+- [x] NFR Requirements (system-level, once) - DONE
+- [x] NFR Design (system-level, once) - DONE (resolved deferred RESILIENCY-03/04/08/14/15)
 - [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
-- [ ] Code Generation (per unit) - EXECUTE
+- [ ] Code Generation (per unit) - EXECUTE — U1 NEXT
 - [ ] Build and Test (per unit) - EXECUTE
 
 ### 🟡 OPERATIONS PHASE
@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: NFR Requirements — SYSTEM (artifacts generated, awaiting approval)
-- **Next Stage**: System NFR Design → U1 Code Gen/Build&Test
-- **Status**: nfr-requirements.md + tech-stack-decisions.md generated. Resiliency decisions recorded (R-04a = no CI/CD local-only; others per recommended). No blocking resiliency findings. REVIEW gate open.
+- **Current Stage**: NFR Design — SYSTEM (artifacts generated, awaiting approval)
+- **Next Stage**: U1 backend-pm Code Generation (Planning) → Build & Test
+- **Status**: nfr-design-patterns.md + logical-components.md generated. System-level design complete after approval. REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider
