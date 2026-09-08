@@ -351,3 +351,24 @@
 **Approval response**: User approved — "Approved". Proceeding to U5 Build & Test.
 
 ---
+
+## CONSTRUCTION - U5 frontend-dashboard Build & Test
+**Timestamp**: 2026-09-08
+**Build Status**: Success (Vite 5 + tsc). **Test Status**: Pass — Vitest 19/19 (re-confirmed). Bundle ~1.01MB three.js (non-blocking).
+**Files updated**: build-and-test-summary.md (added U5 section).
+**Cumulative**: backend 21/21 + frontend 19/19.
+**Ready for Operations**: No — U3 backend-uf remains (final unit).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — build-and-test-summary.md (U5 added). WHAT'S NEXT: Request Changes / Approve & Continue to U3 backend-uf."
+**Gate**: Awaiting approval before U3.
+**Approval response**: User approved — "Approved". U5 complete. Proceeding to U3 backend-uf (Functional Design).
+
+---
+
+## CONSTRUCTION - U3 backend-uf Functional Design (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote backend-uf-functional-design-plan.md, Q1–Q6 pre-filled: own report/metric/feedback tables; aggregate read-only from tasks + activity_events token payloads (cost 미수집); 409 when not COMPLETED + idempotent single report; UF_MVP_V1 scoring per 06 §3.3; UtilizationAdapter wired via deps.set_utilization_port at startup; same-type-first previous-report selection. Artifacts: domain-entities, business-logic-model, business-rules (backend-only).
+**Approval prompt (logged before asking)**: "Approve U3 FD plan (defaults) to generate artifacts. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U3 FD plan approval.
+**Approval response**: User approved — "Approved". Generating U3 functional-design artifacts.
+
+---

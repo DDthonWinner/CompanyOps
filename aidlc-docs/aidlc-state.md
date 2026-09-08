@@ -58,17 +58,17 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 - [x] NFR Requirements (system-level, once) - DONE
 - [x] NFR Design (system-level, once) - DONE (resolved deferred RESILIENCY-03/04/08/14/15)
 - [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
-- [~] Code Generation (per unit) - U1, U2, U4 DONE; U5/U3 pending
-- [~] Build and Test (per unit) - backend 21/21 + frontend 11/11 PASS; U5/U3 pending
+- [~] Code Generation (per unit) - U1, U2, U4, U5 DONE; U3 pending
+- [~] Build and Test (per unit) - backend 21/21 + frontend 19/19 PASS; U3 pending
 
 ### 🟡 OPERATIONS PHASE
 - [ ] Operations - PLACEHOLDER
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Code Generation — U5 frontend-dashboard (code generated + verified, awaiting approval)
-- **Next Stage**: U5 Build & Test (formalize), then U3 backend-uf
-- **Status**: Dashboard app generated (control center + PM create/matching + plan-first/approval UI + UF section); wired into AppShell. `npm run test` 19/19; `npm run build` success. REVIEW gate open.
+- **Current Stage**: Functional Design — U3 backend-uf (Planning; plan awaiting approval)
+- **Next Stage**: U3 Code Generation → Build & Test (final unit)
+- **Status**: U1+U2+U4+U5 complete. U3 FD plan created (Q1–Q6; adopt 02+06 §3.3; tokens from activity_events; UtilizationAdapter via UtilizationPort). Awaiting plan approval.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

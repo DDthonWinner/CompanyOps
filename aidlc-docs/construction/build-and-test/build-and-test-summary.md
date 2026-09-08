@@ -3,6 +3,14 @@
 > Stage: CONSTRUCTION / Build and Test · Date: 2026-09-08
 > Per-unit build (Q5). Covers **U1 backend-pm** and **U2 backend-git**; U4/U5/U3 follow.
 
+## U5 frontend-dashboard — Build & Test (2026-09-08)
+- **Build tool**: Vite 5 + TypeScript (npm; shared frontend project with U4).
+- **Unit tests (Vitest + RTL)**: full frontend suite **19 passed / 0 failed** (8 files: 11 U4 + 8 U5). New U5 tests: `deriveAttention` derivation/dedup (04 §7), PlanReviewPanel button states + version-guarded planReviewComplete/planApprove (04 §19), MilestoneResultApproval disabled when gate FAILED (FR-DASH-6), FeedbackSection ACTIVE post-completion notice (FR-DASH-13), ProjectCreateDialog → createProject.
+- **Build**: `npm run build` → **success**; bundle ~1.01 MB (three.js). One benign `act()` warning (async fetch after a synchronous assertion).
+- **Stories**: DASH-1..3, UF-1..4, PM-1/3/4, ORCH-1..3/6/8 (UI). Full operator loop drivable from the browser.
+
+---
+
 ## U4 frontend-tycoon — Build & Test (2026-09-08)
 - **Build tool**: Vite 5 + TypeScript (npm). `npm install` 263 pkgs (exit 0).
 - **Unit tests (Vitest + RTL)**: **11 passed / 0 failed** — store revision guard + sheet toggles; `resolveSelection` (06 §6); SseClient CONNECTING→CONNECTED/resync, higher-revision re-read, error→backoff reconnect→DISCONNECTED; VelocityPod renders server progress + review pill; GlobalExecutiveBar renders tabs/connection/project picker (fetch mocked).
