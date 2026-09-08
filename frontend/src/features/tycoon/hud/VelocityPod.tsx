@@ -33,6 +33,14 @@ export function VelocityPod() {
                   {m.progressTotal === 0 ? "작업 없음" : `${m.progressCurrent}/${m.progressTotal} · ${m.progressPercent}%`}
                 </span>
               </button>
+              {m.progressTotal > 0 && (
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-high">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${m.progressPercent}%`, backgroundColor: m.displayColor ?? "#4f46e5" }}
+                  />
+                </div>
+              )}
               {m.reviewStatus && (
                 <div className="mt-1">
                   <StatusPill status={m.reviewStatus} testId={`mr-status-${m.id}`} />

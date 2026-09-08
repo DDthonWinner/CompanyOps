@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { useStore } from "../../../store/useStore";
 import { dispatchSelection } from "../selectionEvent";
 import { CityMascot } from "./CityMascot";
 
@@ -13,23 +14,23 @@ const ORB_COLOR: Record<string, string> = {
 };
 
 const MASCOT_SCALE = 1.9;
-const FACE = Math.PI / 4; // face the iso camera so the mascot's front is visible
+const FACE_CAMERA = Math.PI / 4; // idle / planning → face the viewer
+const FACE_MONITOR = Math.PI; // working → turn to the desk monitor (−z)
 
-type Mood = "typing" | "thinking" | "blocked";
-function moodOf(status: string): Mood {
-  if (status === "WORKING") return "typing";
-  if (status === "BLOCKED") return "blocked";
-  return "thinking"; // IDLE / WAITING / ASSIGNED
+type State = "working" | "idle" | "planning";
+function stateOf(status: string): State {
+  if (status === "WORKING") return "working";
+  if (status === "IDLE") return "idle";
+  return "planning"; // WAITING / ASSIGNED / BLOCKED
 }
 
-function makeBubble(mood: Mood): THREE.CanvasTexture | null {
-  if (mood === "typing") return null;
+function makeBubble(status: string): THREE.CanvasTexture | null {
+  const blocked = status === "BLOCKED";
   const c = document.createElement("canvas");
   c.width = 256;
   c.height = 192;
   const ctx = c.getContext("2d");
   if (!ctx) return null;
-  const blocked = mood === "blocked";
   ctx.fillStyle = blocked ? "#fee2e2" : "#ffffff";
   ctx.strokeStyle = blocked ? "#ef4444" : "#cbd5e1";
   ctx.lineWidth = 8;
@@ -91,74 +92,120 @@ export function DevPawn({
   name: string;
   position: [number, number]; // [x, z] on the floor
 }) {
+  const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const mascot = useRef<THREE.Group>(null);
+  const armL = useRef<THREE.Group>(null);
+  const armR = useRef<THREE.Group>(null);
   const bubble = useRef<THREE.Group>(null);
+  const arms = useMemo(() => ({ left: armL, right: armR }), []);
 
-  const mood = moodOf(status);
+  const setCamera = useStore((s) => s.setCamera);
+  const isSelected = useStore(
+    (s) => s.openSheet?.kind === "agent" && s.openSheet.id === projectAgentId,
+  );
+
+  const st = stateOf(status);
   const phase = useMemo(() => (projectAgentId.charCodeAt(0) % 10) * 0.63, [projectAgentId]);
   const tag = useMemo(() => makeNameTag(name), [name]);
-  const bubbleTex = useMemo(() => makeBubble(mood), [mood]);
+  // Bubble only while planning (thinking / waiting / blocked).
+  const bubbleTex = useMemo(() => (st === "planning" ? makeBubble(status) : null), [st, status]);
   useEffect(() => () => tag?.dispose(), [tag]);
   useEffect(() => () => bubbleTex?.dispose(), [bubbleTex]);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    if (body.current) {
-      const amp = mood === "typing" ? 0.08 : 0.03;
-      body.current.position.y = Math.sin(t * 2.2 + phase) * amp;
-    }
     if (mascot.current) {
-      if (mood === "typing") {
-        // Lean into the desk with a quick working bob.
-        mascot.current.rotation.set(0.12 + Math.sin(t * 6 + phase) * 0.05, FACE, 0);
-      } else if (mood === "thinking") {
-        // Gentle pondering sway.
-        mascot.current.rotation.set(0.02, FACE, Math.sin(t * 0.8 + phase) * 0.07);
+      const targetY = st === "working" ? FACE_MONITOR : FACE_CAMERA;
+      mascot.current.rotation.y += (targetY - mascot.current.rotation.y) * 0.12;
+      if (st === "working") {
+        mascot.current.rotation.x = 0.14 + Math.sin(t * 4 + phase) * 0.03;
+        mascot.current.rotation.z = 0;
+      } else if (st === "planning") {
+        mascot.current.rotation.x = 0.03;
+        mascot.current.rotation.z = Math.sin(t * 0.8 + phase) * 0.05;
       } else {
-        // Blocked: small restless jitter.
-        mascot.current.rotation.set(0.05, FACE, Math.sin(t * 3.2 + phase) * 0.03);
+        mascot.current.rotation.x = 0;
+        mascot.current.rotation.z = 0;
+      }
+    }
+    if (body.current) {
+      body.current.position.y = Math.sin(t * 2.2 + phase) * (st === "working" ? 0.06 : 0.03);
+    }
+    if (armL.current && armR.current) {
+      if (st === "working") {
+        // Alternating taps → typing at the keyboard.
+        armL.current.rotation.set(0.18 + Math.sin(t * 10 + phase) * 0.28, 0, 0);
+        armR.current.rotation.set(0.18 + Math.sin(t * 10 + phase + Math.PI) * 0.28, 0, 0);
+      } else if (st === "planning") {
+        // Right hand drifts up to the head — scratch / ponder.
+        const s = Math.sin(t * 1.1 + phase) * 0.5 + 0.5;
+        armR.current.rotation.set(-0.3 * s, 0, -1.35 * s);
+        armL.current.rotation.set(0, 0, 0);
+      } else {
+        armL.current.rotation.set(0, 0, 0);
+        armR.current.rotation.set(0, 0, 0);
       }
     }
     if (bubble.current) bubble.current.position.y = 7.4 + Math.sin(t * 1.6 + phase) * 0.16;
+    if (root.current) {
+      const target = isSelected ? 1.08 : 1;
+      root.current.scale.x += (target - root.current.scale.x) * 0.2;
+      root.current.scale.setScalar(root.current.scale.x);
+    }
   });
 
   const orbColor = ORB_COLOR[status] ?? "#767586";
 
   return (
     <group
+      ref={root}
       position={[position[0], 0, position[1]]}
       onClick={(e) => {
         e.stopPropagation();
         dispatchSelection({ projectId, type: "agent", projectAgentId });
+        setCamera(projectAgentId); // focus + zoom onto this agent
       }}
       onPointerOver={() => (document.body.style.cursor = "pointer")}
       onPointerOut={() => (document.body.style.cursor = "auto")}
     >
+      {/* Selection highlight ring */}
+      {isSelected && (
+        <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.7, 2.15, 44]} />
+          <meshBasicMaterial color={color} transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} />
+        </mesh>
+      )}
+
       <group ref={body}>
-        {/* Explorer mascot with a per-agent uniform color */}
-        <group ref={mascot} scale={MASCOT_SCALE} rotation={[0, FACE, 0]}>
-          <CityMascot uniform={color} />
+        {/* Explorer mascot with a per-agent uniform color + animatable arms */}
+        <group ref={mascot} scale={MASCOT_SCALE} rotation={[0, FACE_CAMERA, 0]}>
+          <CityMascot uniform={color} arms={arms} />
         </group>
 
         {/* Floating status orb */}
         <mesh position={[0, 5.8, 0]}>
           <sphereGeometry args={[0.22, 14, 14]} />
-          <meshStandardMaterial color={orbColor} emissive={orbColor} emissiveIntensity={0.6} toneMapped={false} />
+          <meshStandardMaterial
+            color={orbColor}
+            emissive={orbColor}
+            emissiveIntensity={isSelected ? 1.1 : 0.6}
+            toneMapped={false}
+          />
         </mesh>
 
         {/* Name tag (large, faces the iso camera) */}
         {tag && (
-          <mesh position={[0, 6.5, 0]} rotation={[0, FACE, 0]}>
+          <mesh position={[0, 6.5, 0]} rotation={[0, FACE_CAMERA, 0]}>
             <planeGeometry args={[5.6, 1.4]} />
             <meshBasicMaterial map={tag} transparent side={THREE.DoubleSide} toneMapped={false} />
           </mesh>
         )}
 
-        {/* Thought / status bubble (large, well above the head) */}
+        {/* Thought / status bubble (planning only) */}
         {bubbleTex && (
           <group ref={bubble} position={[0, 7.4, 0]}>
-            <mesh rotation={[0, FACE, 0]}>
+            <mesh rotation={[0, FACE_CAMERA, 0]}>
               <planeGeometry args={[2.7, 2.0]} />
               <meshBasicMaterial map={bubbleTex} transparent side={THREE.DoubleSide} toneMapped={false} />
             </mesh>

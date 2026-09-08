@@ -1,6 +1,9 @@
 // Tycoon copy of the dashboard explorer mascot (kept local to features/tycoon to
 // avoid touching the dashboard version). The khaki uniform is parameterized so
 // each agent wears a differently-colored uniform; fur / cream / scarf stay fixed.
+// The two arms are wrapped in shoulder-pivot groups (optional refs) so DevPawn can
+// animate typing and head-scratching.
+import type { RefObject } from "react";
 import * as THREE from "three";
 import type { ThreeElements } from "@react-three/fiber";
 
@@ -20,7 +23,19 @@ const RED = "#ed4039";
 const shade = (hex: string, amt: number, to: string) =>
   new THREE.Color(hex).lerp(new THREE.Color(to), amt).getStyle();
 
-export function CityMascot({ uniform, badge = "#ffffff" }: { uniform: string; badge?: string }) {
+export type ArmRefs = { left?: RefObject<THREE.Group>; right?: RefObject<THREE.Group> };
+
+// One arm wrapped so it pivots at the shoulder (for animation).
+function Arm({ side, uniform, armRef }: { side: number; uniform: string; armRef?: RefObject<THREE.Group> }) {
+  return (
+    <group ref={armRef ?? undefined} position={[side * 0.45, 1.42, 0]}>
+      <Ellipsoid at={[side * 0.07, -0.27, 0]} scale={[0.17, 0.36, 0.19]} color={uniform} rotation={[0, 0, side * 0.7]} />
+      <Ellipsoid at={[side * 0.27, -0.49, 0.02]} scale={[0.15, 0.18, 0.16]} color={FUR} />
+    </group>
+  );
+}
+
+export function CityMascot({ uniform, badge = "#ffffff", arms }: { uniform: string; badge?: string; arms?: ArmRefs }) {
   const brim = shade(uniform, 0.28, "#ffffff"); // lighter hat brim
   const pocket = shade(uniform, 0.22, "#000000"); // darker pockets
   return (
@@ -28,12 +43,10 @@ export function CityMascot({ uniform, badge = "#ffffff" }: { uniform: string; ba
       {/* Short legs and broad, rounded body. */}
       <Ellipsoid at={[0, 0.6, 0]} scale={[0.43, 0.5, 0.31]} color={FUR} />
       {[-1, 1].map((side) => (
-        <group key={side}>
-          <Ellipsoid at={[side * 0.23, 0.16, 0.13]} scale={[0.19, 0.16, 0.28]} color={FUR} />
-          <Ellipsoid at={[side * 0.52, 1.15, 0]} scale={[0.17, 0.36, 0.19]} color={uniform} rotation={[0, 0, side * 0.7]} />
-          <Ellipsoid at={[side * 0.72, 0.93, 0.02]} scale={[0.15, 0.18, 0.16]} color={FUR} />
-        </group>
+        <Ellipsoid key={side} at={[side * 0.23, 0.16, 0.13]} scale={[0.19, 0.16, 0.28]} color={FUR} />
       ))}
+      <Arm side={-1} uniform={uniform} armRef={arms?.left} />
+      <Arm side={1} uniform={uniform} armRef={arms?.right} />
       <Ellipsoid at={[0, 1.13, 0]} scale={[0.47, 0.54, 0.33]} color={uniform} />
       <mesh position={[0, 0.8, 0]} scale={[1, 1, 0.73]} castShadow>
         <cylinderGeometry args={[0.46, 0.46, 0.13, 24]} />

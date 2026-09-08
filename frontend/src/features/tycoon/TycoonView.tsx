@@ -3,6 +3,7 @@ import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useStore } from "../../store/useStore";
 import { TycoonCanvas } from "./TycoonCanvas";
 import { WebGLFallback, isWebGLAvailable } from "./WebGLFallback";
+import { AgentList } from "./hud/AgentList";
 import { CommandDock } from "./hud/CommandDock";
 import { SideHUD } from "./hud/SideHUD";
 import { VelocityPod } from "./hud/VelocityPod";
@@ -29,6 +30,7 @@ export function TycoonView() {
     <div className="relative h-full w-full">
       <TycoonCanvas snapshot={snapshot} />
       <SideHUD />
+      <AgentList />
       <VelocityPod />
       <ViewControls />
       <CommandDock />

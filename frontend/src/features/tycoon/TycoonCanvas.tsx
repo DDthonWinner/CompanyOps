@@ -1,9 +1,9 @@
 import { Canvas } from "@react-three/fiber";
 import { useMemo } from "react";
 import { DESK_ROLES, roleColor } from "../../lib/roles";
-import type { Snapshot } from "../../api/types";
+import type { Agent, Snapshot } from "../../api/types";
 import { useStore } from "../../store/useStore";
-import { CameraControls } from "./scene/CameraControls";
+import { CameraControls, type FocusPoint } from "./scene/CameraControls";
 import { Decor } from "./scene/Decor";
 import { DomainDesk } from "./scene/DomainDesk";
 import { DevPawn } from "./scene/DevPawn";
@@ -21,14 +21,6 @@ const DOMAIN_LAYOUT: Record<string, [number, number]> = {
 const PM_POS: [number, number] = [48, 0];
 const DEFAULT_TARGET: [number, number, number] = [12, 2, 0];
 const MAX_SEATS = 4;
-
-// Camera focus points for the CommandDock quick-jump buttons.
-const FOCUS: Record<string, [number, number, number]> = {
-  ...Object.fromEntries(
-    Object.entries(DOMAIN_LAYOUT).map(([code, [x, z]]) => [code, [x, 2, z] as [number, number, number]]),
-  ),
-  PM: [PM_POS[0], 2, PM_POS[1]],
-};
 
 // Up to 4 seats in a single row tucked at the desk (+z, facing the monitor).
 function domainSeat([dx, dz]: [number, number], i: number): [number, number] {
@@ -59,8 +51,33 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot, rolesById]);
 
-  const agentsFor = (code: string) =>
-    snapshot.agents.filter((a) => codeOf(a.roleId) === code && a.status !== "REMOVED");
+  // Seated agents per desk (sliced to the visible seat count) — shared by render + focus.
+  const seated = useMemo(() => {
+    const forCode = (code: string): Agent[] =>
+      snapshot.agents.filter((a) => codeOf(a.roleId) === code && a.status !== "REMOVED").slice(0, MAX_SEATS);
+    const domain: Record<string, Agent[]> = {};
+    for (const code of Object.keys(DOMAIN_LAYOUT)) domain[code] = forCode(code);
+    return { domain, pm: forCode("PM") };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshot, rolesById]);
+
+  // Focus targets: departments (wider) + each agent (zoomed in, centered).
+  const focusPoints = useMemo(() => {
+    const fp: Record<string, FocusPoint> = {};
+    for (const [code, pos] of Object.entries(DOMAIN_LAYOUT)) {
+      fp[code] = { pos: [pos[0], 3, pos[1]], zoomMult: 1.7 };
+      seated.domain[code].forEach((a, i) => {
+        const [sx, sz] = domainSeat(pos, i);
+        fp[a.id] = { pos: [sx, 4, sz], zoomMult: 3.0 };
+      });
+    }
+    fp.PM = { pos: [PM_POS[0], 3, PM_POS[1]], zoomMult: 1.7 };
+    seated.pm.forEach((a, i) => {
+      const [sx, sz] = pmSeat(PM_POS, i);
+      fp[a.id] = { pos: [sx, 4, sz], zoomMult: 3.0 };
+    });
+    return fp;
+  }, [seated]);
 
   return (
     <Canvas
@@ -72,7 +89,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
     >
       <color attach="background" args={["#f8f9ff"]} />
       <Lighting />
-      <CameraControls focusPoints={FOCUS} defaultTarget={DEFAULT_TARGET} />
+      <CameraControls focusPoints={focusPoints} defaultTarget={DEFAULT_TARGET} />
       <FloorGrid />
       <Decor />
 
@@ -92,7 +109,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
               inboxCount={r.inbox}
               outboxCount={r.outbox}
             />
-            {agentsFor(code).slice(0, MAX_SEATS).map((a, i) => (
+            {seated.domain[code].map((a, i) => (
               <DevPawn
                 key={a.id}
                 projectId={projectId}
@@ -116,7 +133,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
         inboxCount={perRole.PM.inbox}
         outboxCount={perRole.PM.outbox}
       />
-      {agentsFor("PM").slice(0, MAX_SEATS).map((a, i) => (
+      {seated.pm.map((a, i) => (
         <DevPawn
           key={a.id}
           projectId={projectId}
