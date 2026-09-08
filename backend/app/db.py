@@ -78,6 +78,22 @@ def init_db() -> None:
     from .uf import models as uf_models  # noqa: F401  register UF tables (U3)
 
     Base.metadata.create_all(bind=engine)
+    _run_light_migrations()
+
+
+def _run_light_migrations() -> None:
+    """Additive-only column backfills for DBs created before a column was added.
+    create_all never ALTERs existing tables; SQLite supports ADD COLUMN safely."""
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    if "feedbacks" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("feedbacks")}
+        if "source" not in cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE feedbacks ADD COLUMN source VARCHAR NOT NULL DEFAULT 'USER'"
+                ))
 
 
 @contextmanager

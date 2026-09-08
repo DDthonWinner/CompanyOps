@@ -27,4 +27,5 @@ export interface Feedback {
   observation: string;
   impact: string;
   suggestion: string;
+  source?: string; // "USER" | "SYSTEM" (rule-based auto-generated)
 }

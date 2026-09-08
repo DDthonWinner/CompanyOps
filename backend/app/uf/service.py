@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from ..common.errors import bad_request, conflict, not_found
 from ..common.models import Project
 from ..common.util import utcnow_iso
+from . import feedback_gen
 from . import repository as repo
 from .models import Feedback, UtilizationMetric, UtilizationReport
 
@@ -45,6 +46,12 @@ def create_report(session: Session, project_id: str) -> dict:
         session.add(m)
 
     report.score = _overall_score(aspect_values)
+
+    # Rule-based feedback drafts grounded in the aggregated metrics (02 §6).
+    metrics_map = {m.metric_key: m.value for m in metrics}
+    for fb in feedback_gen.generate(aspect_values, metrics_map):
+        session.add(Feedback(report_id=report.id, source="SYSTEM", **fb))
+
     session.flush()  # autoflush is off; make metrics queryable for serialization
     return report_dict(session, report)
 
@@ -226,6 +233,7 @@ def create_feedback(session: Session, report_id: str, data: dict) -> dict:
         report_id=report_id, aspect=data.get("aspect", "AUTONOMY"),
         severity=data.get("severity", "LOW"), observation=data.get("observation", ""),
         impact=data.get("impact", ""), suggestion=data.get("suggestion", ""),
+        source="USER",
     )
     session.add(f)
     session.flush()
@@ -248,4 +256,5 @@ def feedback_dict(f: Feedback) -> dict:
     return {
         "feedbackId": f.id, "reportId": f.report_id, "aspect": f.aspect, "severity": f.severity,
         "observation": f.observation, "impact": f.impact, "suggestion": f.suggestion,
+        "source": f.source,
     }

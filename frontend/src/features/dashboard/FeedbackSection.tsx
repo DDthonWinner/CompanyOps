@@ -69,7 +69,12 @@ export function FeedbackSection() {
             <ul className="space-y-1">
               {feedbacks.map((f) => (
                 <li key={f.feedbackId} className="rounded border border-outline-variant bg-surface-lowest p-2 text-xs">
-                  <b>{f.aspect}</b> · {f.severity}
+                  <span className="flex items-center gap-1">
+                    <b>{f.aspect}</b> · {f.severity}
+                    {f.source === "SYSTEM" && (
+                      <span className="rounded bg-primary/15 px-1 text-[10px] text-primary">자동</span>
+                    )}
+                  </span>
                   <div>{f.observation}</div>
                   <div className="text-on-background/60">→ {f.suggestion}</div>
                 </li>
