@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Build & Test — U4 frontend-tycoon (PASS, awaiting approval)
-- **Next Stage**: U5 frontend-dashboard (Functional Design → Code Gen → Build & Test)
-- **Status**: U1+U2+U4 complete; backend 21/21 + frontend 11/11 pass; both builds green. Remaining: U5 (Dashboard+Feedback), U3 (UF). REVIEW gate open.
+- **Current Stage**: Functional Design — U5 frontend-dashboard (artifacts generated, awaiting approval)
+- **Next Stage**: U5 Code Generation → Build & Test
+- **Status**: U5 FD artifacts generated (frontend-components, business-logic-model, business-rules, domain-entities). Dashboard P0 + PM/UF flows specified. REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

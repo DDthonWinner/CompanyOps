@@ -310,5 +310,23 @@
 **Ready for Operations**: No — U5 frontend-dashboard, U3 backend-uf remain.
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — build-and-test-summary.md (U4 added). WHAT'S NEXT: Request Changes / Approve & Continue to U5 frontend-dashboard."
 **Gate**: Awaiting approval before U5.
+**Approval response**: User approved — "Approved". U4 complete. Proceeding to U5 frontend-dashboard (Functional Design).
+
+---
+
+## CONSTRUCTION - U5 frontend-dashboard Functional Design (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote frontend-dashboard-functional-design-plan.md, Q1–Q6 pre-filled: Dashboard P0 set (ProjectProgress/AttentionCenter/AgentOverview/ActiveTaskList/PlanReviewPanel/QARunReport+QualityGate/ActivityTimeline/RecentArtifacts/CommandInput; charts/dnd deferred); PM create + agent matching UIs; plan-first/approval/decision actions with version guards + 409 handling; UF FeedbackSection (post-completion gating); extend shared ApiClient with write/PM/UF methods; wire DashboardView into AppShell (shared GEBar). Artifacts: frontend-components, business-logic-model, business-rules, domain-entities.
+**Approval prompt (logged before asking)**: "Approve U5 FD plan (defaults) to generate artifacts. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U5 FD plan approval.
+**Approval response**: User approved — "Approve". Generating U5 functional-design artifacts.
+
+---
+
+## CONSTRUCTION - U5 frontend-dashboard Functional Design (Artifacts Generated)
+**Timestamp**: 2026-09-08
+**Artifacts**: frontend-components.md (04 §24 tree + ProjectCreate/AgentMatching + reads/writes table + data-testid), domain-entities.md (reuses U4 types + write request shapes + plan/QA/MR/UF view types + AttentionItem), business-logic-model.md (setup→team, plan-first lifecycle, milestone review, decisions, UF gating, 409 handling), business-rules.md (FR-DASH-1..19: plan-first, milestone/QA separation, attention dedup, PM validation, UF post-completion, a11y/connection, deferrals).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — construction/frontend-dashboard/functional-design/. WHAT'S NEXT: Request Changes / Continue to U5 Code Generation."
+**Gate**: Awaiting approval before U5 Code Generation.
 
 ---
