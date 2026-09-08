@@ -372,3 +372,20 @@
 **Approval response**: User approved — "Approved". Generating U3 functional-design artifacts.
 
 ---
+
+## CONSTRUCTION - U3 backend-uf Functional Design (Artifacts Generated)
+**Timestamp**: 2026-09-08
+**Artifacts**: domain-entities.md (UtilizationReport/Metric/Feedback owned + read refs incl. activity token source), business-logic-model.md (create_report idempotent+409, aggregate, UF_MVP_V1 compute_score, select_previous, feedback CRUD, UtilizationAdapter wiring, API paths), business-rules.md (BU-1..15: gating/idempotency, no-mutation boundary, metrics/score, comparison, feedback content, wiring).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — construction/backend-uf/functional-design/. WHAT'S NEXT: Request Changes / Continue to U3 Code Generation."
+**Gate**: Awaiting approval before U3 Code Generation.
+**Approval response**: User approved — "Approved". U3 Functional Design complete. Proceeding to U3 Code Generation (Planning).
+
+---
+
+## CONSTRUCTION - U3 backend-uf Code Generation (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote backend-uf-code-generation-plan.md — 7 steps: uf/models (register via init_db import); uf/repository (persistence + read helpers incl. activity token sum); uf/service (create_report 409+idempotent, aggregate, UF_MVP_V1 compute_score, select_previous, feedback CRUD); uf/schemas+routes (/api/utilization*, /api/feedbacks); uf/adapter (UtilizationAdapter) + main wiring (include router + deps.set_utilization_port); tests (409/idempotent/score/feedback/e2e completion auto-report); docs. Code at backend/app/uf/.
+**Approval prompt (logged before asking)**: "Approve U3 code generation plan (Steps 1–7) to generate code. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U3 code-gen plan approval.
+
+---

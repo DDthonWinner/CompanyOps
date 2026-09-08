@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Functional Design — U3 backend-uf (Planning; plan awaiting approval)
-- **Next Stage**: U3 Code Generation → Build & Test (final unit)
-- **Status**: U1+U2+U4+U5 complete. U3 FD plan created (Q1–Q6; adopt 02+06 §3.3; tokens from activity_events; UtilizationAdapter via UtilizationPort). Awaiting plan approval.
+- **Current Stage**: Code Generation — U3 backend-uf (Planning; plan awaiting approval)
+- **Next Stage**: U3 code generation (Steps 1–7) → U3 Build & Test (final unit)
+- **Status**: U3 FD approved. backend-uf-code-generation-plan.md created (7 steps: models, repository, service+scoring, routes, adapter+wiring, tests, docs). Awaiting plan approval.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

@@ -33,11 +33,11 @@
 [Answer]: Same-type-first previous-report selection (recommended)
 
 ## Mandatory Functional Design Artifacts (generation checklist)
-- [ ] `construction/backend-uf/functional-design/domain-entities.md` — UtilizationReport/UtilizationMetric/Feedback (owned) + read refs
-- [ ] `construction/backend-uf/functional-design/business-logic-model.md` — aggregation + UF_MVP_V1 scoring + comparison + wiring
-- [ ] `construction/backend-uf/functional-design/business-rules.md` — gating, idempotency, no-mutation boundary, cost/미수집, feedback rules
-- [ ] (No frontend-components.md — backend-only; UI is U5 FeedbackSection)
-- [ ] Validate against 02 + 06 §3.3
+- [x] `construction/backend-uf/functional-design/domain-entities.md` — UtilizationReport/UtilizationMetric/Feedback (owned) + read refs
+- [x] `construction/backend-uf/functional-design/business-logic-model.md` — aggregation + UF_MVP_V1 scoring + comparison + wiring
+- [x] `construction/backend-uf/functional-design/business-rules.md` — gating, idempotency, no-mutation boundary, cost/미수집, feedback rules
+- [x] (No frontend-components.md — backend-only; UI is U5 FeedbackSection)
+- [x] Validate against 02 + 06 §3.3
 
 ## Approval
 Approve this plan (defaults) to generate U3 functional-design artifacts, or edit any `[Answer]:`.
