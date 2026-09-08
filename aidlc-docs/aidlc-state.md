@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Functional Design — U4 frontend-tycoon (artifacts generated, awaiting approval)
-- **Next Stage**: U4 Code Generation → Build & Test
-- **Status**: U4 FD artifacts generated (frontend-components, business-logic-model, business-rules, domain-entities). Shared foundation + Tycoon view specified. REVIEW gate open.
+- **Current Stage**: Code Generation — U4 frontend-tycoon (code generated + verified, awaiting approval)
+- **Next Stage**: U4 Build & Test (formalize), then U5 frontend-dashboard
+- **Status**: frontend/ app generated (shared foundation + Tycoon R3F view). `npm run test` 11/11 pass; `npm run build` success. REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

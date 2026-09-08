@@ -277,5 +277,26 @@
 **Artifacts**: frontend-components.md (AppShell/GlobalExecutiveBar/SnapshotStore/ApiClient/SseClient + TycoonCanvas/DomainDesk/DevPawn/HUD tree, props/state, API integration, data-testid), domain-entities.md (TS snapshot/selection/store types + role colors), business-logic-model.md (startup/select, realtime sync, render, selection, camera, empty/failure), business-rules.md (FR-TY-1..18: read-only snapshot, revision guard, a11y text+icon, WORKING-only-when-RUNNING, throttle, modal a11y, single shared GEBar, WebGL fallback, VITE_API_BASE).
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — construction/frontend-tycoon/functional-design/. WHAT'S NEXT: Request Changes / Continue to U4 Code Generation."
 **Gate**: Awaiting approval before U4 Code Generation.
+**Approval response**: User approved — "Approved". U4 Functional Design complete. Proceeding to U4 Code Generation (Planning).
+
+---
+
+## CONSTRUCTION - U4 frontend-tycoon Code Generation (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote frontend-tycoon-code-generation-plan.md — 9 steps: Vite/React/TS + Tailwind/tokens scaffold; api types + client + sse; Zustand store (revision guard); shared UI primitives + role maps; AppShell + GlobalExecutiveBar + connection wiring; R3F Tycoon scene (Ortho iso, desks/pawns/trays/monitors, raycast→CustomEvent, WebGL fallback); HUD (SideHUD/VelocityPod/CommandDock/AgentSheet/DeskSheet); Vitest+RTL tests (store/sse/GEBar/VelocityPod/selection); build config + docs. Code at frontend/.
+**Approval prompt (logged before asking)**: "Approve U4 code generation plan (Steps 1–9) to generate code. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U4 code-gen plan approval.
+**Approval response**: User approved — "Approved". Generating U4 code (Steps 1–9).
+
+---
+
+## CONSTRUCTION - U4 frontend-tycoon Code Generation (Generated + verified)
+**Timestamp**: 2026-09-08
+**Created**: frontend/ Vite+React+TS scaffold (Tailwind/tokens/fonts); api/{types,client,sse}; store/useStore (revision guard + persisted UI + roles); components/ui/{GlassPanel,Button,StatusPill,Sheet}; lib/roles; app/{AppShell,GlobalExecutiveBar,useConnection,selection}; features/tycoon/{TycoonView,TycoonCanvas,WebGLFallback,selectionEvent} + scene/{Lighting,FloorGrid,Monitor,DomainDesk,DevPawn} + hud/{SideHUD,VelocityPod,CommandDock,AgentSheet,DeskSheet}; 5 test files.
+**npm install**: 263 packages (exit 0). **Fixes**: build script tsc --noEmit && vite build (composite/noEmit conflict); removed tsconfig.node.json.
+**Validation**: `npm run test` **11/11 pass**; `npm run build` **success** (three.js bundle ~988kB warning — non-blocking; dev-dep npm audit advisories out of scope, Security disabled). Plan steps 1–9 [x].
+**Story coverage**: TY-1..3, RT-1..2, PM-2 (shell select). Read-only vs backend; creation/plan actions are U5.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — frontend/ + code-summary. WHAT'S NEXT: Request Changes / Continue to U4 Build & Test."
+**Gate**: Awaiting approval before U4 Build & Test.
 
 ---
