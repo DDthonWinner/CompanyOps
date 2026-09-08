@@ -23,4 +23,4 @@ E) **N/A — Single-node/single-region is acceptable; no cross-region DR needed.
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: E
