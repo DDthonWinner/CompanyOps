@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from ..common.errors import bad_request, conflict, not_found
 from ..common.models import Project
 from ..common.util import utcnow_iso
+from . import feedback_gen
 from . import repository as repo
 from .models import Feedback, UtilizationMetric, UtilizationReport
 
@@ -44,7 +45,23 @@ def create_report(session: Session, project_id: str) -> dict:
         m.report_id = report.id
         session.add(m)
 
+    # Persist per-aspect scores so the report can show a breakdown alongside the
+    # final score. Invalid/uncollected aspect => N/A (excluded from the overall).
+    for aspect in ("AUTONOMY", "RESOURCE_EFFICIENCY", "AREA_DISTRIBUTION"):
+        sc = aspect_values.get(aspect)
+        session.add(UtilizationMetric(
+            report_id=report.id, aspect=aspect, metric_key="aspectScore",
+            value=str(sc) if sc is not None else "N/A",
+            collection_status="COLLECTED" if sc is not None else "UNCOLLECTED",
+        ))
+
     report.score = _overall_score(aspect_values)
+
+    # Rule-based feedback drafts grounded in the aggregated metrics (02 §6).
+    metrics_map = {m.metric_key: m.value for m in metrics}
+    for fb in feedback_gen.generate(aspect_values, metrics_map):
+        session.add(Feedback(report_id=report.id, source="SYSTEM", **fb))
+
     session.flush()  # autoflush is off; make metrics queryable for serialization
     return report_dict(session, report)
 
@@ -171,11 +188,19 @@ def report_dict(session: Session, r: UtilizationReport) -> dict:
     metrics = session.execute(
         select(UtilizationMetric).where(UtilizationMetric.report_id == r.id)
     ).scalars()
+    aspect_scores: dict[str, int | None] = {}
+    flat: dict[str, str] = {}
+    for m in metrics:
+        if m.metric_key == "aspectScore":
+            aspect_scores[m.aspect] = None if m.value == "N/A" else int(m.value)
+        else:
+            flat[m.metric_key] = m.value
     return {
         "reportId": r.id, "projectId": r.project_id, "status": r.status,
         "utilizationScore": r.score, "scoreVersion": r.score_version,
+        "aspectScores": aspect_scores,
         "previousReportId": r.previous_report_id,
-        "metrics": {m.metric_key: m.value for m in metrics},
+        "metrics": flat,
     }
 
 
@@ -226,6 +251,7 @@ def create_feedback(session: Session, report_id: str, data: dict) -> dict:
         report_id=report_id, aspect=data.get("aspect", "AUTONOMY"),
         severity=data.get("severity", "LOW"), observation=data.get("observation", ""),
         impact=data.get("impact", ""), suggestion=data.get("suggestion", ""),
+        source="USER",
     )
     session.add(f)
     session.flush()
@@ -248,4 +274,5 @@ def feedback_dict(f: Feedback) -> dict:
     return {
         "feedbackId": f.id, "reportId": f.report_id, "aspect": f.aspect, "severity": f.severity,
         "observation": f.observation, "impact": f.impact, "suggestion": f.suggestion,
+        "source": f.source,
     }
