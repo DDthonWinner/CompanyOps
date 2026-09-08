@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { Button } from "../../components/ui/Button";
 import { GlassPanel } from "../../components/ui/GlassPanel";
+import { Icon } from "../../components/ui/Icon";
 import { useStore } from "../../store/useStore";
 import { ActiveTaskList } from "./ActiveTaskList";
 import { AgentMatchingPanel } from "./AgentMatchingPanel";
 import { AgentOverview } from "./AgentOverview";
 import { AttentionCenter } from "./AttentionCenter";
 import { CommandInput } from "./CommandInput";
+import { CityWorkspace } from "./CityWorkspace";
 import { FeedbackSection } from "./FeedbackSection";
 import { HeaderStrip } from "./HeaderStrip";
 import { PlanReviewPanel } from "./PlanReviewPanel";
 import { ProjectCreateDialog } from "./ProjectCreateDialog";
 import { QASection } from "./QASection";
 import { RecentArtifacts } from "./RecentArtifacts";
+import { TokenUsage } from "./TokenUsage";
 import { ActivityTimeline } from "./ActivityTimeline";
 
 export function DashboardView() {
@@ -23,11 +26,18 @@ export function DashboardView() {
   const needsTeam = status === "DRAFT" || status === "AGENT_MATCHING" || status === "READY";
 
   return (
-    <div data-testid="dash-view" className="h-full w-full overflow-auto px-6 pb-28">
-      <div className="mx-auto max-w-[1200px] space-y-4">
-        <div className="flex items-center justify-between pt-2">
-          <HeaderStrip />
-          <Button onClick={() => setCreateOpen(true)} data-testid="project-create-open">+ 새 프로젝트</Button>
+    <div data-testid="dash-view" className="h-full w-full overflow-auto px-3 pb-28 sm:px-6">
+      <div className="mx-auto max-w-[1280px] space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-2 pt-2">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-on-background/45">
+              Your Development Control Center
+            </div>
+            <h1 className="display text-2xl font-bold">프로젝트 워크스페이스</h1>
+          </div>
+          <Button onClick={() => setCreateOpen(true)} data-testid="project-create-open">
+            <Icon name="add" size={16} /> 새 프로젝트
+          </Button>
         </div>
 
         {!activeProjectId && (
@@ -36,25 +46,40 @@ export function DashboardView() {
           </GlassPanel>
         )}
 
+        {activeProjectId && <HeaderStrip />}
+
         {activeProjectId && needsTeam && <AgentMatchingPanel />}
 
-        {activeProjectId && (
-          <div className="flex flex-col gap-4 md:flex-row">
-            <div className="order-2 flex-1 space-y-4 md:order-1">
-              <AgentOverview />
-              <PlanReviewPanel />
-              <ActiveTaskList />
-              <QASection />
-              <div className="grid gap-4 md:grid-cols-2">
-                <ActivityTimeline />
-                <RecentArtifacts />
+        {activeProjectId && !needsTeam && (
+          <>
+            {/* Center flow + Attention Center (04 §23) */}
+            <div className="flex flex-col gap-4 lg:flex-row">
+              <div className="order-2 min-w-0 flex-1 lg:order-1">
+                <CityWorkspace />
               </div>
-              <FeedbackSection />
+              <div className="order-1 w-full lg:order-2 lg:w-80 lg:flex-shrink-0">
+                <AttentionCenter />
+              </div>
             </div>
-            <div className="order-1 w-full md:order-2 md:w-80 md:flex-shrink-0">
-              <AttentionCenter />
+
+            {/* Agent roster (current & next step) */}
+            <AgentOverview />
+
+            <PlanReviewPanel />
+            <ActiveTaskList />
+
+            {/* Quality + Resource */}
+            <div className="grid gap-4 lg:grid-cols-2">
+              <QASection />
+              <TokenUsage />
             </div>
-          </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <ActivityTimeline />
+              <RecentArtifacts />
+            </div>
+            <FeedbackSection />
+          </>
         )}
       </div>
 

@@ -40,7 +40,7 @@ export function AppShell() {
   return (
     <div className="relative h-full w-full overflow-hidden">
       <GlobalExecutiveBar />
-      <main className="h-full w-full pt-20">
+      <main className="h-full w-full pt-44 sm:pt-32 lg:pt-20">
         {activeTab === "tycoon" ? <TycoonView /> : <DashboardView />}
       </main>
       <AgentSheet

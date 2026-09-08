@@ -34,13 +34,14 @@ export function GlobalExecutiveBar() {
   const projectName = snapshot?.project?.name;
 
   return (
-    <header className="glass-3 fixed left-1/2 top-4 z-40 flex w-[min(1100px,94vw)] -translate-x-1/2 items-center justify-between gap-4 rounded-full px-5 py-2">
+    <header className="glass-3 fixed left-1/2 top-4 z-40 grid w-[min(1100px,94vw)] -translate-x-1/2 items-center justify-between gap-2 rounded-2xl px-3 py-2 sm:grid-cols-2 lg:flex lg:gap-4 lg:rounded-full lg:px-5">
       {/* left: brand + project */}
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center justify-between gap-3 sm:col-span-2 lg:justify-start">
         <span className="display text-base font-bold text-primary">CompanyOps</span>
         <select
           data-testid="gebar-project-select"
-          className="rounded-full border border-outline-variant bg-surface-lowest px-3 py-1 text-sm"
+          aria-label="프로젝트 선택"
+          className="min-w-0 max-w-[180px] rounded-full border border-outline-variant bg-surface-lowest px-3 py-1 text-sm"
           value={activeProjectId ?? ""}
           onChange={(e) => setActiveProject(e.target.value || null)}
         >
@@ -51,11 +52,11 @@ export function GlobalExecutiveBar() {
             </option>
           ))}
         </select>
-        {projectName && <span className="text-sm text-on-background/60">{projectName}</span>}
+        {projectName && <span className="hidden truncate text-sm text-on-background/60 lg:block lg:max-w-[160px]">{projectName}</span>}
       </div>
 
       {/* center: tabs */}
-      <nav className="flex items-center gap-1 rounded-full bg-surface p-1">
+      <nav className="flex w-fit shrink-0 items-center gap-1 rounded-full bg-surface p-1">
         <TabButton id="tycoon" active={activeTab === "tycoon"} onClick={() => setActiveTab("tycoon")}>
           Tycoon Office
         </TabButton>
@@ -65,8 +66,8 @@ export function GlobalExecutiveBar() {
       </nav>
 
       {/* right: connection + plan review */}
-      <div className="flex items-center gap-3">
-        <span data-testid="gebar-connection" className="flex items-center gap-1.5 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
+        <span data-testid="gebar-connection" className="flex flex-wrap items-center gap-1.5 text-xs">
           <span aria-hidden style={{ color: conn.color }}>●</span>
           <span>{conn.label}</span>
           {lastSyncAt && (
@@ -91,7 +92,7 @@ function TabButton({
       data-testid={`gebar-tab-${id}`}
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full px-4 py-1 text-sm font-medium transition ${
+      className={`whitespace-nowrap rounded-full px-4 py-1 text-sm font-medium transition ${
         active ? "bg-surface-lowest text-primary shadow" : "text-on-background/70 hover:text-on-background"
       }`}
     >
