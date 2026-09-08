@@ -196,5 +196,18 @@
 **Stories implemented**: PM-1..6, ORCH-1..8, RT-1/2 (backend/SSE). GitPort/UtilizationPort stubs for U2/U3.
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine backend/ + aidlc-docs/construction/backend-pm/code/. WHAT'S NEXT: Request Changes / Continue to U1 Build & Test."
 **Gate**: Awaiting approval before U1 Build & Test.
+**Approval response**: User approved — "Approved". U1 code generation complete. Proceeding to U1 Build & Test.
+
+---
+
+## CONSTRUCTION - U1 Build & Test
+**Timestamp**: 2026-09-08
+**Env note**: initial `python3 -m venv` failed (python3.14-venv/ensurepip missing); user installed python3.14-venv; recreated backend/venv with pip.
+**Build Status**: Success — `pip install -r requirements.txt` exit 0 on Python 3.14.4 (FastAPI 0.141.1, SQLAlchemy 2.0.52, pydantic 2.13.5, sse-starlette 3.4.11, uvicorn 0.52.4, openai 3.8.0, pytest 9.1.1).
+**Test Status**: Pass — pytest 14/14. API smoke via TestClient: health ok; project create (AGENT_MATCHING, 180000, cap 12); assign→READY; command→plan v1 REVIEW; stale review-complete→409 STALE_VERSION; approve→EXECUTING; worker→task COMPLETED (AI_AGENT); milestone 100%/PENDING; git PUSHED (stub commit stub000001).
+**Files Generated**: build-instructions.md, unit-test-instructions.md, integration-test-instructions.md, build-and-test-summary.md.
+**Ready for Operations**: No — U2/U4/U5/U3 remain. Next: U2 backend-git.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine build-and-test-summary.md. WHAT'S NEXT: Request Changes / Approve & Continue to U2 backend-git."
+**Gate**: Awaiting approval before U2.
 
 ---

@@ -58,17 +58,17 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 - [x] NFR Requirements (system-level, once) - DONE
 - [x] NFR Design (system-level, once) - DONE (resolved deferred RESILIENCY-03/04/08/14/15)
 - [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
-- [ ] Code Generation (per unit) - EXECUTE — U1 NEXT
-- [ ] Build and Test (per unit) - EXECUTE
+- [~] Code Generation (per unit) - U1 DONE; U2/U4/U5/U3 pending
+- [~] Build and Test (per unit) - U1 PASS (14/14); U2/U4/U5/U3 pending
 
 ### 🟡 OPERATIONS PHASE
 - [ ] Operations - PLACEHOLDER
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Code Generation — U1 backend-pm (code generated, awaiting approval)
-- **Next Stage**: U1 Build & Test
-- **Status**: U1 backend code generated under backend/ (Steps 1–13 complete). Byte-compile clean. Stories PM-1..6, ORCH-1..8, RT-1/2 implemented (backend). GitPort/UtilizationPort stubs stand in for U2/U3. Tests written (run in Build & Test). REVIEW gate open.
+- **Current Stage**: Build & Test — U1 backend-pm (PASS, awaiting approval)
+- **Next Stage**: U2 backend-git (Functional Design → Code Gen → Build & Test)
+- **Status**: venv on Python 3.14; deps installed (exit 0); **pytest 14/14 pass**; API smoke test green (connected flow works, stale-version 409, task COMPLETED, git PUSHED stub). Build & Test artifacts written. REVIEW gate open. Not ready for Operations — U2/U4/U5/U3 remain.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider
