@@ -415,3 +415,9 @@
 **Gate**: Awaiting final acknowledgement.
 
 ---
+
+## Post-construction - README local-testing guide
+**Timestamp**: 2026-09-08
+**Event**: User requested an easy local-testing README. Rewrote root README.md: prerequisites, two-terminal backend/frontend setup, demo-mode connected-flow walkthrough, .env config table (EXECUTION_MODE/GIT_MODE/OpenAI/DB/QA), test commands (backend 25 / frontend 19 / build), troubleshooting + reset. Status section updated to reflect all 5 units complete.
+
+---
