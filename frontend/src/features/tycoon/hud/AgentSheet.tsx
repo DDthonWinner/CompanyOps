@@ -1,3 +1,4 @@
+import { agentMetrics } from "../../dashboard/agentMetrics";
 import { Sheet } from "../../../components/ui/Sheet";
 import { StatusPill } from "../../../components/ui/StatusPill";
 import { useStore } from "../../../store/useStore";
@@ -9,8 +10,9 @@ export function AgentSheet({ open, projectAgentId, onClose }: {
   const rolesById = useStore((s) => s.rolesById);
   const agent = snapshot?.agents.find((a) => a.id === projectAgentId);
   const roleCode = agent ? rolesById[agent.roleId]?.code : undefined;
-  const currentTask = snapshot?.tasks.find((t) => t.id === agent?.currentTaskId);
-  const nextTask = snapshot?.tasks.find((t) => t.id === agent?.nextTaskId);
+  const metrics = snapshot && agent ? agentMetrics(snapshot, agent) : null;
+  const currentTask = metrics?.current;
+  const nextTask = metrics?.next;
 
   return (
     <Sheet open={open && !!agent} onClose={onClose} title={agent?.displayName ?? "Agent"}

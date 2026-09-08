@@ -28,3 +28,6 @@ checkouts/
 .DS_Store
 .idea/
 .vscode/
+
+# Working notes (local only)
+requirements/dashboard/*

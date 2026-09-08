@@ -419,6 +419,24 @@ class TaskPublish(Base):
     )
 
 
+class TokenUsage(Base):
+    """Per model-call token record (06 §3.1). Written by the worker at execution time;
+    aggregated read-only into the snapshot (project / agent / task / role)."""
+
+    __tablename__ = "token_usage"
+    id = _id()
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    task_id = Column(String, ForeignKey("project_tasks.id"))
+    project_agent_id = Column(String, ForeignKey("project_agents.id"))
+    role_code = Column(String)
+    stage = Column(String, nullable=False, default="EXECUTION")
+    input_tokens = Column(Integer)
+    output_tokens = Column(Integer)
+    total_tokens = Column(Integer)
+    demo = Column(Integer, nullable=False, default=0)
+    measured_at = _ts()
+
+
 # ------------------------------------------------------------------ Platform
 class ActivityEvent(Base):
     __tablename__ = "activity_events"

@@ -3,14 +3,40 @@ import { useMemo } from "react";
 import { DESK_ROLES, roleColor } from "../../lib/roles";
 import type { Snapshot } from "../../api/types";
 import { useStore } from "../../store/useStore";
+import { CameraControls } from "./scene/CameraControls";
+import { Decor } from "./scene/Decor";
 import { DomainDesk } from "./scene/DomainDesk";
 import { DevPawn } from "./scene/DevPawn";
 import { FloorGrid } from "./scene/FloorGrid";
 import { Lighting } from "./scene/Lighting";
+import { PMSuite } from "./scene/PMSuite";
 
-const DESK_X: Record<string, number> = {
-  FRONTEND: -8, BACKEND: -4, DATABASE: 0, PM: 4, QA: 8,
+// Domain desks form a spaced row; the PM suite sits apart to the right.
+const DOMAIN_LAYOUT: Record<string, [number, number]> = {
+  FRONTEND: [-22, 16],
+  DATABASE: [22, 16],
+  BACKEND: [-22, -16],
+  QA: [22, -16],
 };
+const PM_POS: [number, number] = [48, 0];
+const DEFAULT_TARGET: [number, number, number] = [12, 2, 0];
+const MAX_SEATS = 4;
+
+// Camera focus points for the CommandDock quick-jump buttons.
+const FOCUS: Record<string, [number, number, number]> = {
+  ...Object.fromEntries(
+    Object.entries(DOMAIN_LAYOUT).map(([code, [x, z]]) => [code, [x, 2, z] as [number, number, number]]),
+  ),
+  PM: [PM_POS[0], 2, PM_POS[1]],
+};
+
+// Up to 4 seats in a single row tucked at the desk (+z, facing the monitor).
+function domainSeat([dx, dz]: [number, number], i: number): [number, number] {
+  return [dx + (i - (MAX_SEATS - 1) / 2) * 4.2, dz + 3.9];
+}
+function pmSeat([px, pz]: [number, number], i: number): [number, number] {
+  return [px + (i - 0.5) * 3.2, pz + 2.7];
+}
 
 export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
   const rolesById = useStore((s) => s.rolesById);
@@ -18,57 +44,89 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
   const projectId = snapshot.project.id;
 
   const perRole = useMemo(() => {
-    const out: Record<string, { percent: number; inbox: number; outbox: number }> = {};
+    const out: Record<string, { percent: number; steps: string; inbox: number; outbox: number }> = {};
     for (const code of DESK_ROLES) {
       const tasks = snapshot.tasks.filter((t) => codeOf(t.roleId) === code && t.status !== "CANCELLED");
       const completed = tasks.filter((t) => t.status === "COMPLETED").length;
       out[code] = {
         percent: tasks.length ? Math.round((100 * completed) / tasks.length) : 0,
+        steps: `${completed}/${tasks.length}`,
         inbox: tasks.filter((t) => t.status === "TODO" || t.status === "WAITING").length,
         outbox: completed,
       };
     }
     return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot, rolesById]);
+
+  const agentsFor = (code: string) =>
+    snapshot.agents.filter((a) => codeOf(a.roleId) === code && a.status !== "REMOVED");
 
   return (
     <Canvas
       shadows
       orthographic
       data-testid="tycoon-canvas"
-      camera={{ position: [12, 12, 12], zoom: 55, near: 0.1, far: 200 }}
-      onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
+      camera={{ position: [100, 94, 92], zoom: 10, near: 0.1, far: 1000 }}
       style={{ width: "100%", height: "100%" }}
     >
       <color attach="background" args={["#f8f9ff"]} />
       <Lighting />
+      <CameraControls focusPoints={FOCUS} defaultTarget={DEFAULT_TARGET} />
       <FloorGrid />
-      {DESK_ROLES.map((code) => {
-        const x = DESK_X[code];
-        const agents = snapshot.agents.filter((a) => codeOf(a.roleId) === code && a.status !== "REMOVED");
+      <Decor />
+
+      {/* Domain desks + seated agents */}
+      {(Object.keys(DOMAIN_LAYOUT) as Array<keyof typeof DOMAIN_LAYOUT>).map((code) => {
+        const pos = DOMAIN_LAYOUT[code];
+        const r = perRole[code];
         return (
           <group key={code}>
             <DomainDesk
               roleCode={code}
               projectId={projectId}
-              position={[x, 0, 0]}
-              percent={perRole[code].percent}
-              inboxCount={perRole[code].inbox}
-              outboxCount={perRole[code].outbox}
+              position={pos}
+              color={roleColor(code)}
+              percent={r.percent}
+              steps={r.steps}
+              inboxCount={r.inbox}
+              outboxCount={r.outbox}
             />
-            {agents.map((a, i) => (
+            {agentsFor(code).slice(0, MAX_SEATS).map((a, i) => (
               <DevPawn
                 key={a.id}
                 projectId={projectId}
                 projectAgentId={a.id}
                 color={a.displayColor || roleColor(code)}
                 status={a.status}
-                position={[x - 0.6 + (i % 3) * 0.6, 0, 2.4 + Math.floor(i / 3) * 0.8]}
+                name={a.displayName}
+                position={domainSeat(pos, i)}
               />
             ))}
           </group>
         );
       })}
+
+      {/* Separate PM suite + PM agents */}
+      <PMSuite
+        projectId={projectId}
+        position={PM_POS}
+        percent={perRole.PM.percent}
+        steps={perRole.PM.steps}
+        inboxCount={perRole.PM.inbox}
+        outboxCount={perRole.PM.outbox}
+      />
+      {agentsFor("PM").slice(0, MAX_SEATS).map((a, i) => (
+        <DevPawn
+          key={a.id}
+          projectId={projectId}
+          projectAgentId={a.id}
+          color={a.displayColor || roleColor("PM")}
+          status={a.status}
+          name={a.displayName}
+          position={pmSeat(PM_POS, i)}
+        />
+      ))}
     </Canvas>
   );
 }

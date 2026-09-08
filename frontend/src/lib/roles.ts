@@ -29,3 +29,18 @@ export const ROLE_LABEL: Record<string, string> = {
 export function roleColor(code: string | undefined): string {
   return (code && ROLE_COLOR[code]) || "#4f46e5";
 }
+
+// Material Symbols glyph name per role (Design §3.1 icon set).
+export const ROLE_ICON: Record<string, string> = {
+  FRONTEND: "code",
+  BACKEND: "dns",
+  DATABASE: "database",
+  QA: "science",
+  DEVOPS: "build",
+  PM: "flag",
+  DESIGN: "brush",
+};
+
+export function roleIcon(code: string | undefined): string {
+  return (code && ROLE_ICON[code]) || "smart_toy";
+}
