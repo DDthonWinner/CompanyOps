@@ -60,6 +60,11 @@ def test_report_score_and_idempotent(uow):
         r1 = uf.create_report(db, pid)
         # 1 AI_AGENT completed task, core area BACKEND → Autonomy 100, Area 100, Resource N/A
         assert r1["utilizationScore"] == 100
+        # per-aspect breakdown accompanies the final score
+        assert r1["aspectScores"]["AUTONOMY"] == 100
+        assert r1["aspectScores"]["AREA_DISTRIBUTION"] == 100
+        assert r1["aspectScores"]["RESOURCE_EFFICIENCY"] is None  # no previous report → N/A
+        assert "aspectScore" not in r1["metrics"]  # kept out of the flat metrics map
         assert r1["metrics"]["aiCompletedTaskCount"] == "1"
         assert r1["metrics"]["estimatedCost"] == "미수집"
         r2 = uf.create_report(db, pid)
