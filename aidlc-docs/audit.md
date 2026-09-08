@@ -218,5 +218,23 @@
 **Plan**: Wrote backend-git-functional-design-plan.md with Q1–Q5 pre-filled: implement 03 §5.2 methods + conform to U1 GitPort; subprocess git (arg arrays, per-project checkout, real push); server-validated idempotent publish with SYNC_REQUIRED/no-force-push; path-safety + ChangeSet-scoped staging; GIT_MODE=stub|real (default stub) injecting real GitInterface at startup. Artifacts: business-logic-model.md, business-rules.md, domain-entities.md (backend-only).
 **Approval prompt (logged before asking)**: "Approve U2 functional-design plan (defaults) to generate artifacts. Options: Request Changes / Approve & Generate."
 **Gate**: Awaiting U2 FD plan approval.
+**Approval response**: User approved — "aproved". GIT_MODE stub-default kept (real opt-in). Generating U2 functional-design artifacts.
+
+---
+
+## CONSTRUCTION - U2 backend-git Functional Design (Artifacts Generated)
+**Timestamp**: 2026-09-08
+**Artifacts**: business-logic-model.md (module layout, run_git wrapper, clone/sync/read/apply/diff/publish flows, GitPort conformance, wiring), business-rules.md (BG-1..17: path-safety, execution, publish preconditions, idempotency, prohibited ops, error mapping, mode), domain-entities.md (Checkout/ChangeSet filesystem entities + dataclasses; relation to U1 TaskPublish/ArtifactVersion; no new DB tables).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine construction/backend-git/functional-design/. WHAT'S NEXT: Request Changes / Continue to U2 Code Generation."
+**Gate**: Awaiting approval before U2 Code Generation.
+**Approval response**: User approved — "approved". U2 Functional Design complete. Proceeding to U2 Code Generation (Planning).
+
+---
+
+## CONSTRUCTION - U2 backend-git Code Generation (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote backend-git-code-generation-plan.md — 9 steps: git_interface package (exceptions/models), run_git wrapper, path-safety+file access, workspace clone/sync, GitInterface implementing GitPort, GIT_MODE wiring in config+main, tests via offline file:// bare repo (GIT-AC-001/002/004/005 + real-injected orchestrator flow), docs. Code at backend/app/git_interface/.
+**Approval prompt (logged before asking)**: "Approve U2 code generation plan (Steps 1–9) to generate code. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U2 code-gen plan approval.
 
 ---

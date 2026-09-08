@@ -30,11 +30,11 @@
 [Answer]: GIT_MODE flag (default stub), inject real GitInterface when real (recommended)
 
 ## Mandatory Functional Design Artifacts (generation checklist)
-- [ ] `construction/backend-git/functional-design/business-logic-model.md` — clone/sync/read/apply/diff/publish flows + git command sequences
-- [ ] `construction/backend-git/functional-design/business-rules.md` — path-safety, idempotency, no-force-push, precondition validation, error mapping
-- [ ] `construction/backend-git/functional-design/domain-entities.md` — checkout/ChangeSet model + relation to TaskPublish (owned by U1)
-- [ ] (No frontend-components.md — backend-only)
-- [ ] Validate against 03 + 06 §2.2/§7
+- [x] `construction/backend-git/functional-design/business-logic-model.md` — clone/sync/read/apply/diff/publish flows + git command sequences
+- [x] `construction/backend-git/functional-design/business-rules.md` — path-safety, idempotency, no-force-push, precondition validation, error mapping
+- [x] `construction/backend-git/functional-design/domain-entities.md` — checkout/ChangeSet model + relation to TaskPublish (owned by U1)
+- [x] (No frontend-components.md — backend-only)
+- [x] Validate against 03 + 06 §2.2/§7
 
 ## Approval
 Approve this plan (defaults) to generate U2 functional-design artifacts, or edit any `[Answer]:`.
