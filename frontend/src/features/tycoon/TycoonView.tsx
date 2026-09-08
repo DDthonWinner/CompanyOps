@@ -6,6 +6,7 @@ import { WebGLFallback, isWebGLAvailable } from "./WebGLFallback";
 import { CommandDock } from "./hud/CommandDock";
 import { SideHUD } from "./hud/SideHUD";
 import { VelocityPod } from "./hud/VelocityPod";
+import { ViewControls } from "./hud/ViewControls";
 
 function Empty({ msg }: { msg: string }) {
   return (
@@ -29,6 +30,7 @@ export function TycoonView() {
       <TycoonCanvas snapshot={snapshot} />
       <SideHUD />
       <VelocityPod />
+      <ViewControls />
       <CommandDock />
     </div>
   );
