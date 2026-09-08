@@ -73,5 +73,15 @@
 **Artifact**: Wrote execution-plan.md with impact/risk analysis, Mermaid workflow visualization, per-stage EXECUTE/SKIP rationale, greenfield module build sequence (P1 connected flow first), success criteria.
 **Approval prompt (logged before asking)**: "Ready to proceed with this plan? REVIEW REQUIRED — examine execution-plan.md. WHAT'S NEXT: Request Changes / Add Skipped Stages (Infrastructure Design) / Approve & Continue to Application Design."
 **Gate**: Awaiting explicit approval before Application Design.
+**Approval response**: User approved — "Approve and continue". Workflow Planning complete. Proceeding to Application Design.
+
+---
+
+## Application Design - Planning
+**Timestamp**: 2026-09-08
+**Context loaded**: Re-read full source contracts 00–06 + Design.md to ground component/method/service artifacts on exact APIs, ERD, GitInterface methods, Dashboard component tree, and state contract.
+**Plan**: Wrote application-design-plan.md with methodology, mandatory-artifact checklist (components/component-methods/services/component-dependency/application-design), and 8 architectural decisions D1–D8 pre-filled with recommended defaults: layered backend; in-process async worker + persisted queue (sequential per-project writes); ExecutionProvider (Fixture default/OpenAI) behind env flag; per-project revision + activity log + snapshot-invalidation SSE; single snapshot-driven Zustand store + UI slice; command_receipts + 409 envelope; git_interface module + per-project write-lock; monorepo package layout.
+**Approval prompt (logged before asking)**: "Approve the application-design plan (recommended defaults D1–D8) to generate design artifacts, or edit any [Answer]. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting plan confirmation before artifact generation.
 
 ---

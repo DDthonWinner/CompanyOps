@@ -65,9 +65,9 @@ _Decided at Requirements Analysis (2026-09-08) via requirement-verification-ques
 
 ## Current Status
 - **Lifecycle Phase**: INCEPTION
-- **Current Stage**: Workflow Planning — complete, awaiting plan approval
-- **Next Stage**: Application Design (after approval)
-- **Status**: execution-plan.md created. Execute: Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Code Generation, Build and Test. Skip: Infrastructure Design. REVIEW gate open.
+- **Current Stage**: Application Design — Planning (plan awaiting confirmation)
+- **Next Stage**: Generate application-design artifacts → Units Generation
+- **Status**: application-design-plan.md created with 8 design decisions (D1–D8) pre-filled with recommended defaults. Awaiting plan confirmation before generating artifacts.
 
 ## Execution Plan Summary
 - **Stages to Execute**: Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Code Generation, Build and Test
