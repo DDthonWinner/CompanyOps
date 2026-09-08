@@ -103,5 +103,6 @@
 **Plan**: Wrote unit-of-work-plan.md with 6 decisions Q1–Q6 pre-filled with recommended defaults: modular monolith; 6 units (backend-platform, backend-pm, backend-orchestration, backend-git, backend-uf, frontend-app); in-process backend integration; build order Platform→PM→Orchestration→Git→Frontend then UF+P2; per-unit CONSTRUCTION P1-first with system-level NFR referenced per unit; D8 code layout. Team Alignment N/A (single operator).
 **Approval prompt (logged before asking)**: "Unit of work plan complete. Review the plan in aidlc-docs/inception/plans/unit-of-work-plan.md. Ready to proceed to generation? Options: Request Changes / Approve & Generate."
 **Gate**: Awaiting plan approval before unit artifact generation.
+**Answers received / analysis**: User revised Q2 to **5 units** — 3 backend (PM [absorbs orchestration+platform+execution provider], Git, UF) + 2 frontend (Dashboard, Tycoon). Q3/Q5/Q6 recommended defaults kept; Q4 P1-first then UF+P2. Analysis found one ambiguity: owner of the shared frontend foundation (AppShell/GlobalExecutiveBar/SnapshotStore/ApiClient/SseClient/shared UI) given only 2 frontend units. Added follow-up Q7 (recommended: fold into frontend-dashboard). Awaiting Q7 answer before generation.
 
 ---

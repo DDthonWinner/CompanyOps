@@ -50,6 +50,30 @@ Application code at workspace root (never in aidlc-docs/); docs summaries under 
 ### Team Alignment
 N/A — single operator/developer context; no multi-team ownership boundaries. (Documented, not a question.)
 
+---
+
+## Answer Analysis (mandatory) + Follow-up
+
+**Resolved unit set (5 units)** per Q2:
+- `backend-pm` — PM **+ Orchestration + Platform/Common + Execution Provider** (per instruction: any other backend services fold into PM)
+- `backend-git` — GitInterface + publish
+- `backend-uf` — utilization reports/metrics/feedback
+- `frontend-dashboard` — Dashboard view + Feedback section
+- `frontend-tycoon` — Tycoon view
+
+**One ambiguity to resolve before generation:** With only two frontend units (Dashboard, Tycoon), the **shared frontend foundation** — AppShell, the single `GlobalExecutiveBar`, `SnapshotStore`, `ApiClient`, `SseClient`, design tokens, shared shadcn/ui — is code that must have a single owning unit (the other unit depends on it), mirroring the "other backend services → PM" instruction.
+
+### Q7 — Where does the shared frontend foundation live? (follow-up)
+A) **Fold into `frontend-dashboard`**; `frontend-tycoon` depends on it. Dashboard is the control-center / primary interactive surface in the P1 connected flow, so it naturally establishes the store + API/SSE clients first. (Recommended)
+
+B) **Fold into `frontend-tycoon`**; `frontend-dashboard` depends on it. The `GlobalExecutiveBar` visual standard originates in the Tycoon bar (MASTER-008).
+
+C) Keep it as a separate shared `frontend-shell` unit (→ 6 units total; contradicts the "2 frontends" choice).
+
+X) Other (describe after [Answer]: tag below)
+
+[Answer]: B
+
 ## Mandatory Unit Artifacts (generation checklist)
 - [ ] `application-design/unit-of-work.md` — unit definitions, responsibilities, owned entities, + greenfield code-organization strategy
 - [ ] `application-design/unit-of-work-dependency.md` — inter-unit dependency matrix + build order
