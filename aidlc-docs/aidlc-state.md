@@ -49,8 +49,8 @@ _Decided at Requirements Analysis (2026-09-08) via requirement-verification-ques
 - [x] Requirements Analysis (approved via option B → User Stories)
 - [x] User Stories (approved — 24 stories / 7 epics)
 - [x] Workflow Planning (execution-plan.md created; awaiting approval)
-- [ ] Application Design - EXECUTE
-- [ ] Units Generation - EXECUTE
+- [x] Application Design - DONE
+- [x] Units Generation - artifacts generated (awaiting approval)
 
 ### 🟢 CONSTRUCTION PHASE
 - [ ] Functional Design - EXECUTE
@@ -65,9 +65,17 @@ _Decided at Requirements Analysis (2026-09-08) via requirement-verification-ques
 
 ## Current Status
 - **Lifecycle Phase**: INCEPTION
-- **Current Stage**: Units Generation — Planning (plan awaiting approval)
-- **Next Stage**: Generate unit artifacts → CONSTRUCTION phase
-- **Status**: Application Design approved. unit-of-work-plan.md created (modular monolith, 6 units, Q1–Q6 pre-filled with recommended defaults). Awaiting plan approval before generating unit artifacts.
+- **Current Stage**: Units Generation — artifacts generated, awaiting approval
+- **Next Stage**: CONSTRUCTION phase (Functional Design / system-level NFR, then per-unit) after approval
+- **Status**: 5 units defined (U1 backend-pm [+orchestration+platform+provider], U2 backend-git, U3 backend-uf, U4 frontend-tycoon [+shared foundation, Q7=B], U5 frontend-dashboard). unit-of-work.md / -dependency.md / -story-map.md generated; all 29 stories mapped. REVIEW gate open.
+
+## Units of Work
+- **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider
+- **U2 backend-git** — GitInterface + publish
+- **U3 backend-uf** — utilization reports/metrics/feedback
+- **U4 frontend-tycoon** — Tycoon view + shared frontend foundation (AppShell/GlobalExecutiveBar/store/api/sse/UI)
+- **U5 frontend-dashboard** — Dashboard + Feedback (depends on U4)
+- **Build order (P1 first)**: U1 → U2 → U4 → U5, then U3 (UF) + P2.
 
 ## Execution Plan Summary
 - **Stages to Execute**: Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Code Generation, Build and Test

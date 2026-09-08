@@ -106,3 +106,15 @@
 **Answers received / analysis**: User revised Q2 to **5 units** — 3 backend (PM [absorbs orchestration+platform+execution provider], Git, UF) + 2 frontend (Dashboard, Tycoon). Q3/Q5/Q6 recommended defaults kept; Q4 P1-first then UF+P2. Analysis found one ambiguity: owner of the shared frontend foundation (AppShell/GlobalExecutiveBar/SnapshotStore/ApiClient/SseClient/shared UI) given only 2 frontend units. Added follow-up Q7 (recommended: fold into frontend-dashboard). Awaiting Q7 answer before generation.
 
 ---
+
+## Units Generation - Part 1 Approval + Generation
+**Timestamp**: 2026-09-08
+**Q7 answer**: B — shared frontend foundation folds into `frontend-tycoon`; `frontend-dashboard` depends on it. No remaining ambiguity.
+**Part 1 approval**: User said "Answered. Read and continue" → confirmation to proceed to generation.
+**Final unit set (5)**: U1 backend-pm (PM+orchestration+platform+execution provider), U2 backend-git, U3 backend-uf, U4 frontend-tycoon (+shared foundation), U5 frontend-dashboard.
+**Data correction (honesty note)**: Actual story count is 29 (P1=23, P2=6), not the 24/15/9 in the earlier stories.md header — corrected the header and noted it in the story map.
+**Artifacts generated**: unit-of-work.md (definitions, owned entities, code-org strategy), unit-of-work-dependency.md (matrix + build order U1→U2→U4→U5 then U3+P2), unit-of-work-story-map.md (all 29 stories mapped; primary+supporting units).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine unit-of-work*.md. WHAT'S NEXT: Request Changes / Approve & Continue to CONSTRUCTION PHASE."
+**Gate**: Awaiting explicit approval before CONSTRUCTION.
+
+---

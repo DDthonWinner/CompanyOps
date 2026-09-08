@@ -75,11 +75,11 @@ X) Other (describe after [Answer]: tag below)
 [Answer]: B
 
 ## Mandatory Unit Artifacts (generation checklist)
-- [ ] `application-design/unit-of-work.md` — unit definitions, responsibilities, owned entities, + greenfield code-organization strategy
-- [ ] `application-design/unit-of-work-dependency.md` — inter-unit dependency matrix + build order
-- [ ] `application-design/unit-of-work-story-map.md` — every story mapped to a unit
-- [ ] Validate unit boundaries and dependencies
-- [ ] Ensure all 24 stories are assigned to units
+- [x] `application-design/unit-of-work.md` — unit definitions, responsibilities, owned entities, + greenfield code-organization strategy
+- [x] `application-design/unit-of-work-dependency.md` — inter-unit dependency matrix + build order
+- [x] `application-design/unit-of-work-story-map.md` — every story mapped to a unit
+- [x] Validate unit boundaries and dependencies
+- [x] Ensure all stories are assigned to units (29 stories; header corrected from 24 miscount)
 
 ## Approval
 **Unit of work plan complete.** Approve to proceed to generation, or edit any `[Answer]:` and tell me.

@@ -5,7 +5,7 @@
 > Each story is INVEST-shaped with acceptance criteria, a **Traces-to** line (requirements.md FR IDs + source AC IDs), and a **Priority** tag (P1 = connected-flow-first per Q4=C; P2 = fold in later).
 > Acceptance criteria intentionally reuse the fixed contracts (multi-axis state, 409 concurrency, progress math, SSE recovery) rather than re-defining them.
 
-**Count**: 24 stories across 7 epics. **P1**: 15 · **P2**: 9.
+**Count**: 29 stories across 7 epics. **P1**: 23 · **P2**: 6. _(Corrected 2026-09-08 during Units Generation: an earlier header miscounted as 24/15/9.)_
 
 ---
 
