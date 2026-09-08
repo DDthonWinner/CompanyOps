@@ -42,5 +42,25 @@
 **Artifact**: Wrote aidlc-docs/inception/requirements/requirements.md (intent, functional FR-PM/ORCH/UF/GIT/DASH/TY/RT, NFRs, acceptance-criteria traceability, resiliency compliance summary).
 **Resiliency compliance**: No blocking findings remain. RESILIENCY-01/02/10/11 compliant; -06/-12 planned; -03/-04/-05/-13/-14/-15 deferred to NFR Design; -07/-08/-09 N/A (single-node PoC).
 **Gate**: REVIEW REQUIRED — awaiting explicit user approval before Workflow Planning.
+**Approval response**: User selected option **B — Add User Stories** ("Do B: Add User stories. Despite it changing very little, I would like the document to exist."). Requirements Analysis approved; proceeding to optional User Stories stage.
+
+---
+
+## User Stories - Planning
+**Timestamp**: 2026-09-08
+**Assessment**: Wrote user-stories-assessment.md — Decision = Execute (user-requested + traceability value). User impact Direct; complexity Complex.
+**Plan**: Wrote story-generation-plan.md with 5 planning decisions (D1–D5) pre-filled with recommended defaults (Feature-Based + epics per module; Operator primary persona + AI/Orchestrator system actors; standard story format with Traces-to + P1/P2; concise testable AC; ~18–24 stories).
+**Approval prompt (logged before asking)**: "Approve the story-generation plan (recommended defaults) to proceed to story generation, or edit any [Answer] and tell me. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting explicit plan approval before generation.
+**Approval response**: User approved — "Yes generate". Proceeding to story generation with recommended defaults (D1–D5).
+
+---
+
+## User Stories - Generation Complete
+**Timestamp**: 2026-09-08
+**Artifacts**: Wrote personas.md (Operator primary + AI Agent/Orchestrator system actors) and stories.md (24 stories across 7 epics: PM, ORCH, GIT, UF, DASH, TY, RT; 15 P1 / 9 P2). All stories INVEST-shaped with AC, Traces-to (requirements.md FR IDs + source AC IDs), and P1/P2 priority.
+**Generation checklist**: All items in story-generation-plan.md marked [x].
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine stories.md and personas.md. WHAT'S NEXT: Request Changes / Approve & Continue to Workflow Planning."
+**Gate**: Awaiting explicit approval of generated stories before Workflow Planning.
 
 ---
