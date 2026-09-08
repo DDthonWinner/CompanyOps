@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: NFR Requirements — SYSTEM (Planning; plan awaiting approval)
+- **Current Stage**: NFR Requirements — SYSTEM (artifacts generated, awaiting approval)
 - **Next Stage**: System NFR Design → U1 Code Gen/Build&Test
-- **Status**: U1 Functional Design approved. system-nfr-requirements-plan.md created (N1–N8 general NFRs + resiliency decisions R-03/04/08/14/15 pre-filled with single-node-PoC recommendations). Awaiting plan approval.
+- **Status**: nfr-requirements.md + tech-stack-decisions.md generated. Resiliency decisions recorded (R-04a = no CI/CD local-only; others per recommended). No blocking resiliency findings. REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

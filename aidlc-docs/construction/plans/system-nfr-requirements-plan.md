@@ -78,9 +78,9 @@ Options: A) existing IR process · B) propose lightweight IR + Correction-of-Err
 [Answer]: B — propose lightweight IR/COE (recommended)
 
 ## Mandatory NFR Requirements Artifacts (generation checklist)
-- [ ] `construction/system/nfr-requirements/nfr-requirements.md` — consolidated NFRs (N1–N8) + resiliency decisions (R-03/04/08/14/15) + full RESILIENCY-01..15 compliance table
-- [ ] `construction/system/nfr-requirements/tech-stack-decisions.md` — confirmed stack + rationale + key libraries/versions
-- [ ] Validate against requirements.md NFR-1..9 and resiliency baseline
+- [x] `construction/system/nfr-requirements/nfr-requirements.md` — consolidated NFRs (N1–N8) + resiliency decisions (R-03/04/08/14/15) + full RESILIENCY-01..15 compliance table
+- [x] `construction/system/nfr-requirements/tech-stack-decisions.md` — confirmed stack + rationale + key libraries/versions
+- [x] Validate against requirements.md NFR-1..9 and resiliency baseline
 
 ## Approval
 Approve this plan (defaults above — especially confirm the resiliency R-* decisions) to generate the system NFR requirements artifacts, or edit any `[Answer]:` and tell me.

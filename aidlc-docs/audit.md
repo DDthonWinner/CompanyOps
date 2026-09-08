@@ -146,5 +146,16 @@
 **Plan**: Wrote system-nfr-requirements-plan.md. General NFRs N1–N8 (scalability/perf/availability/security/tech-stack/reliability/maintainability/usability) pre-filled from requirements.md NFR-1..9. Resiliency baseline decisions asked (RESILIENCY-03/04/08/14/15) with single-node-PoC recommendations: R-03 exempt; R-04a propose minimal optional CI; R-04b version-pinned redeploy; R-04c direct/in-place; R-08 single-region/single-node; R-14 defer to Operations; R-15 propose lightweight IR/COE. Artifacts: nfr-requirements.md, tech-stack-decisions.md.
 **Approval prompt (logged before asking)**: "Approve the system NFR requirements plan (defaults; confirm resiliency R-* decisions) to generate artifacts, or edit any [Answer]. Options: Request Changes / Approve & Generate."
 **Gate**: Awaiting plan approval (esp. resiliency decisions) before artifact generation.
+**Answers received**: N1–N8 kept recommended. Resiliency: R-03 exempt; **R-04a overridden → no CI/CD, local deployment only**; R-04b version-pinned redeploy; R-04c direct/in-place; R-08 single-region/single-node; R-14 defer to Operations; R-15 lightweight IR/COE. No ambiguity. User said "Continue" → generate.
+
+---
+
+## CONSTRUCTION - System NFR Requirements (Artifacts Generated)
+**Timestamp**: 2026-09-08
+**Artifacts**: construction/system/nfr-requirements/nfr-requirements.md (NFR-S1..S8, resiliency decisions table, full RESILIENCY-01..15 compliance — no blocking findings), tech-stack-decisions.md (confirmed backend/frontend stack, monorepo, no-CI local deploy).
+**Resiliency**: R-04a = no CI/CD (local only, user override); all rules compliant/planned/N/A/deferred/exempt per user decisions. No blocking resiliency finding.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine construction/system/nfr-requirements/. WHAT'S NEXT: Request Changes / Approve & Continue to System NFR Design."
+**Gate**: Awaiting approval before System NFR Design.
+**Approval response**: User approved — "Approved". System NFR Requirements complete. Proceeding to System NFR Design.
 
 ---
