@@ -93,5 +93,15 @@
 **Validation**: Cross-checked against 06 contract — state axes separate, Task COMPLETED preconditions, progress math, milestone result versioning, project completion + UF trigger, SSE snapshot-invalidation, idempotency/409, git rules, 3D selection. No inconsistencies found.
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine aidlc-docs/inception/application-design/. WHAT'S NEXT: Request Changes / Approve & Continue to Units Generation."
 **Gate**: Awaiting explicit approval before Units Generation.
+**Approval response**: User approved — "Approved". Application Design complete. Proceeding to Units Generation.
+
+---
+
+## Units Generation - Planning
+**Timestamp**: 2026-09-08
+**Approach**: Modular monolith; unit of work = logical module. Reviewed code-generation.md structure patterns (greenfield multi-unit monolith) and aligned to approved D8 monorepo layout.
+**Plan**: Wrote unit-of-work-plan.md with 6 decisions Q1–Q6 pre-filled with recommended defaults: modular monolith; 6 units (backend-platform, backend-pm, backend-orchestration, backend-git, backend-uf, frontend-app); in-process backend integration; build order Platform→PM→Orchestration→Git→Frontend then UF+P2; per-unit CONSTRUCTION P1-first with system-level NFR referenced per unit; D8 code layout. Team Alignment N/A (single operator).
+**Approval prompt (logged before asking)**: "Unit of work plan complete. Review the plan in aidlc-docs/inception/plans/unit-of-work-plan.md. Ready to proceed to generation? Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting plan approval before unit artifact generation.
 
 ---
