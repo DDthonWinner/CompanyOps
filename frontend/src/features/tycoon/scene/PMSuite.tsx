@@ -136,8 +136,8 @@ export function PMSuite({
           steps={steps}
           percent={percent}
           color="#e11d48"
-          width={7.5}
-          height={4.2}
+          width={10}
+          height={5.6}
           onSelect={() => select("desk")}
         />
       </group>

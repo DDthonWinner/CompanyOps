@@ -68,8 +68,8 @@ export function Monitor({
   steps,
   percent,
   color,
-  width = 14,
-  height = 5.6,
+  width = 18,
+  height = 7.2,
   onSelect,
 }: {
   title: string;

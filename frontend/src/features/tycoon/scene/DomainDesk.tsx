@@ -185,10 +185,10 @@ export function DomainDesk({
         </mesh>
       </group>
 
-      {/* Floating domain badge */}
+      {/* Floating domain badge (above the taller monitor) */}
       {badge && (
-        <mesh position={[0, DESK_HEIGHT + 7.4, -DESK_WIDTH / 2 + 1.2]} rotation={[0, Math.PI / 4, 0]}>
-          <planeGeometry args={[6.2, 1.2]} />
+        <mesh position={[0, DESK_HEIGHT + 10.4, -DESK_WIDTH / 2 + 1.2]} rotation={[0, Math.PI / 4, 0]}>
+          <planeGeometry args={[7.6, 1.5]} />
           <meshBasicMaterial map={badge} transparent side={THREE.DoubleSide} toneMapped={false} />
         </mesh>
       )}
