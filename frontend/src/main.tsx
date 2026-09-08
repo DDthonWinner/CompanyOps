@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { AppShell } from "./app/AppShell";
+import { ScrollWorld } from "./features/world/ScrollWorld";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <AppShell />
+    <ScrollWorld />
   </React.StrictMode>,
 );
