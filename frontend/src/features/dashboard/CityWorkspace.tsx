@@ -19,7 +19,7 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
   }
 }
 
-export function CityWorkspace() {
+export function CityWorkspace({ compact = false }: { compact?: boolean }) {
   const snapshot = useStore((s) => s.snapshot);
   const roles = useStore((s) => s.rolesById);
   const connection = useStore((s) => s.connection);
@@ -55,23 +55,23 @@ export function CityWorkspace() {
             <Button variant="ghost" onClick={() => setReset((v) => v + 1)}>시점 초기화</Button>
           </div>
         </div>
-        <div className="relative mt-2 h-[300px] overflow-hidden rounded-xl border border-outline-variant/50 bg-[#f0effa] sm:h-[390px]" aria-label="AI 개발 도시. 건물 선택은 아래 부서와 에이전트 버튼으로도 가능합니다.">
+        <div className={`relative mt-2 overflow-hidden rounded-xl border border-outline-variant/50 bg-[#f0effa] ${compact ? "h-[260px]" : "h-[300px] sm:h-[390px]"}`} aria-label="AI 개발 도시. 건물 선택은 아래 부서와 에이전트 버튼으로도 가능합니다.">
           <SceneBoundary key={snapshot.project.id}>
             <Suspense fallback={<div role="status" className="p-6 text-sm">3D 도시를 준비하고 있어요…</div>}>
               <CityScene nodes={nodes} effects={effects && connection === "CONNECTED"} reset={reset} onSelect={select} />
             </Suspense>
           </SceneBoundary>
         </div>
-        <p className="mt-2 text-[11px] text-on-background/60">드래그로 회전 · 스크롤로 확대 · 건물 선택으로 상세 보기 · 빛 경로는 역할 흐름을 나타냅니다</p>
-        <div className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
-          {nodes.map((node) => <div key={node.role} className="min-w-0 rounded-xl border border-outline-variant/60 bg-white/80 p-2.5">
+        <p className="mt-2 text-[11px] text-on-background/60">드래그 회전 · 스크롤 확대 · 건물 선택으로 상세 보기</p>
+        <div className={`mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 ${compact ? "border-t border-outline-variant/50 pt-2" : ""}`}>
+          {nodes.map((node) => <div key={node.role} className={compact ? "min-w-0" : "min-w-0 rounded-xl border border-outline-variant/60 bg-white/80 p-2.5"}>
             <button type="button" onClick={() => select(node.role)} className="w-full rounded text-left text-xs font-semibold focus-visible:outline-primary" style={{ color: roleColor(node.role) }}>
               {ROLE_LABEL[node.role]} · {node.percent}%
             </button>
-            <ProgressBar value={node.percent} color={roleColor(node.role)} height={4} />
-            <p className="my-1 text-[10px] text-on-background/60">{node.total ? `${node.completed}/${node.total} 작업 완료` : "작업 없음"}</p>
-            {!node.agents.length && <p className="text-xs text-on-background/60">미배정</p>}
-            {node.agents.map(({ agent, metrics }) => <button key={agent.id} type="button" onClick={() => openAgent(agent.id)} className="mt-1 block w-full rounded text-left focus-visible:outline-primary" aria-label={`${agent.displayName} 상세 보기`}>
+            {!compact && <ProgressBar value={node.percent} color={roleColor(node.role)} height={4} />}
+            {!compact && <p className="my-1 text-[10px] text-on-background/60">{node.total ? `${node.completed}/${node.total} 작업 완료` : "작업 없음"}</p>}
+            {!compact && !node.agents.length && <p className="text-xs text-on-background/60">미배정</p>}
+            {!compact && node.agents.map(({ agent, metrics }) => <button key={agent.id} type="button" onClick={() => openAgent(agent.id)} className="mt-1 block w-full rounded text-left focus-visible:outline-primary" aria-label={`${agent.displayName} 상세 보기`}>
               <span className="block truncate text-xs font-medium">{agent.displayName}</span>
               <StatusPill status={agent.status} />
               <span className="mt-1 block truncate text-[10px] text-on-background/60" title={metrics.current?.title}>{metrics.current?.title ?? "현재 작업 없음"}</span>

@@ -16,6 +16,7 @@ const STATUS_BADGE: Record<string, { label: string; color: string }> = {
 };
 
 export function HeaderStrip() {
+  const selectPanel = useStore((s) => s.setDashboardPanel);
   const snapshot = useStore((s) => s.snapshot);
   const rolesById = useStore((s) => s.rolesById);
   if (!snapshot) return null;
@@ -32,7 +33,7 @@ export function HeaderStrip() {
     : "대기 중";
 
   return (
-    <GlassPanel level={4} className="w-full p-5" data-testid="dash-progress">
+    <GlassPanel level={4} className="w-full p-4" data-testid="dash-progress">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
         {/* Left: status + title + phase */}
         <div className="min-w-0 lg:w-64">
@@ -65,9 +66,9 @@ export function HeaderStrip() {
 
         {/* Right: KPI tiles */}
         <div className="grid grid-cols-3 gap-3 lg:w-72">
-          <Kpi label="활성 에이전트" value={`${p.workingAgentCount}`} sub={`/ ${p.assignedAgentCount}`} icon="smart_toy" />
-          <Kpi label="진행 중 작업" value={String(running.length)} sub={waiting ? `${waiting} 대기` : undefined} icon="pending_actions" />
-          <Kpi label="확인 필요" value={String(attention)} icon="notifications_active" alert={attention > 0} />
+          <Kpi label="활성 에이전트" value={`${p.workingAgentCount}`} sub={`/ ${p.assignedAgentCount}`} icon="smart_toy" onClick={() => document.getElementById("dashboard-agents")?.scrollIntoView({ block: "center", behavior: "smooth" })} />
+          <Kpi label="진행 중 작업" value={String(running.length)} sub={waiting ? `${waiting} 대기` : undefined} icon="pending_actions" onClick={() => selectPanel("tasks")} />
+          <Kpi label="확인 필요" value={String(attention)} icon="notifications_active" alert={attention > 0} onClick={() => document.getElementById("dashboard-attention")?.scrollIntoView({ block: "center", behavior: "smooth" })} />
         </div>
       </div>
     </GlassPanel>
@@ -80,16 +81,18 @@ function Kpi({
   sub,
   icon,
   alert = false,
+  onClick,
 }: {
   label: string;
   value: string;
   sub?: string;
   icon: string;
   alert?: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div
-      className="rounded-xl border border-outline-variant bg-surface-lowest px-2.5 py-2"
+    <button type="button" onClick={onClick}
+      className="text-left transition hover:bg-surface-low focus-visible:outline-primary rounded-xl border border-outline-variant bg-surface-lowest px-2.5 py-2"
       style={alert ? { borderColor: "#d97706", background: "#d977061a" } : undefined}
     >
       <div className="flex items-center gap-1 text-[10px] text-on-background/50">
@@ -100,6 +103,6 @@ function Kpi({
         <span className={`tabular text-xl font-bold ${alert ? "text-[#b45309]" : ""}`}>{value}</span>
         {sub && <span className="tabular text-[11px] text-on-background/45">{sub}</span>}
       </div>
-    </div>
+    </button>
   );
 }

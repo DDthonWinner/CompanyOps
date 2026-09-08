@@ -17,6 +17,7 @@ export function GlobalExecutiveBar() {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const setActiveProject = useStore((s) => s.setActiveProject);
   const activeTab = useStore((s) => s.ui.activeTab);
+  const setDashboardPanel = useStore((s) => s.setDashboardPanel);
   const setActiveTab = useStore((s) => s.setActiveTab);
   const connection = useStore((s) => s.connection);
   const lastSyncAt = useStore((s) => s.lastSyncAt);
@@ -76,7 +77,7 @@ export function GlobalExecutiveBar() {
             </span>
           )}
         </span>
-        <Button variant="ghost" onClick={() => setActiveTab("dashboard")} data-testid="gebar-plan-review">
+        <Button variant="ghost" onClick={() => setDashboardPanel("plan")} data-testid="gebar-plan-review">
           계획 검토
         </Button>
       </div>

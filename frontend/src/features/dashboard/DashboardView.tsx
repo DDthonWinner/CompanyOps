@@ -3,25 +3,22 @@ import { Button } from "../../components/ui/Button";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { Icon } from "../../components/ui/Icon";
 import { useStore } from "../../store/useStore";
-import { ActiveTaskList } from "./ActiveTaskList";
 import { AgentMatchingPanel } from "./AgentMatchingPanel";
 import { AgentOverview } from "./AgentOverview";
+import { WorkspaceBrief } from "./WorkspaceBrief";
 import { AttentionCenter } from "./AttentionCenter";
 import { CommandInput } from "./CommandInput";
 import { CityWorkspace } from "./CityWorkspace";
 import { FeedbackSection } from "./FeedbackSection";
+import { DashboardDetails } from "./DashboardDetails";
 import { HeaderStrip } from "./HeaderStrip";
-import { PlanReviewPanel } from "./PlanReviewPanel";
 import { ProjectCreateDialog } from "./ProjectCreateDialog";
-import { QASection } from "./QASection";
-import { RecentArtifacts } from "./RecentArtifacts";
-import { TokenUsage } from "./TokenUsage";
-import { ActivityTimeline } from "./ActivityTimeline";
 
 export function DashboardView() {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const snapshot = useStore((s) => s.snapshot);
   const [createOpen, setCreateOpen] = useState(false);
+  const selectPanel = useStore((s) => s.setDashboardPanel);
   const status = snapshot?.project.status;
   const needsTeam = status === "DRAFT" || status === "AGENT_MATCHING" || status === "READY";
 
@@ -35,9 +32,12 @@ export function DashboardView() {
             </div>
             <h1 className="display text-2xl font-bold">프로젝트 워크스페이스</h1>
           </div>
+          <div className="flex flex-wrap gap-2">
+          {activeProjectId && <Button variant="ghost" onClick={() => selectPanel("tasks")}>작업 살펴보기 ↗</Button>}
           <Button onClick={() => setCreateOpen(true)} data-testid="project-create-open">
             <Icon name="add" size={16} /> 새 프로젝트
           </Button>
+          </div>
         </div>
 
         {!activeProjectId && (
@@ -55,30 +55,19 @@ export function DashboardView() {
             {/* Center flow + Attention Center (04 §23) */}
             <div className="flex flex-col gap-4 lg:flex-row">
               <div className="order-2 min-w-0 flex-1 lg:order-1">
-                <CityWorkspace />
+                <CityWorkspace compact />
               </div>
-              <div className="order-1 w-full lg:order-2 lg:w-80 lg:flex-shrink-0">
+              <div id="dashboard-attention" className="order-1 flex w-full flex-col gap-3 lg:order-2 lg:w-80 lg:flex-shrink-0">
                 <AttentionCenter />
+                <WorkspaceBrief />
               </div>
             </div>
 
             {/* Agent roster (current & next step) */}
-            <AgentOverview />
+            <div id="dashboard-agents"><AgentOverview key={activeProjectId} /></div>
 
-            <PlanReviewPanel />
-            <ActiveTaskList />
-
-            {/* Quality + Resource */}
-            <div className="grid gap-4 lg:grid-cols-2">
-              <QASection />
-              <TokenUsage />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <ActivityTimeline />
-              <RecentArtifacts />
-            </div>
-            <FeedbackSection />
+            <DashboardDetails key={activeProjectId} />
+            {status === "COMPLETED" && <FeedbackSection />}
           </>
         )}
       </div>

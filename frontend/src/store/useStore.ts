@@ -4,6 +4,8 @@ import { persist } from "zustand/middleware";
 import type { ConnState } from "../api/sse";
 import type { Snapshot } from "../api/types";
 
+export type DashboardPanel = "overview" | "tasks" | "plan" | "quality" | "resources" | "activity" | "artifacts";
+
 export interface OpenSheet {
   kind: "agent" | "desk";
   id: string; // projectAgentId (agent) or roleCode (desk)
@@ -14,7 +16,7 @@ interface StoreState {
   snapshot: Snapshot | null;
   lastSyncAt: string | null;
   connection: ConnState;
-  ui: { activeTab: "tycoon" | "dashboard"; camera: { target?: string } };
+  ui: { activeTab: "tycoon" | "dashboard"; camera: { target?: string }; dashboardPanel?: DashboardPanel };
   openSheet: OpenSheet | null;
   rolesById: Record<string, { code: string; name: string }>;
 
@@ -24,6 +26,7 @@ interface StoreState {
   setConnection: (c: ConnState) => void;
   setActiveTab: (t: "tycoon" | "dashboard") => void;
   setCamera: (target?: string) => void;
+  setDashboardPanel: (panel: DashboardPanel) => void;
   openAgentSheet: (projectAgentId: string) => void;
   openDeskSheet: (roleCode: string) => void;
   closeSheet: () => void;
@@ -51,6 +54,7 @@ export const useStore = create<StoreState>()(
       },
       setConnection: (c) => set({ connection: c }),
       setActiveTab: (t) => set((st) => ({ ui: { ...st.ui, activeTab: t } })),
+      setDashboardPanel: (dashboardPanel) => set((st) => ({ ui: { ...st.ui, activeTab: "dashboard", dashboardPanel } })),
       setCamera: (target) => set((st) => ({ ui: { ...st.ui, camera: { target } } })),
       openAgentSheet: (projectAgentId) => set({ openSheet: { kind: "agent", id: projectAgentId } }),
       openDeskSheet: (roleCode) => set({ openSheet: { kind: "desk", id: roleCode } }),

@@ -16,8 +16,14 @@ export interface AgentMetrics {
 const ACTIVE_ORDER: Record<string, number> = { RUNNING: 0, REVIEW: 1, WAITING: 2, BLOCKED: 3 };
 
 export function agentMetrics(snapshot: Snapshot, agent: Agent): AgentMetrics {
+  // Tasks are assigned by role (assignedProjectAgentId is usually null); match the
+  // agent's own tasks first, else fall back to same-role unassigned tasks.
   const tasks = snapshot.tasks
-    .filter((t) => t.assignedProjectAgentId === agent.id)
+    .filter(
+      (t) =>
+        t.assignedProjectAgentId === agent.id ||
+        (t.assignedProjectAgentId == null && t.roleId != null && t.roleId === agent.roleId),
+    )
     .slice()
     .sort((a, b) => a.sortOrder - b.sortOrder);
   const eligible = tasks.filter((t) => t.status !== "CANCELLED");
@@ -44,5 +50,13 @@ export function agentMetrics(snapshot: Snapshot, agent: Agent): AgentMetrics {
     next = tasks.find((t) => t.id !== current?.id && (t.status === "TODO" || t.status === "WAITING")) ?? null;
   }
 
-  return { tasks, completed, total, percent, current, next, tokenTotal: agent.tokenTotal ?? null };
+  // Per-agent tokens: server value if present, else sum of matched tasks' tokens.
+  let tokenTotal = agent.tokenTotal ?? null;
+  if (tokenTotal == null) {
+    const summed = tasks.reduce((acc, t) => (t.tokenTotal != null ? acc + t.tokenTotal : acc), 0);
+    const anyToken = tasks.some((t) => t.tokenTotal != null);
+    tokenTotal = anyToken ? summed : null;
+  }
+
+  return { tasks, completed, total, percent, current, next, tokenTotal };
 }
