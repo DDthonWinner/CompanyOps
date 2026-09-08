@@ -3,6 +3,15 @@
 > Stage: CONSTRUCTION / Build and Test · Date: 2026-09-08
 > Per-unit build (Q5). Covers **U1 backend-pm** and **U2 backend-git**; U4/U5/U3 follow.
 
+## U4 frontend-tycoon — Build & Test (2026-09-08)
+- **Build tool**: Vite 5 + TypeScript (npm). `npm install` 263 pkgs (exit 0).
+- **Unit tests (Vitest + RTL)**: **11 passed / 0 failed** — store revision guard + sheet toggles; `resolveSelection` (06 §6); SseClient CONNECTING→CONNECTED/resync, higher-revision re-read, error→backoff reconnect→DISCONNECTED; VelocityPod renders server progress + review pill; GlobalExecutiveBar renders tabs/connection/project picker (fetch mocked).
+- **Build**: `npm run build` (tsc --noEmit + vite build) → **success**; artifacts in `frontend/dist/`.
+- **Notes (non-blocking)**: Three.js bundle ~988 kB (code-splitting = future optimization); `npm audit` dev-dep advisories out of scope (Security extension disabled).
+- **Stories**: TY-1..3, RT-1..2, PM-2 (shell select). Read-only vs backend.
+
+---
+
 ## U2 backend-git — Build & Test (2026-09-08)
 - **Build**: Success (no new deps; uses system `git` 2.53).
 - **Unit tests**: 7 new (`tests/git_interface/`) — clone/branch init, apply+commit+**push** (GIT-AC-001), new-file changeset (GIT-AC-004), idempotent re-push/no-dup (GIT-AC-002), path-safety rejection (GIT-AC-005), NO_CHANGES, and a **connected orchestrator flow with the real GitInterface** (ORCH-4/5 — real commit, not stub).

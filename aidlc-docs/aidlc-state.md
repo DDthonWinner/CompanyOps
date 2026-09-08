@@ -58,17 +58,17 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 - [x] NFR Requirements (system-level, once) - DONE
 - [x] NFR Design (system-level, once) - DONE (resolved deferred RESILIENCY-03/04/08/14/15)
 - [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
-- [~] Code Generation (per unit) - U1, U2 DONE; U4/U5/U3 pending
-- [~] Build and Test (per unit) - U1+U2 PASS (21/21); U4/U5/U3 pending
+- [~] Code Generation (per unit) - U1, U2, U4 DONE; U5/U3 pending
+- [~] Build and Test (per unit) - backend 21/21 + frontend 11/11 PASS; U5/U3 pending
 
 ### 🟡 OPERATIONS PHASE
 - [ ] Operations - PLACEHOLDER
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Code Generation — U4 frontend-tycoon (code generated + verified, awaiting approval)
-- **Next Stage**: U4 Build & Test (formalize), then U5 frontend-dashboard
-- **Status**: frontend/ app generated (shared foundation + Tycoon R3F view). `npm run test` 11/11 pass; `npm run build` success. REVIEW gate open.
+- **Current Stage**: Build & Test — U4 frontend-tycoon (PASS, awaiting approval)
+- **Next Stage**: U5 frontend-dashboard (Functional Design → Code Gen → Build & Test)
+- **Status**: U1+U2+U4 complete; backend 21/21 + frontend 11/11 pass; both builds green. Remaining: U5 (Dashboard+Feedback), U3 (UF). REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

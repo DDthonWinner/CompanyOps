@@ -298,5 +298,17 @@
 **Story coverage**: TY-1..3, RT-1..2, PM-2 (shell select). Read-only vs backend; creation/plan actions are U5.
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — frontend/ + code-summary. WHAT'S NEXT: Request Changes / Continue to U4 Build & Test."
 **Gate**: Awaiting approval before U4 Build & Test.
+**Approval response**: User approved — "Approved". Proceeding to U4 Build & Test.
+
+---
+
+## CONSTRUCTION - U4 frontend-tycoon Build & Test
+**Timestamp**: 2026-09-08
+**Build Status**: Success (Vite 5 + tsc). **Test Status**: Pass — Vitest 11/11 (re-confirmed fresh). Bundle warning (three.js ~988kB) non-blocking.
+**Files updated**: build-and-test-summary.md (added U4 section).
+**Cumulative**: backend 21/21 + frontend 11/11.
+**Ready for Operations**: No — U5 frontend-dashboard, U3 backend-uf remain.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — build-and-test-summary.md (U4 added). WHAT'S NEXT: Request Changes / Approve & Continue to U5 frontend-dashboard."
+**Gate**: Awaiting approval before U5.
 
 ---
