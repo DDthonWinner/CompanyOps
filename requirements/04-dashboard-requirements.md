@@ -646,7 +646,8 @@ Risk는 AI의 임의적인 확률값보다는 **발견된 문제와 근거가 �
 
 데스크톱 권장 구성:
 
-- 상단: 프로젝트 단계, Task 수 기준 진행률, 실행·대기 건수, 항상 보이는 연결 상태
+- 글로벌 내비게이션 바(최상단 고정): Tycoon Office와 공유하는 **통합 글로벌 내비게이션 바**([Design 4.1](Design.md)). 제품명·현재 Project·Tycoon Office/Dashboard 탭·항상 보이는 실제 연결 상태를 제공한다. Dashboard는 별도 상단 헤더/탭을 만들지 않고 이 공통 바를 마운트한다.
+- 화면 상단: 프로젝트 단계, Task 수 기준 진행률, 실행·대기 건수. 연결 상태는 글로벌 내비게이션 바에서 항상 확인한다.
 - 중앙: Agent 작업 영역 및 PM → Frontend / Backend → QA 개발 흐름
 - 오른쪽: Decision / Milestone 결과 승인 / 계획 최종 승인을 모은 Attention Center
 - 하단: Agent 요약, QA·Quality Gate, Activity, Artifact, 사용자 지시 입력
@@ -668,34 +669,34 @@ UI 톤은 제공된 레퍼런스의 밝은 배경, 흰색 카드, 보라색 포�
 ## 24. Recommended Dashboard Components
 
 ~~~text
-DashboardPage
-├── ProjectHeader
-├── ConnectionStatus
-├── ProjectProgress
-├── DependencyWaitNotice
-├── DevelopmentFlow / AgentWorkArea
-├── AttentionCenter
-│   ├── DecisionCard
-│   ├── MilestoneResultApprovalCard
-│   ├── PlanApprovalCard
-│   └── QAReviewCard
-├── AgentOverview / AgentCard
-├── CurrentAndNextStep
-├── ActiveTaskList / DependencyDetailPanel
-├── PlanReviewPanel
-│   ├── PlanVersion
-│   ├── FeedbackHistory
-│   ├── ImpactPreview
-│   └── FinalExecutionApproval
-├── QARunReport / QAReview / AdditionalValidationRequest
-├── QualityGate
-├── TokenUsage
-├── ActivityTimeline
-├── RecentArtifacts / ArtifactPreview
-└── CommandInput
+AppShell
+├── GlobalExecutiveBar        // Tycoon Office와 공유하는 통합 글로벌 내비게이션 바 (제품명·Project·Tycoon Office/Dashboard 탭·연결 상태). Design 4.1
+└── DashboardPage
+    ├── ProjectProgress
+    ├── DependencyWaitNotice
+    ├── DevelopmentFlow / AgentWorkArea
+    ├── AttentionCenter
+    │   ├── DecisionCard
+    │   ├── MilestoneResultApprovalCard
+    │   ├── PlanApprovalCard
+    │   └── QAReviewCard
+    ├── AgentOverview / AgentCard
+    ├── CurrentAndNextStep
+    ├── ActiveTaskList / DependencyDetailPanel
+    ├── PlanReviewPanel
+    │   ├── PlanVersion
+    │   ├── FeedbackHistory
+    │   ├── ImpactPreview
+    │   └── FinalExecutionApproval
+    ├── QARunReport / QAReview / AdditionalValidationRequest
+    ├── QualityGate
+    ├── TokenUsage
+    ├── ActivityTimeline
+    ├── RecentArtifacts / ArtifactPreview
+    └── CommandInput
 ~~~
 
-컴포넌트 이름은 구현 예시이다. 상태의 단일 기준을 공유하여 요약, 카드, 상세, 알림의 상태가 서로 달라지지 않게 한다.
+컴포넌트 이름은 구현 예시이다. 이전의 DashboardPage 로컬 ProjectHeader·ConnectionStatus는 두지 않고, 제품명·Project·연결 상태는 공용 GlobalExecutiveBar가 제공한다. 상태의 단일 기준을 공유하여 요약, 카드, 상세, 알림의 상태가 서로 달라지지 않게 한다.
 
 ---
 

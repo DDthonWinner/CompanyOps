@@ -127,7 +127,7 @@ Severity는 영향 설명이며 Comment 생성만으로 Task를 중단하거나 
 
 ## 8. 화면과 비교
 
-React/TypeScript 기반 Dashboard 내부 섹션/상세 패널로 제공한다. 세 번째 최상위 탭은 만들지 않는다.
+React/TypeScript 기반 Dashboard 내부 섹션/상세 패널로 제공한다. 세 번째 최상위 탭은 만들지 않는다. Dashboard 안에서 렌더링되므로 Tycoon Office와 공유하는 **통합 글로벌 내비게이션 바**([Design 4.1](Design.md))를 그대로 사용하며 별도 상단 바/헤더/탭을 두지 않는다.
 
 | 섹션 | 표시 |
 | --- | --- |

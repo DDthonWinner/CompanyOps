@@ -33,7 +33,7 @@
 
 - **Interactive 3D Canvas Layer (Level 0)**: Three.js 기반으로 구동되며, 고정된 Isometric(등각투영) 시점으로 오피스, 데스크, 요원(Agent) 등을 렌더링하는 핵심 게임 뷰포트.
 - **HUD Overlay (React + HTML Layer)**: 3D 캔버스 위에 떠 있는 투명한 아크릴 패널 형태의 UI 영역.
-  - **Global Executive Bar (Top)**: 제품명, Project 컨텍스트, Tycoon Office/Dashboard 탭 및 연결 상태.
+  - **Global Executive Bar (Top)**: 제품명, Project 컨텍스트, Tycoon Office/Dashboard 탭 및 연결 상태. 타이쿤 뷰의 이 상단 바가 전 화면이 공유하는 **통합 글로벌 내비게이션 바**의 표준이다([Design 4.1](Design.md)).
   - **Side HUD (Left)**: 프로젝트 요약, 역할/Agent 네비게이션, 배정 수/정원 및 Budget 기준 금액.
   - **Velocity Pod (Top-Right)**: 역할별 Active Sprint Milestones 및 Task 상태 요약.
   - **Command Dock (Bottom-Center)**: 카메라 뷰 전환 및 고속 이동 줌 마커.
@@ -70,12 +70,13 @@
 
 ### 3.2 HTML HUD 인터페이스 (React/Tailwind 기반)
 
-#### 3.2.1 Global Executive Bar (상단)
+#### 3.2.1 Global Executive Bar (상단, 전 화면 공용 컴포넌트)
 
 **기능 요구사항**:
+- Global Executive Bar는 [Design 4.1](Design.md)에 정의된 **통합 글로벌 내비게이션 바**이며, 타이쿤 뷰의 상단 바를 표준으로 삼아 Dashboard(및 Dashboard 내부 AI 활용 Feedback 섹션)와 같은 컴포넌트를 공유한다. 타이쿤 뷰는 이 공통 바를 자체 재구현 없이 마운트하고, 뷰 전용 액션만 기여한다.
 - CompanyOps, 현재 Project 이름, Tycoon Office/Dashboard 두 탭, 실제 연결 상태 표시.
 - 시뮬레이션 시간·배속·Pause 기능은 제외한다.
-- Reset View 버튼 (확대/축소 및 이동을 했을 경우를 위해 Camera 리셋 기능)
+- Reset View 버튼 (확대/축소 및 이동을 했을 경우를 위해 Camera 리셋 기능). 타이쿤 뷰가 활성일 때만 노출하는 뷰 전용 액션이다.
 - **계획 검토 버튼**: 참고 자료의 Deploy Sprint 자리에 배치하고 Dashboard의 계획 검토·최종 실행 승인 흐름으로 연결한다. 토스트만으로 실행 완료를 표시하지 않는다.
 
 #### 3.2.2 Side HUD 및 Velocity Pod (좌측/우측 팝오버)

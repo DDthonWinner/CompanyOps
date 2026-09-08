@@ -38,6 +38,7 @@ AWS AI-DLC는 이 서비스를 만드는 개발 워크플로우로 사용한다.
 | MASTER-005 | Active Sprint Milestones에 하위 전체 Task 중 완료 Task의 비율과 목록을 표시한다. 가중치·PM 판단·수동 입력을 사용하지 않는다. 사람의 결과 승인은 Milestone 단위로 처리한다.                                           |
 | MASTER-006 | 시뮬레이션 시간·배속·Pause는 MVP에서 제외한다. 수동 Pause/Resume 조작도 제공하지 않는다. 결정·승인·선행 조건 대기는 유지한다.                                                                                        |
 | MASTER-007 | Task별 결과 승인은 두지 않는다. Task는 승인된 Plan에 따라 실행되어 기술 QA를 통과하고 Git 게시가 성공하면 COMPLETED가 된다. 모든 Task가 완료된 Milestone은 결과 승인 대기가 되며, 승인 후 다음 Milestone을 시작한다. |
+| MASTER-008 | 상단 글로벌 내비게이션 바는 타이쿤 뷰의 GlobalExecutiveBar를 표준으로 삼는 단일 공통 컴포넌트다. Tycoon Office·Dashboard와 Dashboard 내부 AI 활용 Feedback 섹션은 화면마다 별도 상단 바/탭을 만들지 않고 AppShell 최상단의 같은 컴포넌트를 마운트한다. 위치·형태는 tycoon-reference-image의 상단 플로팅 캡슐을 따르며, 탭 라벨 등 내용은 현재 요구사항을 따른다(이미지의 화면명은 자리표시자다). 상세 사양은 [Design 4.1](Design.md). |
 
 ## 4. MVP 범위와 실행 환경
 

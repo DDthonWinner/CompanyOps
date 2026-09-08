@@ -9,7 +9,7 @@
 | 참고 요소                              | MVP 적용                                                                |
 | -------------------------------------- | ----------------------------------------------------------------------- |
 | Axiom Studio AI/Project Synthetica     | CompanyOps/실제 Project 이름                                             |
-| Overview/Departments/Roadmap/Analytics | Tycoon Office/Dashboard 두 탭                                           |
+| Overview/Departments/Roadmap/Analytics | 통합 글로벌 내비게이션 바(전 화면 공용)의 Tycoon Office/Dashboard 두 탭  |
 | Workspaces                             | Project 선택/목록                                                       |
 | Agents 12/16                           | 실제 배정 수/정원                                                       |
 | Runway/Burn rate/잔액                  | HIGH $250,000 / MEDIUM $180,000 / LOW $120,000                          |
@@ -47,24 +47,37 @@
 
 ## 4. 화면 구조 및 HUD 레이아웃
 
-Viewport를 3D 제도 책상(Drafting desk)으로 간주하고, UI 위젯들은 화면 가장자리에 고정(Anchored)된다.
+Viewport를 3D 제도 책상(Drafting desk)으로 간주하고, UI 위젯들은 화면 가장자리에 고정(Anchored)된다. **GlobalExecutiveBar(통합 글로벌 내비게이션 바)는 특정 뷰에 속하지 않고 AppShell 최상단에 한 번만 마운트되어 모든 화면이 공유한다.** 선택된 탭에 따라 그 아래 영역만 TycoonView 또는 DashboardView로 교체된다.
 
 ```text
 AppShell
-├── TycoonCanvas (Three.js 3D Layer)
-│   ├── FloorStage & Isometric Grid
-│   ├── DomainDesks (FE, BE, DB, PM Suite 등)
-│   └── DevPawns (작업자 캐릭터)
-│
-└── HUD Overlay (React + HTML Layer)
-    ├── GlobalExecutiveBar (Top: 제품명, Project, Tycoon Office/Dashboard 탭, 연결 상태)
-    ├── SideHUD (Left: 프로젝트 요약, 부서/Agent 네비게이션, 배정 수/정원, Budget 기준 금액)
-    ├── VelocityPod (Top-Right: 역할별 Active Sprint Milestones, Task 수 기반 자동 진행률, 하위 Task)
-    ├── CommandDock (Bottom-Center: 뷰 전환, 고속 이동 줌 마커)
-    └── Modals
-        ├── Agent Detail Sheet (요원 상세 스탯 및 하위 작업 정보)
-        └── Desk/Domain Sheet (부서 큐, 인박스/아웃박스 상세)
+├── GlobalExecutiveBar (Top: 전 화면 공용 통합 글로벌 내비게이션 바 — 제품명, Project, Tycoon Office/Dashboard 탭, 연결 상태, 공용 액션)
+└── ActiveView (선택된 탭만 렌더링)
+    ├── TycoonView
+    │   ├── TycoonCanvas (Three.js 3D Layer)
+    │   │   ├── FloorStage & Isometric Grid
+    │   │   ├── DomainDesks (FE, BE, DB, PM Suite 등)
+    │   │   └── DevPawns (작업자 캐릭터)
+    │   └── HUD Overlay (React + HTML Layer)
+    │       ├── SideHUD (Left: 프로젝트 요약, 부서/Agent 네비게이션, 배정 수/정원, Budget 기준 금액)
+    │       ├── VelocityPod (Top-Right: 역할별 Active Sprint Milestones, Task 수 기반 자동 진행률, 하위 Task)
+    │       ├── CommandDock (Bottom-Center: 뷰 전환, 고속 이동 줌 마커)
+    │       └── Modals
+    │           ├── Agent Detail Sheet (요원 상세 스탯 및 하위 작업 정보)
+    │           └── Desk/Domain Sheet (부서 큐, 인박스/아웃박스 상세)
+    └── DashboardView (04번 Dashboard; AI 활용 Feedback 섹션 포함)
 ```
+
+### 4.1 통합 글로벌 내비게이션 바 (GlobalExecutiveBar)
+
+상단 글로벌 내비게이션 바는 화면마다 다시 만들지 않는 **단일 공통 컴포넌트**다. 타이쿤 뷰의 상단 바(GlobalExecutiveBar)를 표준으로 삼고, Tycoon Office·Dashboard와 Dashboard 내부의 AI 활용 Feedback 섹션은 모두 AppShell 최상단에 마운트된 같은 컴포넌트를 공유한다. 어떤 화면도 자체 상단 헤더/탭을 별도로 두지 않는다.
+
+- **위치**: `tycoon-reference-image.png`처럼 화면 최상단에 고정(fixed top)하고 좌우 폭을 채우되 중앙 정렬한 플로팅 바로 둔다. 3D 캔버스와 Dashboard 콘텐츠 위(z-40)에 떠 있으며, 탭 전환과 무관하게 항상 같은 자리에 유지된다.
+- **형태**: 모서리를 완전히 둥글린 캡슐형(`rounded-full`) 반투명 글래스 패널(Level 2~3, backdrop blur)로, 아래 3개 구역을 좌·중·우로 배치한다. 참고 이미지의 화면명·배속·Deploy Sprint 라벨은 위치와 형태 참고용 자리표시자이며 내용은 아래 규칙을 따른다.
+- **좌측(브랜드/컨텍스트)**: 제품 로고 + `CompanyOps` + 현재 Project 이름(규모/단계 배지 포함). 참고 이미지의 `Axiom Studio AI` / `DLC: Project Synthetica`를 대체한다.
+- **중앙(탭 내비게이션)**: `Tycoon Office`·`Dashboard` 두 탭. 참고 이미지의 Overview/Departments/Roadmap/Analytics 자리에 배치하고 현재 선택 탭을 강조한다. 세 번째 최상위 탭(별도 Feedback 탭 포함)은 만들지 않는다.
+- **우측(공용 액션·상태)**: 실제 연결 상태 표시(항상 보임, [Dashboard 28장](04-dashboard-requirements.md) 연결 규칙), 계획 검토 버튼(참고 이미지의 Deploy Sprint 자리, Dashboard의 계획 검토·최종 실행 승인 흐름으로 연결). 뷰 전용 액션(예: 타이쿤의 Reset View)은 해당 뷰가 활성일 때만 노출한다. 시뮬레이션 시간·배속·Pause 컨트롤은 제외한다.
+- **동작**: 선택 탭은 Local Storage의 UI 설정으로만 저장하고 서버 업무 상태를 덮어쓰지 않는다. 연결 상태·마지막 동기화 시각은 어떤 탭에서도 항상 보이게 한다. 두 화면이 같은 컴포넌트를 공유하므로 제품명·Project·연결 상태 표현이 화면 간에 어긋나지 않는다.
 
 ## 5. 디자인 토큰 및 색상 시스템
 
@@ -192,6 +205,7 @@ useEffect(() => {
 - Three.js 화면 위에 투명하고 세련된(Glassmorphism) HUD가 4개 영역(Top, Left, Right, Bottom)에 분산 고정된다.
 - 타이쿤 부서 컬러 코드(Indigo, Emerald, Amber, Rose)가 3D 씬과 React DOM 전체에 일관되게 적용된다.
 - 사용자가 3D 환경의 요원이나 모니터를 클릭하면, CustomEvent를 통해 React의 상태 시트(Modal/Sheet)가 올바르게 호출된다.
+- 통합 글로벌 내비게이션 바(GlobalExecutiveBar, 4.1)가 AppShell 최상단에 한 번만 마운트되어 Tycoon Office·Dashboard·Feedback 섹션에서 동일하게 표시되고, 탭 전환 시 제품명·Project·연결 상태 표현이 유지된다.
 
 ## 12. 공통 접근성과 상태 표현
 
