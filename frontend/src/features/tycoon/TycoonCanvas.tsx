@@ -18,16 +18,16 @@ const DOMAIN_LAYOUT: Record<string, [number, number]> = {
   BACKEND: [-22, -16],
   QA: [22, -16],
 };
-const PM_POS: [number, number] = [48, 0];
-const DEFAULT_TARGET: [number, number, number] = [12, 2, 0];
+const PM_POS: [number, number] = [66, 0];
+const DEFAULT_TARGET: [number, number, number] = [18, 3, 0];
 const MAX_SEATS = 4;
 
-// Up to 4 seats in a single row tucked at the desk (+z, facing the monitor).
+// Up to 4 seats spread across the desk length (+z, facing the monitor).
 function domainSeat([dx, dz]: [number, number], i: number): [number, number] {
-  return [dx + (i - (MAX_SEATS - 1) / 2) * 4.2, dz + 3.9];
+  return [dx + (i - (MAX_SEATS - 1) / 2) * 7.0, dz + 4.4];
 }
 function pmSeat([px, pz]: [number, number], i: number): [number, number] {
-  return [px + (i - 0.5) * 3.2, pz + 2.7];
+  return [px + (i - 0.5) * 5, pz + 3.2];
 }
 
 export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
@@ -36,13 +36,13 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
   const projectId = snapshot.project.id;
 
   const perRole = useMemo(() => {
-    const out: Record<string, { percent: number; steps: string; inbox: number; outbox: number }> = {};
+    const out: Record<string, { percent: number; total: number; inbox: number; outbox: number }> = {};
     for (const code of DESK_ROLES) {
       const tasks = snapshot.tasks.filter((t) => codeOf(t.roleId) === code && t.status !== "CANCELLED");
       const completed = tasks.filter((t) => t.status === "COMPLETED").length;
       out[code] = {
         percent: tasks.length ? Math.round((100 * completed) / tasks.length) : 0,
-        steps: `${completed}/${tasks.length}`,
+        total: tasks.length,
         inbox: tasks.filter((t) => t.status === "TODO" || t.status === "WAITING").length,
         outbox: completed,
       };
@@ -68,7 +68,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
       fp[code] = { pos: [pos[0], 3, pos[1]], zoomMult: 1.7 };
       seated.domain[code].forEach((a, i) => {
         const [sx, sz] = domainSeat(pos, i);
-        fp[a.id] = { pos: [sx, 4, sz], zoomMult: 3.0 };
+        fp[a.id] = { pos: [sx, 6, sz], zoomMult: 2.6 };
       });
     }
     fp.PM = { pos: [PM_POS[0], 3, PM_POS[1]], zoomMult: 1.7 };
@@ -87,7 +87,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
       camera={{ position: [100, 94, 92], zoom: 10, near: 0.1, far: 1000 }}
       style={{ width: "100%", height: "100%" }}
     >
-      <color attach="background" args={["#f8f9ff"]} />
+      <color attach="background" args={["#e9ebf2"]} />
       <Lighting />
       <CameraControls focusPoints={focusPoints} defaultTarget={DEFAULT_TARGET} />
       <FloorGrid />
@@ -105,7 +105,8 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
               position={pos}
               color={roleColor(code)}
               percent={r.percent}
-              steps={r.steps}
+              done={r.outbox}
+              total={r.total}
               inboxCount={r.inbox}
               outboxCount={r.outbox}
             />
@@ -129,7 +130,8 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
         projectId={projectId}
         position={PM_POS}
         percent={perRole.PM.percent}
-        steps={perRole.PM.steps}
+        done={perRole.PM.outbox}
+        total={perRole.PM.total}
         inboxCount={perRole.PM.inbox}
         outboxCount={perRole.PM.outbox}
       />

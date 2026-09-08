@@ -17,7 +17,7 @@ function PaperStack({ count, y }: { count: number; y: number }) {
       {Array.from({ length: Math.min(8, Math.max(0, count)) }).map((_, i) => (
         <mesh key={i} position={[0, y + i * 0.085, 0]} rotation={[0, ((i % 3) - 1) * 0.08, 0]} castShadow>
           <boxGeometry args={[1.9, 0.07, 2.1]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.85} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} roughness={1} />
         </mesh>
       ))}
     </>
@@ -28,14 +28,16 @@ export function PMSuite({
   projectId,
   position,
   percent,
-  steps,
+  done,
+  total,
   inboxCount,
   outboxCount,
 }: {
   projectId: string;
   position: [number, number]; // [x, z]
   percent: number;
-  steps: string;
+  done: number;
+  total: number;
   inboxCount: number;
   outboxCount: number;
 }) {
@@ -132,8 +134,8 @@ export function PMSuite({
       {/* Big monitor (on the exec desktop) */}
       <group position={[0.8, 3.46, -2.8]}>
         <Monitor
-          title="PM Strategy Hub"
-          steps={steps}
+          done={done}
+          total={total}
           percent={percent}
           color="#e11d48"
           width={10}

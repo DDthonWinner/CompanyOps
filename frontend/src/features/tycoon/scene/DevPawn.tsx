@@ -13,7 +13,7 @@ const ORB_COLOR: Record<string, string> = {
   ASSIGNED: "#4f46e5",
 };
 
-const MASCOT_SCALE = 1.9;
+const MASCOT_SCALE = 3.0;
 const FACE_CAMERA = Math.PI / 4; // idle / planning → face the viewer
 const FACE_MONITOR = Math.PI; // working → turn to the desk monitor (−z)
 
@@ -147,7 +147,7 @@ export function DevPawn({
         armR.current.rotation.set(0, 0, 0);
       }
     }
-    if (bubble.current) bubble.current.position.y = 7.4 + Math.sin(t * 1.6 + phase) * 0.16;
+    if (bubble.current) bubble.current.position.y = 12.0 + Math.sin(t * 1.6 + phase) * 0.18;
     if (root.current) {
       const target = isSelected ? 1.08 : 1;
       root.current.scale.x += (target - root.current.scale.x) * 0.2;
@@ -172,7 +172,7 @@ export function DevPawn({
       {/* Selection highlight ring */}
       {isSelected && (
         <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[1.7, 2.15, 44]} />
+          <ringGeometry args={[3.2, 4.0, 48]} />
           <meshBasicMaterial color={color} transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} />
         </mesh>
       )}
@@ -184,8 +184,8 @@ export function DevPawn({
         </group>
 
         {/* Floating status orb */}
-        <mesh position={[0, 5.8, 0]}>
-          <sphereGeometry args={[0.22, 14, 14]} />
+        <mesh position={[0, 10.4, 0]}>
+          <sphereGeometry args={[0.4, 16, 16]} />
           <meshStandardMaterial
             color={orbColor}
             emissive={orbColor}
@@ -194,19 +194,19 @@ export function DevPawn({
           />
         </mesh>
 
-        {/* Name tag (large, faces the iso camera) */}
+        {/* Name tag (large, sits under the agent, faces the iso camera) */}
         {tag && (
-          <mesh position={[0, 6.5, 0]} rotation={[0, FACE_CAMERA, 0]}>
-            <planeGeometry args={[5.6, 1.4]} />
+          <mesh position={[0.9, 1.45, 0.9]} rotation={[0, FACE_CAMERA, 0]}>
+            <planeGeometry args={[7, 1.75]} />
             <meshBasicMaterial map={tag} transparent side={THREE.DoubleSide} toneMapped={false} />
           </mesh>
         )}
 
         {/* Thought / status bubble (planning only) */}
         {bubbleTex && (
-          <group ref={bubble} position={[0, 7.4, 0]}>
+          <group ref={bubble} position={[0, 12.0, 0]}>
             <mesh rotation={[0, FACE_CAMERA, 0]}>
-              <planeGeometry args={[2.7, 2.0]} />
+              <planeGeometry args={[4, 3]} />
               <meshBasicMaterial map={bubbleTex} transparent side={THREE.DoubleSide} toneMapped={false} />
             </mesh>
           </group>

@@ -3,9 +3,9 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 
-const CENTER_X = 12;
-const W = 108; // x span
-const D = 60; // z span
+const CENTER_X = 18;
+const W = 132; // x span
+const D = 62; // z span
 const CELL = 6;
 
 export function FloorGrid() {
@@ -16,7 +16,7 @@ export function FloorGrid() {
     const ctx = c.getContext("2d");
     if (ctx) {
       ctx.clearRect(0, 0, 64, 64);
-      ctx.strokeStyle = "rgba(165,178,214,0.18)";
+      ctx.strokeStyle = "rgba(150,120,60,0.14)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, 0);
@@ -34,15 +34,15 @@ export function FloorGrid() {
 
   return (
     <group position={[CENTER_X, 0, 0]}>
-      {/* Recessed base lip — reads as depth under the stage */}
+      {/* Recessed base lip — a warmer, slightly deeper wood tone */}
       <mesh position={[0, -1.1, 0]} receiveShadow>
         <boxGeometry args={[W + 7, 1.4, D + 7]} />
-        <meshStandardMaterial color="#eef1fb" roughness={1} />
+        <meshStandardMaterial color="#efe4bf" roughness={1} />
       </mesh>
-      {/* Main stage — near-white, clean/futuristic */}
+      {/* Main stage — warm, light wood-ish floor */}
       <mesh position={[0, -0.3, 0]} receiveShadow>
         <boxGeometry args={[W, 1.2, D]} />
-        <meshStandardMaterial color="#fdfdff" roughness={0.9} metalness={0} />
+        <meshStandardMaterial color="#fbf3d7" roughness={0.95} metalness={0} />
       </mesh>
       {/* Faint grid overlay */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.31, 0]}>

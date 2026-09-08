@@ -35,7 +35,7 @@ export function AgentList() {
   return (
     <GlassPanel
       level={2}
-      className="pointer-events-auto absolute left-6 top-[17rem] max-h-[calc(100vh-21rem)] w-64 overflow-auto p-3"
+      className="pointer-events-auto w-full min-h-0 flex-1 overflow-auto p-3"
       data-testid="agent-list"
     >
       <div className="display mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-on-background/60">

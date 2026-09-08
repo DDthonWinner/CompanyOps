@@ -29,8 +29,11 @@ export function TycoonView() {
   return (
     <div className="relative h-full w-full">
       <TycoonCanvas snapshot={snapshot} />
-      <SideHUD />
-      <AgentList />
+      {/* Left column: project summary + agent roster, hugging the top-left corner */}
+      <div className="pointer-events-none absolute bottom-4 left-4 top-4 flex w-64 flex-col gap-3">
+        <SideHUD />
+        <AgentList />
+      </div>
       <VelocityPod />
       <ViewControls />
       <CommandDock />

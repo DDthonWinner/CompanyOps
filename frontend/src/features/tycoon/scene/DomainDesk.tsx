@@ -4,7 +4,7 @@ import { INBOX_COLOR, OUTBOX_COLOR, ROLE_LABEL } from "../../../lib/roles";
 import { dispatchSelection } from "../selectionEvent";
 import { Monitor } from "./Monitor";
 
-const DESK_LENGTH = 18;
+const DESK_LENGTH = 28;
 const DESK_WIDTH = 5.2;
 const DESK_HEIGHT = 3.2;
 
@@ -51,7 +51,7 @@ function PaperStack({ count, y }: { count: number; y: number }) {
       {Array.from({ length: n }).map((_, i) => (
         <mesh key={i} position={[0, y + i * 0.085, 0]} rotation={[0, ((i % 3) - 1) * 0.08, 0]} castShadow>
           <boxGeometry args={[2.2, 0.07, 2.9]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.85} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} roughness={1} />
         </mesh>
       ))}
     </>
@@ -64,7 +64,8 @@ export function DomainDesk({
   position,
   color,
   percent,
-  steps,
+  done,
+  total,
   inboxCount,
   outboxCount,
 }: {
@@ -73,7 +74,8 @@ export function DomainDesk({
   position: [number, number]; // [x, z]
   color: string;
   percent: number;
-  steps: string;
+  done: number;
+  total: number;
   inboxCount: number;
   outboxCount: number;
 }) {
@@ -135,8 +137,8 @@ export function DomainDesk({
       {/* Big monitor */}
       <group position={[0, DESK_HEIGHT + 0.25, -DESK_WIDTH / 2 + 1.2]}>
         <Monitor
-          title={ROLE_LABEL[roleCode] ?? roleCode}
-          steps={steps}
+          done={done}
+          total={total}
           percent={percent}
           color={color}
           onSelect={() => selectDesk("desk")}
@@ -187,8 +189,8 @@ export function DomainDesk({
 
       {/* Floating domain badge (above the taller monitor) */}
       {badge && (
-        <mesh position={[0, DESK_HEIGHT + 10.4, -DESK_WIDTH / 2 + 1.2]} rotation={[0, Math.PI / 4, 0]}>
-          <planeGeometry args={[7.6, 1.5]} />
+        <mesh position={[0, DESK_HEIGHT + 13.5, -DESK_WIDTH / 2 + 1.2]} rotation={[0, Math.PI / 4, 0]}>
+          <planeGeometry args={[13.5, 2.7]} />
           <meshBasicMaterial map={badge} transparent side={THREE.DoubleSide} toneMapped={false} />
         </mesh>
       )}

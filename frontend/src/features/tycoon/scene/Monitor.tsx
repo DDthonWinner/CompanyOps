@@ -1,6 +1,6 @@
 // Big desk monitor: metal stand + dark frame + high-res CanvasTexture screen.
-// Screen art ported from the reference (dark UI, tag pill, big title, progress
-// bar, submetrics); redraws only when the underlying data changes (FR-TY-9).
+// Screen shows only the essentials at a large, readable size: a progress bar,
+// the done/remaining task count, and the completion percentage.
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 
@@ -11,69 +11,50 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
     ctx.fill();
     return;
   }
-  ctx.fillRect(x, y, w, h); // fallback for engines without roundRect
+  ctx.fillRect(x, y, w, h);
 }
 
-function draw(canvas: HTMLCanvasElement, title: string, steps: string, percent: number, color: string) {
+function draw(canvas: HTMLCanvasElement, done: number, total: number, percent: number, color: string) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const W = canvas.width;
   ctx.clearRect(0, 0, W, canvas.height);
-
-  // Screen background + header bar
-  ctx.fillStyle = "#090d16";
+  ctx.fillStyle = "#0b1220";
   ctx.fillRect(0, 0, W, canvas.height);
-  ctx.fillStyle = "#1e293b";
-  ctx.fillRect(0, 0, W, 88);
 
-  // "SPRINT ACTIVE" tag pill
+  const left = Math.max(0, total - done);
+
+  // Big completion percentage
   ctx.fillStyle = color;
-  roundRect(ctx, 32, 22, 230, 44, 12);
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 24px sans-serif";
-  ctx.fillText("SPRINT ACTIVE", 48, 53);
+  ctx.font = "bold 168px sans-serif";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(`${percent}%`, 56, 210);
 
-  // Health badge
-  ctx.fillStyle = "#38bdf8";
-  ctx.font = "bold 24px monospace";
-  ctx.fillText("● SYSTEM 100% HEALTHY", 620, 54);
-
-  // Big title
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 54px sans-serif";
-  ctx.fillText(title, 40, 190);
-
-  // Milestone steps + percent
-  ctx.fillStyle = "#cbd5e1";
-  ctx.font = "bold 36px monospace";
-  ctx.fillText(`TASKS: ${steps}`, 40, 260);
-  ctx.fillStyle = color;
-  ctx.font = "bold 44px monospace";
-  ctx.fillText(`${percent}% COMPLETED`, 620, 260);
+  // Done / remaining count
+  ctx.fillStyle = "#e2e8f0";
+  ctx.font = "bold 66px monospace";
+  ctx.fillText(`${done} DONE`, 56, 320);
+  ctx.fillStyle = "#94a3b8";
+  ctx.fillText(`· ${left} LEFT`, 380, 320);
 
   // Progress bar track + fill
   ctx.fillStyle = "#1e293b";
-  roundRect(ctx, 40, 310, 944, 44, 22);
+  roundRect(ctx, 56, 384, 912, 82, 41);
   ctx.fillStyle = color;
-  roundRect(ctx, 40, 310, Math.max(30, (944 * percent) / 100), 44, 22);
-
-  // Submetrics footer
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "28px sans-serif";
-  ctx.fillText("⚡ Autonomous Agents In Sync   |   Pipeline: Optimal", 40, 430);
+  roundRect(ctx, 56, 384, Math.max(82, (912 * percent) / 100), 82, 41);
 }
 
 export function Monitor({
-  title,
-  steps,
+  done,
+  total,
   percent,
   color,
   width = 18,
   height = 7.2,
   onSelect,
 }: {
-  title: string;
-  steps: string;
+  done: number;
+  total: number;
   percent: number;
   color: string;
   width?: number;
@@ -89,9 +70,9 @@ export function Monitor({
   const texture = useMemo(() => new THREE.CanvasTexture(canvas), [canvas]);
 
   useEffect(() => {
-    draw(canvas, title, steps, percent, color);
+    draw(canvas, done, total, percent, color);
     texture.needsUpdate = true;
-  }, [canvas, texture, title, steps, percent, color]);
+  }, [canvas, texture, done, total, percent, color]);
 
   useEffect(() => () => texture.dispose(), [texture]);
 

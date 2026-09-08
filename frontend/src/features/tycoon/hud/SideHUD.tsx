@@ -8,7 +8,7 @@ export function SideHUD() {
   return (
     <GlassPanel
       level={2}
-      className="pointer-events-auto absolute left-6 top-24 w-64 p-4"
+      className="pointer-events-auto w-full shrink-0 p-4"
       data-testid="side-hud"
     >
       <div className="display text-sm font-semibold">{p.name}</div>
