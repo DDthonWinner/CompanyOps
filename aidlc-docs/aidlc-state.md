@@ -18,6 +18,29 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: See code-generation.md Critical Rules
 
+## Extension Configuration
+_Decided at Requirements Analysis (2026-09-08) via requirement-verification-questions.md Q9–Q11._
+
+| Extension | Enabled | Answer | Full rules loaded |
+|---|---|---|---|
+| Security | No | Q9 = B (skip) | No |
+| Resiliency (baseline) | Yes | Q10 = A (directional best practices) | Yes — resiliency-baseline.md |
+| Property-Based Testing | No | Q11 = C (skip) | No |
+
+**Resiliency note**: Applied as directional design-time guidance. RESILIENCY-02 (RTO/RPO + DR strategy) is a mandatory user decision required before finalizing requirements — pending in `resiliency-clarification-questions.md`. RESILIENCY-03/04/08/14/15 deferred to NFR Design per the baseline rules.
+
+## Build-time Decisions (Requirements Analysis)
+| # | Decision | Answer |
+|---|---|---|
+| Q1 | LLM connection mode | Both behind a flag, **default = demo/fixture** |
+| Q2 | Real-LLM provider | OpenAI GPT |
+| Q3 | GitHub publish | Real remote push to `DDthonWinner/TestOutput` |
+| Q4 | Scope | P1 connected flow first, then fold in P2 |
+| Q5 | Layout | Monorepo `backend/` + `frontend/` |
+| Q6 | Frontend tooling | Vite + npm |
+| Q7 | Backend tooling | Python 3.11+ venv + requirements.txt + SQLAlchemy |
+| Q8 | Real-time transport | SSE exactly per contract |
+
 ## Stage Progress
 
 ### 🔵 INCEPTION PHASE
@@ -43,5 +66,5 @@
 ## Current Status
 - **Lifecycle Phase**: INCEPTION
 - **Current Stage**: Requirements Analysis
-- **Next Stage**: Awaiting answers to requirement-verification-questions.md
-- **Status**: Gate open — waiting for user answers
+- **Next Stage**: Finalize requirements.md → Workflow Planning (after RESILIENCY-02 answer)
+- **Status**: Build-time answers received (Q1–Q11). One blocking resiliency finding (RESILIENCY-02) pending in resiliency-clarification-questions.md before requirements.md can be finalized.
