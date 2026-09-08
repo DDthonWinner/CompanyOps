@@ -116,5 +116,15 @@
 **Artifacts generated**: unit-of-work.md (definitions, owned entities, code-org strategy), unit-of-work-dependency.md (matrix + build order U1→U2→U4→U5 then U3+P2), unit-of-work-story-map.md (all 29 stories mapped; primary+supporting units).
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine unit-of-work*.md. WHAT'S NEXT: Request Changes / Approve & Continue to CONSTRUCTION PHASE."
 **Gate**: Awaiting explicit approval before CONSTRUCTION.
+**Approval response**: User approved — "Approved. Enter Construction Phase". Units Generation complete. Entering CONSTRUCTION.
+
+---
+
+## CONSTRUCTION - Entry + U1 Functional Design (Planning)
+**Timestamp**: 2026-09-08
+**Construction sequence set**: U1 FD → System NFR Requirements → System NFR Design → U1 CodeGen/Build&Test → U2 → U4 → U5 → U3 (each FD→CodeGen→Build&Test). NFR at system level per Q5.
+**U1 FD plan**: Wrote backend-pm-functional-design-plan.md with 6 decisions Q1–Q6 pre-filled with recommended defaults: adopt 01+06 as entities/rules source; deterministic fixture provider; QA real-cmd-if-present else labeled demo-PASS tied to contentHash; approved-plan→milestone-grouped tasks then ACTIVE; seed roles/models/templates/profiles; adopt 06 §4.3 + 01 §10 error model. Artifacts: domain-entities.md, business-logic-model.md, business-rules.md (no frontend for U1).
+**Approval prompt (logged before asking)**: "Approve the U1 functional-design plan (defaults Q1–Q6) to generate artifacts, or edit any [Answer]. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U1 FD plan confirmation before artifact generation.
 
 ---

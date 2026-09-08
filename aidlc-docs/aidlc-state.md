@@ -53,21 +53,22 @@ _Decided at Requirements Analysis (2026-09-08) via requirement-verification-ques
 - [x] Units Generation - artifacts generated (awaiting approval)
 
 ### 🟢 CONSTRUCTION PHASE
-- [ ] Functional Design - EXECUTE
-- [ ] NFR Requirements - EXECUTE
-- [ ] NFR Design - EXECUTE (resolves deferred RESILIENCY-03/04/08/14/15)
+_Sequence: U1 Functional Design → System NFR Requirements → System NFR Design → U1 Code Gen/Build&Test → U2 → U4 → U5 → U3 (each FD→CodeGen→Build&Test)._
+- [ ] Functional Design (per unit) - EXECUTE — U1 IN PROGRESS
+- [ ] NFR Requirements (system-level, once) - EXECUTE
+- [ ] NFR Design (system-level, once) - EXECUTE (resolves deferred RESILIENCY-03/04/08/14/15)
 - [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
-- [ ] Code Generation - EXECUTE
-- [ ] Build and Test - EXECUTE
+- [ ] Code Generation (per unit) - EXECUTE
+- [ ] Build and Test (per unit) - EXECUTE
 
 ### 🟡 OPERATIONS PHASE
 - [ ] Operations - PLACEHOLDER
 
 ## Current Status
-- **Lifecycle Phase**: INCEPTION
-- **Current Stage**: Units Generation — artifacts generated, awaiting approval
-- **Next Stage**: CONSTRUCTION phase (Functional Design / system-level NFR, then per-unit) after approval
-- **Status**: 5 units defined (U1 backend-pm [+orchestration+platform+provider], U2 backend-git, U3 backend-uf, U4 frontend-tycoon [+shared foundation, Q7=B], U5 frontend-dashboard). unit-of-work.md / -dependency.md / -story-map.md generated; all 29 stories mapped. REVIEW gate open.
+- **Lifecycle Phase**: CONSTRUCTION
+- **Current Stage**: Functional Design — U1 backend-pm (Planning)
+- **Next Stage**: System NFR Requirements → NFR Design → U1 Code Gen/Build&Test
+- **Status**: Units Generation approved (5 units). Entered CONSTRUCTION. Creating U1 backend-pm functional-design plan.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider
