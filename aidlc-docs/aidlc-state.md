@@ -58,17 +58,17 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 - [x] NFR Requirements (system-level, once) - DONE
 - [x] NFR Design (system-level, once) - DONE (resolved deferred RESILIENCY-03/04/08/14/15)
 - [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
-- [~] Code Generation (per unit) - U1 DONE; U2/U4/U5/U3 pending
-- [~] Build and Test (per unit) - U1 PASS (14/14); U2/U4/U5/U3 pending
+- [~] Code Generation (per unit) - U1, U2 DONE; U4/U5/U3 pending
+- [~] Build and Test (per unit) - U1+U2 PASS (21/21); U4/U5/U3 pending
 
 ### 🟡 OPERATIONS PHASE
 - [ ] Operations - PLACEHOLDER
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Code Generation — U2 backend-git (code generated + tests green, awaiting approval)
-- **Next Stage**: U2 Build & Test (formalize), then U4 frontend-tycoon
-- **Status**: git_interface package + GIT_MODE wiring generated. Full suite 21/21 pass (14 U1 + 7 U2), incl. real-git connected flow to offline file:// remote. REVIEW gate open.
+- **Current Stage**: Functional Design — U4 frontend-tycoon (artifacts generated, awaiting approval)
+- **Next Stage**: U4 Code Generation → Build & Test
+- **Status**: U4 FD artifacts generated (frontend-components, business-logic-model, business-rules, domain-entities). Shared foundation + Tycoon view specified. REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

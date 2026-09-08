@@ -1,7 +1,19 @@
-# Build and Test Summary — U1 backend-pm
+# Build and Test Summary — Backend (U1 + U2)
 
 > Stage: CONSTRUCTION / Build and Test · Date: 2026-09-08
-> Per-unit build (Q5). This covers **U1 backend-pm**; U2/U4/U5/U3 follow.
+> Per-unit build (Q5). Covers **U1 backend-pm** and **U2 backend-git**; U4/U5/U3 follow.
+
+## U2 backend-git — Build & Test (2026-09-08)
+- **Build**: Success (no new deps; uses system `git` 2.53).
+- **Unit tests**: 7 new (`tests/git_interface/`) — clone/branch init, apply+commit+**push** (GIT-AC-001), new-file changeset (GIT-AC-004), idempotent re-push/no-dup (GIT-AC-002), path-safety rejection (GIT-AC-005), NO_CHANGES, and a **connected orchestrator flow with the real GitInterface** (ORCH-4/5 — real commit, not stub).
+- **Method**: offline `file://` bare repo → real subprocess git, no network/credentials.
+- **Full suite**: **21 passed / 0 failed** (14 U1 + 7 U2). Exit 0.
+- **GIT-AC coverage**: 001 ✓ · 002 ✓ · 004 ✓ · 005 ✓ (003 QA-then-change re-gate is enforced by U1 PublishCoordinator + BG-7/BG-9).
+- **Real-mode note**: identical code path pushes to `DDthonWinner/TestOutput` when `GIT_MODE=real` with env credentials.
+
+---
+
+
 
 ## Build Status
 - **Build tool**: Python 3.14 venv + pip

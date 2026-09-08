@@ -247,5 +247,35 @@
 **Validation**: full pytest **21/21 pass** (14 U1 + 7 U2). Offline real git via file:// bare repo covers GIT-AC-001/002/004/005 + real-git connected flow (ORCH-4/5, real commit not stub). Plan steps 1–9 [x].
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine backend/app/git_interface/ + code-summary. WHAT'S NEXT: Request Changes / Continue to U2 Build & Test."
 **Gate**: Awaiting approval before U2 Build & Test.
+**Approval response**: User approved — "Approved". Proceeding to U2 Build & Test.
+
+---
+
+## CONSTRUCTION - U2 backend-git Build & Test
+**Timestamp**: 2026-09-08
+**Build Status**: Success (system git 2.53; no new deps). **Test Status**: Pass — full suite 21/21 (14 U1 + 7 U2), exit 0.
+**Coverage**: GIT-AC-001/002/004/005 + real-git connected flow (ORCH-4/5) via offline file:// bare repo.
+**Files updated**: build-and-test-summary.md (added U2 section).
+**Ready for Operations**: No — U4 frontend-tycoon, U5 frontend-dashboard, U3 backend-uf remain.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — build-and-test-summary.md (U2 added). WHAT'S NEXT: Request Changes / Approve & Continue to U4 frontend-tycoon."
+**Gate**: Awaiting approval before U4.
+**Approval response**: User approved — "Approved". Backend (U1+U2) complete. Proceeding to U4 frontend-tycoon (Functional Design).
+
+---
+
+## CONSTRUCTION - U4 frontend-tycoon Functional Design (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote frontend-tycoon-functional-design-plan.md with Q1–Q6 pre-filled: shared foundation (AppShell/GlobalExecutiveBar/SnapshotStore/ApiClient/SseClient); R3F scene (Ortho iso, desks/pawns/trays/CanvasTexture monitors, raycaster→CustomEvent); HUD regions (SideHUD/VelocityPod/CommandDock/AgentSheet/DeskSheet); data flow SSE→snapshot→store→render, selection-only CustomEvent; Tailwind+Design tokens+a11y+WebGL fallback; read-only project picker (creation is U5), VITE_API_BASE. Artifacts: frontend-components.md, business-logic-model.md, business-rules.md, domain-entities.md.
+**Approval prompt (logged before asking)**: "Approve U4 FD plan (defaults) to generate artifacts. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U4 FD plan approval.
+**Approval response**: User approved — "Approved". Generating U4 functional-design artifacts.
+
+---
+
+## CONSTRUCTION - U4 frontend-tycoon Functional Design (Artifacts Generated)
+**Timestamp**: 2026-09-08
+**Artifacts**: frontend-components.md (AppShell/GlobalExecutiveBar/SnapshotStore/ApiClient/SseClient + TycoonCanvas/DomainDesk/DevPawn/HUD tree, props/state, API integration, data-testid), domain-entities.md (TS snapshot/selection/store types + role colors), business-logic-model.md (startup/select, realtime sync, render, selection, camera, empty/failure), business-rules.md (FR-TY-1..18: read-only snapshot, revision guard, a11y text+icon, WORKING-only-when-RUNNING, throttle, modal a11y, single shared GEBar, WebGL fallback, VITE_API_BASE).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — construction/frontend-tycoon/functional-design/. WHAT'S NEXT: Request Changes / Continue to U4 Code Generation."
+**Gate**: Awaiting approval before U4 Code Generation.
 
 ---
