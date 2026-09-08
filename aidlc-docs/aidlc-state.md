@@ -45,26 +45,30 @@ _Decided at Requirements Analysis (2026-09-08) via requirement-verification-ques
 
 ### 🔵 INCEPTION PHASE
 - [x] Workspace Detection
-- [ ] Reverse Engineering (SKIPPED — greenfield, no existing code)
+- [x] Reverse Engineering (SKIPPED — greenfield, no existing code)
 - [x] Requirements Analysis (approved via option B → User Stories)
-- [ ] User Stories (IN PROGRESS — Planning)
-- [ ] Workflow Planning
-- [ ] Application Design
-- [ ] Units Generation
+- [x] User Stories (approved — 24 stories / 7 epics)
+- [x] Workflow Planning (execution-plan.md created; awaiting approval)
+- [ ] Application Design - EXECUTE
+- [ ] Units Generation - EXECUTE
 
 ### 🟢 CONSTRUCTION PHASE
-- [ ] Functional Design
-- [ ] NFR Requirements
-- [ ] NFR Design
-- [ ] Infrastructure Design
-- [ ] Code Generation
-- [ ] Build and Test
+- [ ] Functional Design - EXECUTE
+- [ ] NFR Requirements - EXECUTE
+- [ ] NFR Design - EXECUTE (resolves deferred RESILIENCY-03/04/08/14/15)
+- [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
+- [ ] Code Generation - EXECUTE
+- [ ] Build and Test - EXECUTE
 
 ### 🟡 OPERATIONS PHASE
 - [ ] Operations - PLACEHOLDER
 
 ## Current Status
 - **Lifecycle Phase**: INCEPTION
-- **Current Stage**: User Stories — Generation complete, awaiting story approval
-- **Next Stage**: Workflow Planning (after approval)
-- **Status**: personas.md + stories.md generated (24 stories / 7 epics; 15 P1, 9 P2). REVIEW gate open — awaiting explicit approval before Workflow Planning.
+- **Current Stage**: Workflow Planning — complete, awaiting plan approval
+- **Next Stage**: Application Design (after approval)
+- **Status**: execution-plan.md created. Execute: Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Code Generation, Build and Test. Skip: Infrastructure Design. REVIEW gate open.
+
+## Execution Plan Summary
+- **Stages to Execute**: Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Code Generation, Build and Test
+- **Stages to Skip**: Reverse Engineering (greenfield), Infrastructure Design (single-node local PoC, no IaC)
