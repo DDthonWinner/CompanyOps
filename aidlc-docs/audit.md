@@ -126,5 +126,15 @@
 **U1 FD plan**: Wrote backend-pm-functional-design-plan.md with 6 decisions Q1–Q6 pre-filled with recommended defaults: adopt 01+06 as entities/rules source; deterministic fixture provider; QA real-cmd-if-present else labeled demo-PASS tied to contentHash; approved-plan→milestone-grouped tasks then ACTIVE; seed roles/models/templates/profiles; adopt 06 §4.3 + 01 §10 error model. Artifacts: domain-entities.md, business-logic-model.md, business-rules.md (no frontend for U1).
 **Approval prompt (logged before asking)**: "Approve the U1 functional-design plan (defaults Q1–Q6) to generate artifacts, or edit any [Answer]. Options: Request Changes / Approve & Generate."
 **Gate**: Awaiting U1 FD plan confirmation before artifact generation.
+**Approval response**: User approved — "Approved." Generating U1 functional-design artifacts with defaults Q1–Q6.
+
+---
+
+## CONSTRUCTION - U1 Functional Design (Artifacts Generated)
+**Timestamp**: 2026-09-08
+**Artifacts**: construction/backend-pm/functional-design/domain-entities.md (PM+orchestration+platform entities, ERD, conventions), business-logic-model.md (12 workflows: recommendation, assignment, progress, plan lifecycle, composition, scheduler/worker + fixture provider, QA gate, publish coordination, milestone result/completion, decisions, snapshot/revision/SSE, idempotency), business-rules.md (BR-P/A/M/X/Q/G/U/S/E/V rule sets + error status map, adopted from 00/01/06).
+**Validation**: consistent with 00 §5/§7, 01, 06.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine construction/backend-pm/functional-design/. WHAT'S NEXT: Request Changes / Approve & Continue to System NFR Requirements."
+**Gate**: Awaiting approval before System NFR Requirements.
 
 ---

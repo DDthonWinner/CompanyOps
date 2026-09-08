@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Functional Design — U1 backend-pm (Planning)
+- **Current Stage**: Functional Design — U1 backend-pm (artifacts generated, awaiting approval)
 - **Next Stage**: System NFR Requirements → NFR Design → U1 Code Gen/Build&Test
-- **Status**: Units Generation approved (5 units). Entered CONSTRUCTION. Creating U1 backend-pm functional-design plan.
+- **Status**: U1 functional-design artifacts generated (domain-entities.md, business-logic-model.md, business-rules.md). REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

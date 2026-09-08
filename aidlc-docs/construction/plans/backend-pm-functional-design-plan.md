@@ -35,11 +35,11 @@ Recommended defaults pre-filled — change any `[Answer]:` if you disagree; othe
 [Answer]: Adopt 06 §4.3 + 01 §10 error model (recommended)
 
 ## Mandatory Functional Design Artifacts (generation checklist)
-- [ ] `construction/backend-pm/functional-design/domain-entities.md` — entities, fields, relationships (01 ERD + 06 supplemental)
-- [ ] `construction/backend-pm/functional-design/business-logic-model.md` — algorithms/workflows: recommendation, plan lifecycle, scheduler, worker, QA gate, publish coordination, milestone result, completion, progress aggregation, revision/snapshot/receipts
-- [ ] `construction/backend-pm/functional-design/business-rules.md` — rules, validations, invariants, error model
-- [ ] (No `frontend-components.md` — U1 is backend-only)
-- [ ] Validate against 00/01/06 contract
+- [x] `construction/backend-pm/functional-design/domain-entities.md` — entities, fields, relationships (01 ERD + 06 supplemental)
+- [x] `construction/backend-pm/functional-design/business-logic-model.md` — algorithms/workflows: recommendation, plan lifecycle, scheduler, worker, QA gate, publish coordination, milestone result, completion, progress aggregation, revision/snapshot/receipts
+- [x] `construction/backend-pm/functional-design/business-rules.md` — rules, validations, invariants, error model
+- [x] (No `frontend-components.md` — U1 is backend-only)
+- [x] Validate against 00/01/06 contract
 
 ## Approval
 Approve this plan (defaults above) to generate the U1 functional-design artifacts, or edit any `[Answer]:` and tell me.
