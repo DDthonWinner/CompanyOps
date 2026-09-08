@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Build & Test — U1 backend-pm (PASS, awaiting approval)
-- **Next Stage**: U2 backend-git (Functional Design → Code Gen → Build & Test)
-- **Status**: venv on Python 3.14; deps installed (exit 0); **pytest 14/14 pass**; API smoke test green (connected flow works, stale-version 409, task COMPLETED, git PUSHED stub). Build & Test artifacts written. REVIEW gate open. Not ready for Operations — U2/U4/U5/U3 remain.
+- **Current Stage**: Functional Design — U2 backend-git (Planning; plan awaiting approval)
+- **Next Stage**: U2 Code Generation → Build & Test
+- **Status**: U1 complete (14/14 tests pass). U2 functional-design plan created (Q1–Q5 pre-filled; adopts 03 + conforms to U1 GitPort; GIT_MODE stub|real). Awaiting plan approval.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

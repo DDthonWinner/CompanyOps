@@ -209,5 +209,14 @@
 **Ready for Operations**: No — U2/U4/U5/U3 remain. Next: U2 backend-git.
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine build-and-test-summary.md. WHAT'S NEXT: Request Changes / Approve & Continue to U2 backend-git."
 **Gate**: Awaiting approval before U2.
+**Approval response**: User approved — "approved". U1 Build & Test complete (14/14). Proceeding to U2 backend-git (Functional Design).
+
+---
+
+## CONSTRUCTION - U2 backend-git Functional Design (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote backend-git-functional-design-plan.md with Q1–Q5 pre-filled: implement 03 §5.2 methods + conform to U1 GitPort; subprocess git (arg arrays, per-project checkout, real push); server-validated idempotent publish with SYNC_REQUIRED/no-force-push; path-safety + ChangeSet-scoped staging; GIT_MODE=stub|real (default stub) injecting real GitInterface at startup. Artifacts: business-logic-model.md, business-rules.md, domain-entities.md (backend-only).
+**Approval prompt (logged before asking)**: "Approve U2 functional-design plan (defaults) to generate artifacts. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U2 FD plan approval.
 
 ---
