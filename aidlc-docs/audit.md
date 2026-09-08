@@ -83,5 +83,15 @@
 **Plan**: Wrote application-design-plan.md with methodology, mandatory-artifact checklist (components/component-methods/services/component-dependency/application-design), and 8 architectural decisions D1–D8 pre-filled with recommended defaults: layered backend; in-process async worker + persisted queue (sequential per-project writes); ExecutionProvider (Fixture default/OpenAI) behind env flag; per-project revision + activity log + snapshot-invalidation SSE; single snapshot-driven Zustand store + UI slice; command_receipts + 409 envelope; git_interface module + per-project write-lock; monorepo package layout.
 **Approval prompt (logged before asking)**: "Approve the application-design plan (recommended defaults D1–D8) to generate design artifacts, or edit any [Answer]. Options: Request Changes / Approve & Generate."
 **Gate**: Awaiting plan confirmation before artifact generation.
+**Approval response**: User approved — "Approved." Generating application-design artifacts with defaults D1–D8.
+
+---
+
+## Application Design - Artifacts Generated
+**Timestamp**: 2026-09-08
+**Artifacts**: components.md (BC-1..7 backend, FC-1..8 frontend), component-methods.md (signatures + I/O for all services and frontend clients/store), services.md (service inventory + orchestration patterns OP-1..8), component-dependency.md (dependency matrix, communication patterns, data-flow DF-1..3, invariants), application-design.md (consolidation + §7 contract-consistency validation).
+**Validation**: Cross-checked against 06 contract — state axes separate, Task COMPLETED preconditions, progress math, milestone result versioning, project completion + UF trigger, SSE snapshot-invalidation, idempotency/409, git rules, 3D selection. No inconsistencies found.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine aidlc-docs/inception/application-design/. WHAT'S NEXT: Request Changes / Approve & Continue to Units Generation."
+**Gate**: Awaiting explicit approval before Units Generation.
 
 ---

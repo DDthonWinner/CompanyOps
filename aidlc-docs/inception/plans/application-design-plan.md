@@ -61,12 +61,12 @@ frontend/src/
 [Answer]: Module layout as above (recommended)
 
 ## Mandatory Design Artifacts (generation checklist)
-- [ ] `application-design/components.md` — components, purpose, responsibilities, interfaces
-- [ ] `application-design/component-methods.md` — method signatures + I/O types (rules deferred to Functional Design)
-- [ ] `application-design/services.md` — service definitions, responsibilities, orchestration
-- [ ] `application-design/component-dependency.md` — dependency matrix, communication patterns, data-flow diagrams
-- [ ] `application-design/application-design.md` — consolidation of the above
-- [ ] Validate design completeness and consistency against the `06` contract
+- [x] `application-design/components.md` — components, purpose, responsibilities, interfaces
+- [x] `application-design/component-methods.md` — method signatures + I/O types (rules deferred to Functional Design)
+- [x] `application-design/services.md` — service definitions, responsibilities, orchestration
+- [x] `application-design/component-dependency.md` — dependency matrix, communication patterns, data-flow diagrams
+- [x] `application-design/application-design.md` — consolidation of the above
+- [x] Validate design completeness and consistency against the `06` contract (§7 of application-design.md)
 
 ## Approval
 Approve this plan (defaults above) to generate the design artifacts, or edit any `[Answer]:` and tell me.
