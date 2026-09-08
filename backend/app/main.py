@@ -14,6 +14,7 @@ from .db import init_db
 from .orchestrator import routes as orch_routes
 from .orchestrator import worker
 from .pm import routes as pm_routes
+from .uf import routes as uf_routes
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("companyops")
@@ -36,10 +37,23 @@ def _wire_git_port() -> None:
         log.warning("Failed to wire real GitInterface (%s); using stub.", exc)
 
 
+def _wire_utilization_port() -> None:
+    """Inject the real UF adapter (U3) so project completion auto-generates a report."""
+    try:
+        from .orchestrator import deps
+        from .uf.adapter import UtilizationAdapter
+
+        deps.set_utilization_port(UtilizationAdapter())
+        log.info("UtilizationAdapter (UF) wired.")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Failed to wire UtilizationAdapter (%s); using no-op stub.", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     _wire_git_port()
+    _wire_utilization_port()
     worker.recover_incomplete()  # RUNNING → BLOCKED after restart (06 §5.2)
     task = asyncio.create_task(worker.worker_loop())
     log.info("CompanyOps backend started (execution_mode=%s, git_mode=%s).",
@@ -70,6 +84,7 @@ app.add_exception_handler(Exception, unhandled_handler)
 
 app.include_router(pm_routes.router)
 app.include_router(orch_routes.router)
+app.include_router(uf_routes.router)
 
 
 @app.get("/health", tags=["platform"])

@@ -388,5 +388,11 @@ def maybe_complete_project(session: Session, project_id: str) -> bool:
     project.status = "COMPLETED"
     project.completed_at = utcnow_iso()
     platform.touch(session, project_id, "project.updated", project_id)
-    deps.utilization_port().request_report(project_id)  # U3 (no-op stub in U1)
+    # Trigger UF report in the SAME transaction (UF sees the uncommitted COMPLETED status).
+    # Isolate UF failures in a savepoint so they never roll back project completion.
+    try:
+        with session.begin_nested():
+            deps.utilization_port().request_report(project_id, session=session)
+    except Exception:  # noqa: BLE001
+        pass
     return True

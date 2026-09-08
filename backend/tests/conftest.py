@@ -11,6 +11,8 @@ os.environ.setdefault("EXECUTION_MODE", "demo")
 import pytest  # noqa: E402
 
 from app.db import Base, SessionLocal, engine, unit_of_work  # noqa: E402
+from app.common import models as _common_models  # noqa: E402,F401  register core tables
+from app.uf import models as _uf_models  # noqa: E402,F401  register UF tables
 from seed import seed  # noqa: E402
 
 

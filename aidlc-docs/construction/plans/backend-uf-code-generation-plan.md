@@ -10,13 +10,13 @@
 - **Tech**: FastAPI + SQLAlchemy (existing backend project).
 
 ## Generation Steps (numbered)
-- [ ] **Step 1 — Models** — `backend/app/uf/__init__.py`, `uf/models.py` (UtilizationReport, UtilizationMetric, Feedback). Register with `Base` by importing `app.uf.models` in `db.init_db`.
-- [ ] **Step 2 — Repository** — `uf/repository.py` (report/metric/feedback persistence + read helpers for tasks/decisions/plan-feedback/milestone-results/activity tokens).
-- [ ] **Step 3 — Service** — `uf/service.py`: `create_report` (409 if not COMPLETED, idempotent), `aggregate`, `compute_score` (UF_MVP_V1), `select_previous`, feedback CRUD, report/metrics getters.
-- [ ] **Step 4 — Schemas + routes** — `uf/schemas.py` (Pydantic), `uf/routes.py` (`POST/GET /api/utilization`, `GET /api/utilization/{id}`, `/metrics`, `GET/POST /{id}/feedbacks`, `PUT /api/feedbacks/{id}`).
-- [ ] **Step 5 — Adapter + wiring** — `uf/adapter.py` (`UtilizationAdapter` implements `UtilizationPort`); in `app/main.py` include the uf router and `deps.set_utilization_port(UtilizationAdapter())` at startup.
-- [ ] **Step 6 — Tests** — `backend/tests/uf/test_uf.py`: 409 when project not COMPLETED; idempotent single report; UF_MVP_V1 score (Autonomy from AI_AGENT ratio; Area distribution; Resource N/A on first report); feedback create post-completion; **end-to-end**: run the connected flow to project COMPLETED with the real UtilizationAdapter wired → a report is auto-created and score computed.
-- [ ] **Step 7 — Docs** — `aidlc-docs/construction/backend-uf/code/code-summary.md`; note UF endpoints in backend README.
+- [x] **Step 1 — Models** — `backend/app/uf/__init__.py`, `uf/models.py` (UtilizationReport, UtilizationMetric, Feedback). Register with `Base` by importing `app.uf.models` in `db.init_db`.
+- [x] **Step 2 — Repository** — `uf/repository.py` (report/metric/feedback persistence + read helpers for tasks/decisions/plan-feedback/milestone-results/activity tokens).
+- [x] **Step 3 — Service** — `uf/service.py`: `create_report` (409 if not COMPLETED, idempotent), `aggregate`, `compute_score` (UF_MVP_V1), `select_previous`, feedback CRUD, report/metrics getters.
+- [x] **Step 4 — Schemas + routes** — `uf/schemas.py` (Pydantic), `uf/routes.py` (`POST/GET /api/utilization`, `GET /api/utilization/{id}`, `/metrics`, `GET/POST /{id}/feedbacks`, `PUT /api/feedbacks/{id}`).
+- [x] **Step 5 — Adapter + wiring** — `uf/adapter.py` (`UtilizationAdapter` implements `UtilizationPort`); in `app/main.py` include the uf router and `deps.set_utilization_port(UtilizationAdapter())` at startup.
+- [x] **Step 6 — Tests** — `backend/tests/uf/test_uf.py`: 409 when project not COMPLETED; idempotent single report; UF_MVP_V1 score (Autonomy from AI_AGENT ratio; Area distribution; Resource N/A on first report); feedback create post-completion; **end-to-end**: run the connected flow to project COMPLETED with the real UtilizationAdapter wired → a report is auto-created and score computed.
+- [x] **Step 7 — Docs** — `aidlc-docs/construction/backend-uf/code/code-summary.md`; note UF endpoints in backend README.
 
 ## Story traceability
 | Step | Stories |

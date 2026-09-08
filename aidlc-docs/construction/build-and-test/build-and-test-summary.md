@@ -3,6 +3,22 @@
 > Stage: CONSTRUCTION / Build and Test · Date: 2026-09-08
 > Per-unit build (Q5). Covers **U1 backend-pm** and **U2 backend-git**; U4/U5/U3 follow.
 
+## U3 backend-uf — Build & Test (2026-09-08)
+- **Build**: Success (no new deps). **Unit tests (pytest)**: full backend suite **25 passed / 0 failed** (21 + 4 UF).
+- **U3 coverage**: 409 when project not COMPLETED; idempotent single report; **UF_MVP_V1** score (Autonomy/Area 100, Resource N/A on first report); feedback post-completion only; **e2e completion auto-generates the report** with the real UtilizationAdapter wired (in-txn via savepoint).
+- **Stories**: UF-1..4 (+ ORCH-8 counts). Read-only vs work state; tokens from activity payloads; cost 미수집.
+
+---
+
+## ALL UNITS — Cumulative (2026-09-08)
+- **Backend (pytest)**: **25/25 pass** (U1 + U2 + U3).
+- **Frontend (Vitest)**: **19/19 pass** (U4 + U5); `npm run build` success.
+- **Units complete**: U1 backend-pm, U2 backend-git, U3 backend-uf, U4 frontend-tycoon, U5 frontend-dashboard.
+- **P1 connected flow**: implemented end-to-end (create → staff → plan → approve → execute → QA → publish → milestone approval → project COMPLETED → UF report), drivable from the UI.
+- **Ready for Operations**: OPERATIONS is a placeholder stage (out of MVP scope).
+
+---
+
 ## U5 frontend-dashboard — Build & Test (2026-09-08)
 - **Build tool**: Vite 5 + TypeScript (npm; shared frontend project with U4).
 - **Unit tests (Vitest + RTL)**: full frontend suite **19 passed / 0 failed** (8 files: 11 U4 + 8 U5). New U5 tests: `deriveAttention` derivation/dedup (04 §7), PlanReviewPanel button states + version-guarded planReviewComplete/planApprove (04 §19), MilestoneResultApproval disabled when gate FAILED (FR-DASH-6), FeedbackSection ACTIVE post-completion notice (FR-DASH-13), ProjectCreateDialog → createProject.

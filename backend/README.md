@@ -33,6 +33,7 @@ Docs: `http://127.0.0.1:8000/docs` · Health: `/health`
 ## Key endpoints (06 §4)
 - PM: `POST/GET /api/projects`, `GET/PATCH /api/projects/{id}`, `/agent-profiles`, `/roles`, `/llm-models`, project-scoped `/agents`, `/sprint-milestones`, `/tasks`, `/agent-recommendations`.
 - Orchestration (project-scoped): `GET /snapshot`, `GET /events` (SSE), `POST /commands`, `POST /plans/{id}/{feedback|review-complete|approve}`, `POST /decisions/{id}/resolve`, `GET /qa-runs/{id}`, `GET/POST /sprint-milestones/{id}/result[/reviews]`, `POST /tasks/{id}/publish`, `GET /tasks/{id}/artifacts`, `GET /activity`.
+- UF (global): `POST/GET /api/utilization`, `GET /api/utilization/{reportId}[/metrics|/feedbacks]`, `POST /api/utilization/{reportId}/feedbacks`, `PUT /api/feedbacks/{feedbackId}`. Report auto-generated on project COMPLETED (UF_MVP_V1); post-completion only.
 
 ## Invariants honored
 Multi-axis state kept separate; `round(100×COMPLETED/non-cancelled)` progress; Task COMPLETED = approved plan version + technical gate PASSED + push success + `executionMode`; milestone-result versioning + human review; idempotency (`requestId`) + optimistic concurrency (409); SSE snapshot-invalidation (heartbeat 15s).

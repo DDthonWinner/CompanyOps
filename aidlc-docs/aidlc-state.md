@@ -58,17 +58,17 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 - [x] NFR Requirements (system-level, once) - DONE
 - [x] NFR Design (system-level, once) - DONE (resolved deferred RESILIENCY-03/04/08/14/15)
 - [ ] Infrastructure Design - SKIP (single-node local PoC, no IaC)
-- [~] Code Generation (per unit) - U1, U2, U4, U5 DONE; U3 pending
-- [~] Build and Test (per unit) - backend 21/21 + frontend 19/19 PASS; U3 pending
+- [x] Code Generation (per unit) - U1, U2, U3, U4, U5 DONE
+- [x] Build and Test (per unit) - backend 25/25 + frontend 19/19 PASS (all units)
 
 ### 🟡 OPERATIONS PHASE
-- [ ] Operations - PLACEHOLDER
+- [ ] Operations - PLACEHOLDER (out of MVP scope)
 
 ## Current Status
-- **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Code Generation — U3 backend-uf (Planning; plan awaiting approval)
-- **Next Stage**: U3 code generation (Steps 1–7) → U3 Build & Test (final unit)
-- **Status**: U3 FD approved. backend-uf-code-generation-plan.md created (7 steps: models, repository, service+scoring, routes, adapter+wiring, tests, docs). Awaiting plan approval.
+- **Lifecycle Phase**: CONSTRUCTION — COMPLETE (all 5 units); OPERATIONS is a placeholder
+- **Current Stage**: Build & Test — U3 backend-uf (PASS); all units done, awaiting approval
+- **Next Stage**: OPERATIONS (placeholder) — MVP construction complete
+- **Status**: All 5 units built & tested. Backend 25/25 + frontend 19/19 pass; both builds green. P1 connected flow complete end-to-end. REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

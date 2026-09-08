@@ -387,5 +387,31 @@
 **Plan**: Wrote backend-uf-code-generation-plan.md — 7 steps: uf/models (register via init_db import); uf/repository (persistence + read helpers incl. activity token sum); uf/service (create_report 409+idempotent, aggregate, UF_MVP_V1 compute_score, select_previous, feedback CRUD); uf/schemas+routes (/api/utilization*, /api/feedbacks); uf/adapter (UtilizationAdapter) + main wiring (include router + deps.set_utilization_port); tests (409/idempotent/score/feedback/e2e completion auto-report); docs. Code at backend/app/uf/.
 **Approval prompt (logged before asking)**: "Approve U3 code generation plan (Steps 1–7) to generate code. Options: Request Changes / Approve & Generate."
 **Gate**: Awaiting U3 code-gen plan approval.
+**Approval response**: User approved — "approved". Generating U3 code (Steps 1–7).
+
+---
+
+## CONSTRUCTION - U3 backend-uf Code Generation (Generated + verified)
+**Timestamp**: 2026-09-08
+**Created**: uf/{__init__,models,repository,service,schemas,routes,adapter}.py; tests/uf/test_uf.py.
+**Modified**: db.init_db (register uf tables); ports/utilization_port.py (request_report accepts session); orchestrator/service.py (completion triggers UF in same txn via begin_nested savepoint); main.py (include uf router + wire UtilizationAdapter); conftest (register uf tables); backend README.
+**Fix during gen**: explicit session.flush() before metric serialization (autoflush off).
+**Validation**: full backend pytest **25/25 pass** (21 + 4 UF): 409-not-completed, idempotent report, UF_MVP_V1 score, feedback post-completion, e2e completion auto-report.
+**Story coverage**: UF-1..4 (+ ORCH-8 counts).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — backend/app/uf/ + code-summary. WHAT'S NEXT: Request Changes / Continue to U3 Build & Test."
+**Gate**: Awaiting approval before U3 Build & Test.
+**Approval response**: User approved — "Approved". Proceeding to U3 Build & Test.
+
+---
+
+## CONSTRUCTION - U3 backend-uf Build & Test + ALL UNITS COMPLETE
+**Timestamp**: 2026-09-08
+**Build/Test**: backend pytest **25/25**, frontend Vitest **19/19**, both builds green (re-confirmed).
+**Units complete**: U1 backend-pm, U2 backend-git, U3 backend-uf, U4 frontend-tycoon, U5 frontend-dashboard.
+**P1 connected flow**: end-to-end (create→staff→plan→approve→execute→QA→publish→milestone approval→COMPLETED→UF report), UI-drivable.
+**Files updated**: build-and-test-summary.md (U3 + cumulative section); aidlc-state.md marks Construction complete.
+**Operations**: placeholder (out of MVP scope).
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — build-and-test-summary.md. All units built & tested. WHAT'S NEXT: Request Changes / Approve (CONSTRUCTION complete; OPERATIONS is a placeholder)."
+**Gate**: Awaiting final acknowledgement.
 
 ---

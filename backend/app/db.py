@@ -75,6 +75,7 @@ def init_db() -> None:
     """Create all tables (MVP; Alembic optional later)."""
     from . import common  # noqa: F401  ensure models are imported/registered
     from .common import models  # noqa: F401
+    from .uf import models as uf_models  # noqa: F401  register UF tables (U3)
 
     Base.metadata.create_all(bind=engine)
 
