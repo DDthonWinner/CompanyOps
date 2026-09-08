@@ -47,4 +47,13 @@ body {
   }
   .tabular { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; }
   .display { font-family: "Space Grotesk", sans-serif; }
+  .input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--outline-variant);
+    background: var(--surface-container-lowest);
+    padding: 0.4rem 0.6rem;
+    font-size: 0.875rem;
+  }
+  .input:focus { outline: 2px solid rgba(70, 72, 212, 0.35); }
 }

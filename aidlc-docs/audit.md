@@ -328,5 +328,26 @@
 **Artifacts**: frontend-components.md (04 §24 tree + ProjectCreate/AgentMatching + reads/writes table + data-testid), domain-entities.md (reuses U4 types + write request shapes + plan/QA/MR/UF view types + AttentionItem), business-logic-model.md (setup→team, plan-first lifecycle, milestone review, decisions, UF gating, 409 handling), business-rules.md (FR-DASH-1..19: plan-first, milestone/QA separation, attention dedup, PM validation, UF post-completion, a11y/connection, deferrals).
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — construction/frontend-dashboard/functional-design/. WHAT'S NEXT: Request Changes / Continue to U5 Code Generation."
 **Gate**: Awaiting approval before U5 Code Generation.
+**Approval response**: User approved — "Approved". U5 Functional Design complete. Proceeding to U5 Code Generation (Planning).
+
+---
+
+## CONSTRUCTION - U5 frontend-dashboard Code Generation (Planning)
+**Timestamp**: 2026-09-08
+**Plan**: Wrote frontend-dashboard-code-generation-plan.md — 11 steps: extend shared ApiClient (write/PM/UF); Toast+409; DashboardView layout + HeaderStrip/AgentOverview/ActiveTaskList; ProjectCreateDialog + AgentMatchingPanel; AttentionCenter + cards + pure attention.ts; PlanReviewPanel + CommandInput; QARunReport/QualityGate/ActivityTimeline/RecentArtifacts; FeedbackSection; wire DashboardView into AppShell; Vitest+RTL tests; build+docs. Code at frontend/src/features/dashboard/ (+ api/client, app/AppShell).
+**Approval prompt (logged before asking)**: "Approve U5 code generation plan (Steps 1–11) to generate code. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting U5 code-gen plan approval.
+**Approval response**: User approved — "Approved". Generating U5 code (Steps 1–11).
+
+---
+
+## CONSTRUCTION - U5 frontend-dashboard Code Generation (Generated + verified)
+**Timestamp**: 2026-09-08
+**Created/modified**: extended api/client.ts (write/PM/UF) + uf-types; toast; dashboard feature (DashboardView, HeaderStrip, AgentOverview, ActiveTaskList, ProjectCreateDialog, AgentMatchingPanel, AttentionCenter + attention.ts + 4 cards, PlanReviewPanel, CommandInput, QASection, ActivityTimeline, RecentArtifacts, FeedbackSection, actions.ts); wired DashboardView + Toaster into AppShell; 3 test files.
+**Validation**: `npm run test` **19/19 pass** (8 files); `npm run build` **success** (~1.01MB three.js bundle warning non-blocking; one benign act() warning in a test). Plan steps 1–11 [x].
+**Story coverage**: DASH-1..3, UF-1..4, PM-1/3/4, ORCH-1..3/6/8 (UI). Writes carry requestId+version guards; 409→toast.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — frontend/src/features/dashboard/ + code-summary. WHAT'S NEXT: Request Changes / Continue to U5 Build & Test."
+**Gate**: Awaiting approval before U5 Build & Test.
+**Approval response**: User approved — "Approved". Proceeding to U5 Build & Test.
 
 ---

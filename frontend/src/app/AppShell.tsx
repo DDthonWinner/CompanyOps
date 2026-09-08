@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { api } from "../api/client";
 import type { TycoonSelection } from "../api/types";
-import { GlassPanel } from "../components/ui/GlassPanel";
+import { Toaster } from "../components/ui/toast";
+import { DashboardView } from "../features/dashboard/DashboardView";
 import { AgentSheet } from "../features/tycoon/hud/AgentSheet";
 import { DeskSheet } from "../features/tycoon/hud/DeskSheet";
 import { TycoonView } from "../features/tycoon/TycoonView";
@@ -40,7 +41,7 @@ export function AppShell() {
     <div className="relative h-full w-full overflow-hidden">
       <GlobalExecutiveBar />
       <main className="h-full w-full pt-20">
-        {activeTab === "tycoon" ? <TycoonView /> : <DashboardPlaceholder />}
+        {activeTab === "tycoon" ? <TycoonView /> : <DashboardView />}
       </main>
       <AgentSheet
         open={openSheet?.kind === "agent"}
@@ -52,25 +53,7 @@ export function AppShell() {
         roleCode={openSheet?.kind === "desk" ? openSheet.id : undefined}
         onClose={closeSheet}
       />
-    </div>
-  );
-}
-
-function DashboardPlaceholder() {
-  const snapshot = useStore((s) => s.snapshot);
-  return (
-    <div className="flex h-full items-center justify-center p-6">
-      <GlassPanel level={2} className="max-w-md p-6 text-center">
-        <h2 className="display mb-2 text-lg font-semibold">Dashboard</h2>
-        <p className="text-sm text-on-background/70">
-          Human–AI Control Center는 <b>frontend-dashboard (U5)</b>에서 구현됩니다.
-        </p>
-        {snapshot && (
-          <p className="tabular mt-3 text-sm">
-            현재 진행률: {snapshot.project.progressTotal === 0 ? "작업 없음" : `${snapshot.project.progressPercent}%`}
-          </p>
-        )}
-      </GlassPanel>
+      <Toaster />
     </div>
   );
 }
