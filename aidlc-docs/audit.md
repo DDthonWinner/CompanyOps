@@ -136,5 +136,15 @@
 **Validation**: consistent with 00 §5/§7, 01, 06.
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine construction/backend-pm/functional-design/. WHAT'S NEXT: Request Changes / Approve & Continue to System NFR Requirements."
 **Gate**: Awaiting approval before System NFR Requirements.
+**Approval response**: User approved — "Approved". U1 Functional Design complete. Proceeding to System NFR Requirements.
+
+---
+
+## CONSTRUCTION - System NFR Requirements (Planning)
+**Timestamp**: 2026-09-08
+**Scope**: system-level (once, per Q5), referenced by all units.
+**Plan**: Wrote system-nfr-requirements-plan.md. General NFRs N1–N8 (scalability/perf/availability/security/tech-stack/reliability/maintainability/usability) pre-filled from requirements.md NFR-1..9. Resiliency baseline decisions asked (RESILIENCY-03/04/08/14/15) with single-node-PoC recommendations: R-03 exempt; R-04a propose minimal optional CI; R-04b version-pinned redeploy; R-04c direct/in-place; R-08 single-region/single-node; R-14 defer to Operations; R-15 propose lightweight IR/COE. Artifacts: nfr-requirements.md, tech-stack-decisions.md.
+**Approval prompt (logged before asking)**: "Approve the system NFR requirements plan (defaults; confirm resiliency R-* decisions) to generate artifacts, or edit any [Answer]. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting plan approval (esp. resiliency decisions) before artifact generation.
 
 ---
