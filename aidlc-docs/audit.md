@@ -175,5 +175,26 @@
 **System-level design complete** (Functional Design U1 + system NFR Req + system NFR Design). Next: per-unit Code Generation starting with U1 backend-pm.
 **Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine construction/system/nfr-design/. WHAT'S NEXT: Request Changes / Approve & Continue to U1 Code Generation."
 **Gate**: Awaiting approval before U1 Code Generation.
+**Approval response**: User approved — "Approved". System NFR Design complete (system-level design done). Proceeding to U1 backend-pm Code Generation (Planning).
+
+---
+
+## CONSTRUCTION - U1 Code Generation (Planning)
+**Timestamp**: 2026-09-08
+**Env check**: Python 3.14.4, Node v22.22.1, npm 9.2.0. Dev repo origin = DDthonWinner/CompanyOps (distinct from app git-output target DDthonWinner/TestOutput). pip via venv.
+**Plan**: Wrote backend-pm-code-generation-plan.md — 13 numbered steps (structure→repository→business logic→API→bootstrap/seed→docs→deployment), story traceability (PM-1..6, ORCH-1..8, RT-1/2), code at backend/ (workspace root). GitPort/UtilizationPort Protocols + stubs keep U1 buildable ahead of U2/U3. Frontend steps N/A. Tests written now, executed in Build & Test.
+**Approval prompt (logged before asking)**: "Approve the U1 code generation plan (Steps 1–13, single source of truth) to generate code, or request changes. Options: Request Changes / Approve & Generate."
+**Gate**: Awaiting plan approval before code generation.
+**Approval response**: User approved — "Approved". Generating U1 code (Steps 1–13).
+
+---
+
+## CONSTRUCTION - U1 Code Generation (Generated)
+**Timestamp**: 2026-09-08
+**Created**: backend/ scaffold + app/{config,db,main}; common/{models,util,errors,platform,progress,snapshot,sse,backup,txn}; pm/{recommendation,service,schemas,routes}; orchestrator/{service,worker,qa,deps,schemas,routes} + execution/{base,fixture,openai_provider,selector}; ports/{git_port,utilization_port}; seed.py; tests/{conftest,common,pm,orchestrator}; root .gitignore + README. All 13 plan steps [x].
+**Validation**: `python3 -m compileall` clean (no syntax errors). Full test execution deferred to Build & Test.
+**Stories implemented**: PM-1..6, ORCH-1..8, RT-1/2 (backend/SSE). GitPort/UtilizationPort stubs for U2/U3.
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine backend/ + aidlc-docs/construction/backend-pm/code/. WHAT'S NEXT: Request Changes / Continue to U1 Build & Test."
+**Gate**: Awaiting approval before U1 Build & Test.
 
 ---

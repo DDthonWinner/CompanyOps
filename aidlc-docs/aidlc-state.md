@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: NFR Design — SYSTEM (artifacts generated, awaiting approval)
-- **Next Stage**: U1 backend-pm Code Generation (Planning) → Build & Test
-- **Status**: nfr-design-patterns.md + logical-components.md generated. System-level design complete after approval. REVIEW gate open.
+- **Current Stage**: Code Generation — U1 backend-pm (code generated, awaiting approval)
+- **Next Stage**: U1 Build & Test
+- **Status**: U1 backend code generated under backend/ (Steps 1–13 complete). Byte-compile clean. Stories PM-1..6, ORCH-1..8, RT-1/2 implemented (backend). GitPort/UtilizationPort stubs stand in for U2/U3. Tests written (run in Build & Test). REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider
