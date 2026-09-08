@@ -19,7 +19,7 @@ C) **Both, behind a config flag** — default to fixture mode for reliable demos
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C, and make the default as a demo
 
 ## Question 2 — If real LLM calls are used, which provider/model?
 Only relevant if Q1 = A or C. The requirements list example models from OpenAI and Anthropic as display metadata.
@@ -32,7 +32,7 @@ C) Not applicable — fixture mode only (Q1 = B)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: B
 
 ## Question 3 — GitHub publish mode
 GIT-003..005 target the fixed remote `https://github.com/DDthonWinner/TestOutput` with real clone/commit/push. Real push needs credentials on the server.
@@ -45,7 +45,7 @@ C) **Both, behind a config flag** — local by default, real remote push when cr
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 4 — Hackathon build scope
 Given the 1–2 day framing (§8), where should the first end-to-end target land?
@@ -58,7 +58,7 @@ C) **Priority-1 connected flow first, then fold in Priority-2** (Profile edit/re
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C
 
 ## Question 5 — Repository / project layout
 How should the codebase be organized in this repo?
@@ -71,7 +71,7 @@ C) Single combined app served by FastAPI (frontend built into backend static)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 6 — Frontend tooling defaults
 The docs specify React + TypeScript + Tailwind + shadcn/ui + Zustand + React Three Fiber/Three.js. To confirm the surrounding toolchain:
@@ -84,7 +84,7 @@ C) Next.js
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 7 — Backend runtime/dependency tooling
 For the FastAPI backend:
@@ -97,7 +97,7 @@ C) Python with `uv`
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 8 — Real-time transport confirmation
 The contract (§5) specifies SSE for two-tab state sync with snapshot re-read on revision events. Confirm:
@@ -110,7 +110,7 @@ C) Polling only for the MVP
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ---
 
@@ -123,7 +123,7 @@ B) No — skip all SECURITY rules (suitable for PoCs, prototypes, and experiment
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: B
 
 ## Question 10 — Resiliency Extensions (AI-DLC opt-in)
 Should the resiliency baseline be applied to this project?
@@ -138,7 +138,7 @@ B) No — skip the resiliency baseline (suitable for PoCs, prototypes, and exper
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
 
 ## Question 11 — Property-Based Testing Extension (AI-DLC opt-in)
 Should property-based testing (PBT) rules be enforced for this project?
@@ -151,4 +151,4 @@ C) No — skip all PBT rules (suitable for simple CRUD applications, UI-only pro
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C
