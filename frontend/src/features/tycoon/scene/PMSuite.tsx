@@ -14,10 +14,10 @@ const LEGS: Array<[number, number, number]> = [
 function PaperStack({ count, y }: { count: number; y: number }) {
   return (
     <>
-      {Array.from({ length: Math.min(5, Math.max(1, count)) }).map((_, i) => (
-        <mesh key={i} position={[0, y + i * 0.1, 0]} rotation={[0, ((i % 3) - 1) * 0.08, 0]} castShadow>
+      {Array.from({ length: Math.min(8, Math.max(0, count)) }).map((_, i) => (
+        <mesh key={i} position={[0, y + i * 0.085, 0]} rotation={[0, ((i % 3) - 1) * 0.08, 0]} castShadow>
           <boxGeometry args={[1.9, 0.07, 2.1]} />
-          <meshLambertMaterial color="#ffffff" />
+          <meshStandardMaterial color="#ffffff" roughness={0.85} />
         </mesh>
       ))}
     </>
@@ -51,17 +51,17 @@ export function PMSuite({
       {/* Rose zone rug */}
       <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[18, 16]} />
-        <meshLambertMaterial color="#fecdd3" transparent opacity={0.9} />
+        <meshStandardMaterial color="#fecdd3" transparent opacity={0.9} />
       </mesh>
 
       {/* Roadmap whiteboard */}
       <mesh position={[0, 4.4, -6.5]}>
         <boxGeometry args={[10, 5.5, 0.3]} />
-        <meshLambertMaterial color="#1e293b" />
+        <meshStandardMaterial color="#1e293b" />
       </mesh>
       <mesh position={[0, 4.4, -6.34]}>
         <planeGeometry args={[9.6, 5.1]} />
-        <meshLambertMaterial color="#ffffff" />
+        <meshStandardMaterial color="#ffffff" />
       </mesh>
       {Array.from({ length: 2 }).flatMap((_, r) =>
         Array.from({ length: 5 }).map((__, c) => (
@@ -84,16 +84,16 @@ export function PMSuite({
         {...hover}
       >
         <boxGeometry args={[10, 0.52, 4.5]} />
-        <meshLambertMaterial color="#ffe4e6" />
+        <meshStandardMaterial color="#ffe4e6" />
       </mesh>
       <mesh position={[0, 3.0, -1.8]}>
         <boxGeometry args={[10.15, 0.28, 4.65]} />
-        <meshLambertMaterial color="#e11d48" />
+        <meshStandardMaterial color="#e11d48" />
       </mesh>
       {LEGS.map(([x, y, z], i) => (
         <mesh key={i} position={[x, y, z]} castShadow>
           <cylinderGeometry args={[0.3, 0.3, 3.0, 12]} />
-          <meshLambertMaterial color="#64748b" />
+          <meshStandardMaterial color="#64748b" />
         </mesh>
       ))}
 
@@ -108,7 +108,7 @@ export function PMSuite({
         {...hover}
       >
         <boxGeometry args={[2.4, 0.6, 2.6]} />
-        <meshLambertMaterial color="#2563eb" />
+        <meshStandardMaterial color="#2563eb" />
       </mesh>
       <group position={[-3.6, 3.85, -1.5]}>
         <PaperStack count={inboxCount} y={0} />
@@ -123,7 +123,7 @@ export function PMSuite({
         {...hover}
       >
         <boxGeometry args={[2.4, 0.6, 2.6]} />
-        <meshLambertMaterial color="#059669" />
+        <meshStandardMaterial color="#059669" />
       </mesh>
       <group position={[-3.6, 3.85, -3.2]}>
         <PaperStack count={outboxCount} y={0} />
@@ -145,11 +145,11 @@ export function PMSuite({
       {/* Coffee bar */}
       <mesh position={[4.0, 4.45, -1.8]} castShadow>
         <boxGeometry args={[1.5, 2.0, 1.3]} />
-        <meshLambertMaterial color="#ffffff" />
+        <meshStandardMaterial color="#ffffff" />
       </mesh>
       <mesh position={[3.0, 3.65, -1.2]} castShadow>
         <cylinderGeometry args={[0.25, 0.25, 0.45, 12]} />
-        <meshLambertMaterial color="#f43f5e" />
+        <meshStandardMaterial color="#f43f5e" />
       </mesh>
     </group>
   );

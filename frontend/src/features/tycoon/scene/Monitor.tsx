@@ -100,17 +100,17 @@ export function Monitor({
     <group>
       {/* Stand */}
       <mesh position={[0, 0.9, 0]} castShadow>
-        <cylinderGeometry args={[0.35, 0.4, 1.8, 12]} />
-        <meshLambertMaterial color="#1e293b" />
+        <cylinderGeometry args={[0.35, 0.4, 1.8, 16]} />
+        <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.4} />
       </mesh>
       <mesh position={[0, 0.1, 0]}>
         <boxGeometry args={[4.2, 0.2, 1.6]} />
-        <meshLambertMaterial color="#1e293b" />
+        <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.4} />
       </mesh>
       {/* Frame */}
       <mesh position={[0, screenY, 0]} castShadow>
         <boxGeometry args={[width, height, 0.45]} />
-        <meshLambertMaterial color="#0f172a" />
+        <meshStandardMaterial color="#0f172a" roughness={0.35} metalness={0.2} />
       </mesh>
       {/* Screen (clickable) */}
       <mesh

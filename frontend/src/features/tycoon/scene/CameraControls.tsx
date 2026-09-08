@@ -15,7 +15,7 @@ const MIN_ZOOM = 3;
 const MAX_ZOOM = 90;
 // Visible world-height at the default zoom — replicates the reference framing
 // (frustumSize 46 → ~92 world units) independent of screen resolution.
-const FRAME_WORLD_HEIGHT = 104;
+const FRAME_WORLD_HEIGHT = 120;
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 

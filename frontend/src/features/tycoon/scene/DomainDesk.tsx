@@ -4,7 +4,7 @@ import { INBOX_COLOR, OUTBOX_COLOR, ROLE_LABEL } from "../../../lib/roles";
 import { dispatchSelection } from "../selectionEvent";
 import { Monitor } from "./Monitor";
 
-const DESK_LENGTH = 22;
+const DESK_LENGTH = 18;
 const DESK_WIDTH = 5.2;
 const DESK_HEIGHT = 3.2;
 
@@ -31,7 +31,7 @@ function makeBadge(text: string, hex: string): THREE.CanvasTexture | null {
   ctx.fillStyle = hex;
   if (typeof ctx.roundRect === "function") {
     ctx.beginPath();
-    ctx.roundRect(10, 10, 340, 50, 14);
+    ctx.roundRect(10, 10, 340, 50, 16);
     ctx.fill();
   } else {
     ctx.fillRect(10, 10, 340, 50);
@@ -43,13 +43,15 @@ function makeBadge(text: string, hex: string): THREE.CanvasTexture | null {
   return new THREE.CanvasTexture(c);
 }
 
+// Documents stack up to visualize pending / finished work per desk.
 function PaperStack({ count, y }: { count: number; y: number }) {
+  const n = Math.min(10, Math.max(0, count));
   return (
     <>
-      {Array.from({ length: Math.min(6, Math.max(1, count)) }).map((_, i) => (
-        <mesh key={i} position={[0, y + i * 0.11, 0]} rotation={[0, ((i % 3) - 1) * 0.09, 0]} castShadow>
-          <boxGeometry args={[2.2, 0.08, 2.9]} />
-          <meshLambertMaterial color="#ffffff" />
+      {Array.from({ length: n }).map((_, i) => (
+        <mesh key={i} position={[0, y + i * 0.085, 0]} rotation={[0, ((i % 3) - 1) * 0.08, 0]} castShadow>
+          <boxGeometry args={[2.2, 0.07, 2.9]} />
+          <meshStandardMaterial color="#ffffff" roughness={0.85} />
         </mesh>
       ))}
     </>
@@ -77,7 +79,7 @@ export function DomainDesk({
 }) {
   const [pulse, setPulse] = useState(1);
   const bounce = () => {
-    setPulse(1.06);
+    setPulse(1.05);
     setTimeout(() => setPulse(1), 180);
   };
   const selectDesk = (type: "desk" | "inbox" | "outbox") => {
@@ -85,8 +87,8 @@ export function DomainDesk({
     dispatchSelection({ projectId, type, roleCode });
   };
 
-  const surface = useMemo(() => tint(color, 0.78), [color]);
-  const mat = useMemo(() => tint(color, 0.6), [color]);
+  const surface = useMemo(() => tint(color, 0.8), [color]);
+  const mat = useMemo(() => tint(color, 0.62), [color]);
   const badge = useMemo(() => makeBadge(`● ${(ROLE_LABEL[roleCode] ?? roleCode).toUpperCase()} DESK`, color), [roleCode, color]);
   useEffect(() => () => badge?.dispose(), [badge]);
 
@@ -98,9 +100,9 @@ export function DomainDesk({
   return (
     <group position={[position[0], 0, position[1]]} scale={pulse}>
       {/* Domain floor mat */}
-      <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[DESK_LENGTH + 6, DESK_WIDTH + 9]} />
-        <meshLambertMaterial color={mat} transparent opacity={0.88} />
+        <meshStandardMaterial color={mat} transparent opacity={0.85} roughness={0.95} />
       </mesh>
 
       {/* Desktop (tinted) + accent trim */}
@@ -115,18 +117,18 @@ export function DomainDesk({
         {...hover}
       >
         <boxGeometry args={[DESK_LENGTH, 0.52, DESK_WIDTH]} />
-        <meshLambertMaterial color={surface} />
+        <meshStandardMaterial color={surface} roughness={0.7} metalness={0.05} />
       </mesh>
       <mesh position={[0, DESK_HEIGHT - 0.22, 0]}>
         <boxGeometry args={[DESK_LENGTH + 0.15, 0.28, DESK_WIDTH + 0.15]} />
-        <meshLambertMaterial color={color} />
+        <meshStandardMaterial color={color} roughness={0.5} metalness={0.1} />
       </mesh>
 
       {/* Legs */}
       {LEGS.map(([lx, lz], i) => (
         <mesh key={i} position={[lx, (DESK_HEIGHT - 0.2) / 2, lz]} castShadow>
-          <cylinderGeometry args={[0.32, 0.32, DESK_HEIGHT - 0.2, 12]} />
-          <meshLambertMaterial color="#64748b" />
+          <cylinderGeometry args={[0.3, 0.3, DESK_HEIGHT - 0.2, 12]} />
+          <meshStandardMaterial color="#94a3b8" roughness={0.5} metalness={0.3} />
         </mesh>
       ))}
 
@@ -153,12 +155,12 @@ export function DomainDesk({
           {...hover}
         >
           <boxGeometry args={[2.8, 0.7, 3.5]} />
-          <meshLambertMaterial color={INBOX_COLOR} />
+          <meshStandardMaterial color={INBOX_COLOR} roughness={0.5} />
         </mesh>
         <PaperStack count={inboxCount} y={0.75} />
         <mesh position={[0, 0.9, 1.82]}>
           <boxGeometry args={[1.8, 0.6, 0.12]} />
-          <meshLambertMaterial color="#1d4ed8" />
+          <meshStandardMaterial color="#1d4ed8" roughness={0.5} />
         </mesh>
       </group>
 
@@ -174,12 +176,12 @@ export function DomainDesk({
           {...hover}
         >
           <boxGeometry args={[2.8, 0.7, 3.5]} />
-          <meshLambertMaterial color={OUTBOX_COLOR} />
+          <meshStandardMaterial color={OUTBOX_COLOR} roughness={0.5} />
         </mesh>
         <PaperStack count={outboxCount} y={0.75} />
         <mesh position={[0, 0.9, 1.82]}>
           <boxGeometry args={[1.8, 0.6, 0.12]} />
-          <meshLambertMaterial color="#047857" />
+          <meshStandardMaterial color="#047857" roughness={0.5} />
         </mesh>
       </group>
 

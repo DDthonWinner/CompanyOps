@@ -11,15 +11,16 @@ import { FloorGrid } from "./scene/FloorGrid";
 import { Lighting } from "./scene/Lighting";
 import { PMSuite } from "./scene/PMSuite";
 
-// Domain desks form a clustered row; the PM suite sits apart to the right.
+// Domain desks form a spaced row; the PM suite sits apart to the right.
 const DOMAIN_LAYOUT: Record<string, [number, number]> = {
-  FRONTEND: [-15, 13],
-  DATABASE: [15, 13],
-  BACKEND: [-15, -13],
-  QA: [15, -13],
+  FRONTEND: [-22, 16],
+  DATABASE: [22, 16],
+  BACKEND: [-22, -16],
+  QA: [22, -16],
 };
-const PM_POS: [number, number] = [42, 0];
-const DEFAULT_TARGET: [number, number, number] = [8, 2, 0];
+const PM_POS: [number, number] = [48, 0];
+const DEFAULT_TARGET: [number, number, number] = [12, 2, 0];
+const MAX_SEATS = 4;
 
 // Camera focus points for the CommandDock quick-jump buttons.
 const FOCUS: Record<string, [number, number, number]> = {
@@ -29,16 +30,12 @@ const FOCUS: Record<string, [number, number, number]> = {
   PM: [PM_POS[0], 2, PM_POS[1]],
 };
 
-// Seat positions in front of a desk (+z), wrapping to a second row past 5 seats.
+// Up to 4 seats in a single row tucked at the desk (+z, facing the monitor).
 function domainSeat([dx, dz]: [number, number], i: number): [number, number] {
-  const col = i % 5;
-  const row = Math.floor(i / 5);
-  return [dx - 8 + col * 4, dz + 5 + row * 4.2];
+  return [dx + (i - (MAX_SEATS - 1) / 2) * 4.2, dz + 3.9];
 }
 function pmSeat([px, pz]: [number, number], i: number): [number, number] {
-  const col = i % 3;
-  const row = Math.floor(i / 3);
-  return [px - 3 + col * 3, pz + 3.4 + row * 4];
+  return [px + (i - 0.5) * 3.2, pz + 2.7];
 }
 
 export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
@@ -95,7 +92,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
               inboxCount={r.inbox}
               outboxCount={r.outbox}
             />
-            {agentsFor(code).map((a, i) => (
+            {agentsFor(code).slice(0, MAX_SEATS).map((a, i) => (
               <DevPawn
                 key={a.id}
                 projectId={projectId}
@@ -119,7 +116,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
         inboxCount={perRole.PM.inbox}
         outboxCount={perRole.PM.outbox}
       />
-      {agentsFor("PM").map((a, i) => (
+      {agentsFor("PM").slice(0, MAX_SEATS).map((a, i) => (
         <DevPawn
           key={a.id}
           projectId={projectId}
