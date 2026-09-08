@@ -22,7 +22,13 @@ Docs: `http://127.0.0.1:8000/docs` · Health: `/health`
 | `DB_PATH` | `./data/companyops.db` | SQLite file |
 | `BACKUP_DIR` | `./backups` | periodic backup target |
 | `QA_TEST_CMD` | (empty) | real test command; empty ⇒ labeled demo PASS |
-| `GIT_REMOTE` | `.../TestOutput` | git output target (U2) |
+| `GIT_MODE` | `stub` | `stub` (deterministic demo) or `real` (subprocess git + real push) |
+| `GIT_REMOTE` | `.../TestOutput` | git output target (used in `real` mode) |
+| `CHECKOUT_ROOT` | `./checkouts` | per-project working copies (`real` mode) |
+
+### Git modes
+- `GIT_MODE=stub` (default) — `LocalStubGit`; deterministic, no real git, safe for demos.
+- `GIT_MODE=real` — the U2 `GitInterface` (subprocess git) is injected at startup: real clone of `GIT_REMOTE`, per-project branch `project/{projectId}`, real commit + push. Requires git credentials in the server environment; missing credentials surface as a `FAILED`/`COMMITTED_LOCAL` publish (never a crash).
 
 ## Key endpoints (06 §4)
 - PM: `POST/GET /api/projects`, `GET/PATCH /api/projects/{id}`, `/agent-profiles`, `/roles`, `/llm-models`, project-scoped `/agents`, `/sprint-milestones`, `/tasks`, `/agent-recommendations`.

@@ -30,6 +30,8 @@ class Settings:
     git_remote: str = os.getenv("GIT_REMOTE", "https://github.com/DDthonWinner/TestOutput").strip()
     checkout_root: str = os.getenv("CHECKOUT_ROOT", "./checkouts").strip()
     git_subprocess_timeout_seconds: float = float(os.getenv("GIT_SUBPROCESS_TIMEOUT_SECONDS", "120"))
+    # stub (default; deterministic demo) | real (subprocess git + real push)
+    git_mode: str = os.getenv("GIT_MODE", "stub").strip().lower()
 
     qa_test_cmd: str = os.getenv("QA_TEST_CMD", "").strip()
 

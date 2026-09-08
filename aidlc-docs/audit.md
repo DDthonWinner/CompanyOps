@@ -236,5 +236,16 @@
 **Plan**: Wrote backend-git-code-generation-plan.md — 9 steps: git_interface package (exceptions/models), run_git wrapper, path-safety+file access, workspace clone/sync, GitInterface implementing GitPort, GIT_MODE wiring in config+main, tests via offline file:// bare repo (GIT-AC-001/002/004/005 + real-injected orchestrator flow), docs. Code at backend/app/git_interface/.
 **Approval prompt (logged before asking)**: "Approve U2 code generation plan (Steps 1–9) to generate code. Options: Request Changes / Approve & Generate."
 **Gate**: Awaiting U2 code-gen plan approval.
+**Approval response**: User approved — "approved". Generating U2 code (Steps 1–9).
+
+---
+
+## CONSTRUCTION - U2 backend-git Code Generation (Generated + validated)
+**Timestamp**: 2026-09-08
+**Created**: backend/app/git_interface/{__init__,exceptions,models,git_command,file_access,workspace,interface}.py; modified config.py (GIT_MODE), main.py (_wire_git_port), .env.example, README.md; tests/git_interface/test_git_interface.py; code-summary.md.
+**Fixes during gen**: workspace._ensure_branch → `git branch --show-current` (unborn-branch safe); initialize rev-parse HEAD non-raising.
+**Validation**: full pytest **21/21 pass** (14 U1 + 7 U2). Offline real git via file:// bare repo covers GIT-AC-001/002/004/005 + real-git connected flow (ORCH-4/5, real commit not stub). Plan steps 1–9 [x].
+**Approval prompt (logged before asking)**: "REVIEW REQUIRED — examine backend/app/git_interface/ + code-summary. WHAT'S NEXT: Request Changes / Continue to U2 Build & Test."
+**Gate**: Awaiting approval before U2 Build & Test.
 
 ---

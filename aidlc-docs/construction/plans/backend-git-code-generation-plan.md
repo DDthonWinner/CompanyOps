@@ -10,15 +10,15 @@
 - **Tech**: Python subprocess `git`; per-project checkout under `CHECKOUT_ROOT`; branch `project/{projectId}`.
 
 ## Generation Steps (numbered)
-- [ ] **Step 1 — Package structure** — `backend/app/git_interface/__init__.py`, `exceptions.py`, `models.py` (ApplyResult/PublishResult already in ports; add ChangeSetView/InitResult/SyncResult).
-- [ ] **Step 2 — git command wrapper** — `git_command.py` (`run_git(args, cwd, timeout)` arg-array subprocess; helpers for status/diff/rev-parse).
-- [ ] **Step 3 — path safety + file access** — `file_access.py` (`resolve_repository_path`, read/apply changes, `compute_changeset`).
-- [ ] **Step 4 — workspace** — `workspace.py` (checkout path, clone/branch init idempotent, ff-only sync).
-- [ ] **Step 5 — GitInterface** — `interface.py` implementing `GitPort`: `initialize_project_repository`, `apply_file_changes`, `get_task_changes`, `sync_milestone_repository`, `publish_task_changes` (commit + push, states, idempotent, SYNC_REQUIRED, missing-creds → FAILED).
-- [ ] **Step 6 — Wiring** — add `GIT_MODE` to `config.py`; in `app/main.py` startup, if `GIT_MODE=real` call `deps.set_git_port(GitInterface(...))`.
-- [ ] **Step 7 — Unit tests** — `backend/tests/git_interface/test_git_interface.py`: use a temp **local bare repo** as `GIT_REMOTE` (offline real git) to verify clone→branch→apply→commit→push (GIT-AC-001), idempotent re-push / NO_CHANGES (GIT-AC-002/004), path-safety rejection (GIT-AC-005). Plus an orchestrator flow test with the real GitInterface injected (real commit, not stub).
-- [ ] **Step 8 — Documentation** — `aidlc-docs/construction/backend-git/code/code-summary.md`; update backend README (GIT_MODE).
-- [ ] **Step 9 — Deployment artifacts** — none new (env var documented; `.env.example` add `GIT_MODE`). No CI (R-04a).
+- [x] **Step 1 — Package structure** — `backend/app/git_interface/__init__.py`, `exceptions.py`, `models.py` (ApplyResult/PublishResult already in ports; add ChangeSetView/InitResult/SyncResult).
+- [x] **Step 2 — git command wrapper** — `git_command.py` (`run_git(args, cwd, timeout)` arg-array subprocess; helpers for status/diff/rev-parse).
+- [x] **Step 3 — path safety + file access** — `file_access.py` (`resolve_repository_path`, read/apply changes, `compute_changeset`).
+- [x] **Step 4 — workspace** — `workspace.py` (checkout path, clone/branch init idempotent, ff-only sync).
+- [x] **Step 5 — GitInterface** — `interface.py` implementing `GitPort`: `initialize_project_repository`, `apply_file_changes`, `get_task_changes`, `sync_milestone_repository`, `publish_task_changes` (commit + push, states, idempotent, SYNC_REQUIRED, missing-creds → FAILED).
+- [x] **Step 6 — Wiring** — add `GIT_MODE` to `config.py`; in `app/main.py` startup, if `GIT_MODE=real` call `deps.set_git_port(GitInterface(...))`.
+- [x] **Step 7 — Unit tests** — `backend/tests/git_interface/test_git_interface.py`: use a temp **local bare repo** as `GIT_REMOTE` (offline real git) to verify clone→branch→apply→commit→push (GIT-AC-001), idempotent re-push / NO_CHANGES (GIT-AC-002/004), path-safety rejection (GIT-AC-005). Plus an orchestrator flow test with the real GitInterface injected (real commit, not stub).
+- [x] **Step 8 — Documentation** — `aidlc-docs/construction/backend-git/code/code-summary.md`; update backend README (GIT_MODE).
+- [x] **Step 9 — Deployment artifacts** — none new (env var documented; `.env.example` add `GIT_MODE`). No CI (R-04a).
 
 ## Story traceability
 | Step | Stories |

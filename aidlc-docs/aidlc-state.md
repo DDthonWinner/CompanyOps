@@ -66,9 +66,9 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 
 ## Current Status
 - **Lifecycle Phase**: CONSTRUCTION
-- **Current Stage**: Code Generation — U2 backend-git (Planning; plan awaiting approval)
-- **Next Stage**: U2 code generation (Steps 1–9) → U2 Build & Test
-- **Status**: U2 Functional Design approved. backend-git-code-generation-plan.md created (9 steps; offline-testable via file:// bare repo; GIT_MODE wiring). Awaiting plan approval.
+- **Current Stage**: Code Generation — U2 backend-git (code generated + tests green, awaiting approval)
+- **Next Stage**: U2 Build & Test (formalize), then U4 frontend-tycoon
+- **Status**: git_interface package + GIT_MODE wiring generated. Full suite 21/21 pass (14 U1 + 7 U2), incl. real-git connected flow to offline file:// remote. REVIEW gate open.
 
 ## Units of Work
 - **U1 backend-pm** — PM + Orchestration + Platform/Common + Execution Provider

@@ -19,12 +19,31 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("companyops")
 
 
+def _wire_git_port() -> None:
+    """Inject the real GitInterface (U2) when GIT_MODE=real; else keep LocalStubGit."""
+    settings = get_settings()
+    if settings.git_mode != "real":
+        return
+    try:
+        from .git_interface.interface import GitInterface
+        from .orchestrator import deps
+
+        deps.set_git_port(GitInterface(
+            settings.git_remote, settings.checkout_root, settings.git_subprocess_timeout_seconds
+        ))
+        log.info("GitInterface (real) wired → %s", settings.git_remote)
+    except Exception as exc:  # noqa: BLE001 — never block startup on git wiring
+        log.warning("Failed to wire real GitInterface (%s); using stub.", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    _wire_git_port()
     worker.recover_incomplete()  # RUNNING → BLOCKED after restart (06 §5.2)
     task = asyncio.create_task(worker.worker_loop())
-    log.info("CompanyOps backend started (execution_mode=%s).", get_settings().execution_mode)
+    log.info("CompanyOps backend started (execution_mode=%s, git_mode=%s).",
+             get_settings().execution_mode, get_settings().git_mode)
     try:
         yield
     finally:
