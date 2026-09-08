@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Axiom Studio AI - Autonomous Dev Tycoon</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary": "#ffffff",
+            "inverse-on-surface": "#eaf1ff",
+            "secondary-fixed-dim": "#4edea3",
+            "inverse-surface": "#213145",
+            "surface-variant": "#d3e4fe",
+            "surface-bright": "#f8f9ff",
+            "on-secondary-fixed": "#002113",
+            "on-secondary-container": "#00714d",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-surface-variant": "#464554",
+            "surface-container-high": "#dce9ff",
+            "on-background": "#0b1c30",
+            "tertiary-fixed": "#ffddb8",
+            "on-error-container": "#93000a",
+            "surface-container": "#e5eeff",
+            "on-secondary-fixed-variant": "#005236",
+            "secondary-fixed": "#6ffbbe",
+            "error-container": "#ffdad6",
+            "secondary-container": "#6cf8bb",
+            "tertiary-container": "#a36700",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "on-surface": "#0b1c30",
+            "primary-fixed-dim": "#c0c1ff",
+            "surface-tint": "#494bd6",
+            "tertiary": "#825100",
+            "on-secondary": "#ffffff",
+            "on-tertiary-fixed-variant": "#653e00",
+            "outline-variant": "#c7c4d7",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "on-tertiary-fixed": "#2a1700",
+            "tertiary-fixed-dim": "#ffb95f",
+            "surface-container-highest": "#d3e4fe",
+            "surface-container-low": "#eff4ff",
+            "outline": "#767586",
+            "inverse-primary": "#c0c1ff",
+            "primary": "#4648d4",
+            "on-primary-container": "#fffbff",
+            "primary-container": "#6063ee",
+            "secondary": "#006c49",
+            "on-tertiary-container": "#fffbff",
+            "background": "#f8f9ff",
+            "on-primary-fixed": "#07006c",
+            "surface-dim": "#cbdbf5",
+            "primary-fixed": "#e1e0ff",
+            "surface": "#f8f9ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "pod-gap": "0.75rem",
+            "panel-padding-sm": "0.5rem",
+            "hud-inset-desktop": "1.5rem",
+            "panel-padding-lg": "1.5rem",
+            "hud-inset-tablet": "1rem",
+            "metric-gap": "0.25rem",
+            "panel-padding-md": "1rem",
+            "element-gap": "0.5rem",
+            "hud-inset-mobile": "0.75rem"
+          },
+          "fontFamily": {
+            "headline-xl": ["Space Grotesk"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Space Grotesk"],
+            "label-caps": ["Space Grotesk"],
+            "label-code": ["JetBrains Mono"],
+            "metric-body": ["JetBrains Mono"],
+            "metric-display": ["JetBrains Mono"],
+            "headline-xl-mobile": ["Space Grotesk"],
+            "body-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-md": ["Space Grotesk"],
+            "headline-lg-mobile": ["Space Grotesk"]
+          },
+          "fontSize": {
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "label-code": ["10px", { "lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "metric-body": ["14px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "metric-display": ["24px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-xl-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(241, 245, 249, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(199, 196, 215, 0.6);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md overflow-hidden select-none h-screen w-screen relative">
+<!-- ========================================================================= -->
+<!-- 3D THREE.JS ISOMETRIC AI TYCOON OFFICE (Interactive Canvas Layer)          -->
+<!-- ========================================================================= -->
+<!-- STITCH_THREEJS_START:ANIMATION_8 class="fixed inset-0 w-full h-full bg-transparent pointer-events-auto" -->
+<div class="fixed inset-0 w-full h-full bg-transparent pointer-events-auto" style="display:block;">
+<script src="https://ajax.googleapis.com/ajax/libs/threejs/r125/three.min.js"></script>
+<div id="threejs-container-ANIMATION_8" style="width:100%;height:100%"></div>
+<script>
+(function() {
+  const container = document.getElementById('threejs-container-ANIMATION_8');
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  // Container and dimensions
+const width = container.clientWidth || window.innerWidth;
+const height = container.clientHeight || window.innerHeight;
+
+// Scene setup
+const scene = new THREE.Scene();
+scene.background = null;
+
+// Fixed Isometric Orthographic Camera
+const aspect = width / height;
+const frustumSize = 46;
+const camera = new THREE.OrthographicCamera(
+  -frustumSize * aspect,
+  frustumSize * aspect,
+  frustumSize,
+  -frustumSize,
+  0.1,
+  1000
+);
+
+// Isometric orientation: 45° azimuth, 35.264° elevation
+const isoDist = 120;
+camera.position.set(isoDist, isoDist, isoDist);
+camera.lookAt(0, 0, 0);
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setSize(width, height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+dirLight.position.set(60, 110, 50);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.camera.near = 10;
+dirLight.shadow.camera.far = 300;
+const d = 55;
+dirLight.shadow.camera.left = -d;
+dirLight.shadow.camera.right = d;
+dirLight.shadow.camera.top = d;
+dirLight.shadow.camera.bottom = -d;
+dirLight.shadow.bias = -0.0005;
+scene.add(dirLight);
+
+const fillLight = new THREE.DirectionalLight(0x818cf8, 0.35);
+fillLight.position.set(-60, 40, -50);
+scene.add(fillLight);
+
+// Floor Grid & Base Stage
+const floorGroup = new THREE.Group();
+scene.add(floorGroup);
+
+const stageGeo = new THREE.BoxGeometry(78, 1.2, 78);
+const stageMat = new THREE.MeshLambertMaterial({ color: 0xfcfdff });
+const stage = new THREE.Mesh(stageGeo, stageMat);
+stage.position.y = -0.6;
+stage.receiveShadow = true;
+floorGroup.add(stage);
+
+// Subtle isometric grid lines
+const grid = new THREE.GridHelper(72, 36, 0xe2e8f0, 0xf1f5f9);
+grid.position.y = 0.02;
+floorGroup.add(grid);
+
+// Standard Materials Helper
+const whiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+const metalLegMat = new THREE.MeshLambertMaterial({ color: 0x64748b });
+const darkMetalMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+const monitorFrameMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+const paperMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+const decoWhiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+const decoWhiteLightMat = new THREE.MeshLambertMaterial({ color: 0xf1f5f9 });
+
+// UNIFIED INBOX & OUTBOX COLOR PALETTE (Noticeable & Consistent)
+// All Inboxes: Vibrant Electric Royal Blue (representing incoming work tasks)
+const inboxTrayMat = new THREE.MeshLambertMaterial({ color: 0x2563eb });
+const inboxSignMat = new THREE.MeshBasicMaterial({ color: 0x1d4ed8 });
+
+// All Outboxes: Vibrant Emerald Green (representing completed work tasks / deliveries)
+const outboxTrayMat = new THREE.MeshLambertMaterial({ color: 0x059669 });
+const outboxSignMat = new THREE.MeshBasicMaterial({ color: 0x047857 });
+
+// Interactive Raycasting
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const interactables = [];
+let hoveredObject = null;
+
+// Dynamic Screen Canvas Textures (High Resolution & Exaggerated Large Monitors)
+function createMonitorTexture(title, steps, progress, tagColor) {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+  
+  // Background
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(0, 0, 1024, 512);
+  
+  // Top header bar
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(0, 0, 1024, 88);
+  
+  // Tag pill
+  ctx.fillStyle = tagColor;
+  ctx.beginPath();
+  ctx.roundRect(32, 22, 230, 44, 12);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.fillText('SPRINT ACTIVE', 48, 53);
+
+  // Status pulse badge
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 24px monospace';
+  ctx.fillText('● SYSTEM 100% HEALTHY', 640, 54);
+  
+  // Header text (Big bold title for high visibility)
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 54px sans-serif';
+  ctx.fillText(title, 40, 190);
+  
+  // Step count / progress ratio
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = 'bold 36px monospace';
+  ctx.fillText(`MILESTONE: ${steps} STEPS`, 40, 260);
+
+  ctx.fillStyle = tagColor;
+  ctx.font = 'bold 44px monospace';
+  ctx.fillText(`${progress}% COMPLETED`, 640, 260);
+  
+  // Progress Bar Track
+  ctx.fillStyle = '#1e293b';
+  ctx.beginPath();
+  ctx.roundRect(40, 310, 944, 44, 22);
+  ctx.fill();
+  
+  // Progress Bar Fill
+  ctx.fillStyle = tagColor;
+  ctx.beginPath();
+  ctx.roundRect(40, 310, Math.max(30, (944 * (progress / 100))), 44, 22);
+  ctx.fill();
+
+  // Bottom Submetrics
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '28px sans-serif';
+  ctx.fillText('⚡ Autonomous Agents In Sync   |   Pipeline: Optimal (0 Errors)', 40, 430);
+
+  const texture = new THREE.CanvasTexture(c);
+  return texture;
+}
+
+// Dev Pawns tracking
+const devPawns = [];
+function createDevPawn(x, z, rotationY, config) {
+  const pawnGroup = new THREE.Group();
+  pawnGroup.position.set(x, 0, z);
+  pawnGroup.rotation.y = rotationY;
+
+  // Chair Stool
+  const stoolBase = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 0.4, 16), darkMetalMat);
+  stoolBase.position.y = 0.2;
+  stoolBase.receiveShadow = true;
+  pawnGroup.add(stoolBase);
+
+  const stoolStem = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.8, 12), metalLegMat);
+  stoolStem.position.y = 1.1;
+  pawnGroup.add(stoolStem);
+
+  const stoolCushion = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.5, 0.6, 16), new THREE.MeshLambertMaterial({ color: config.accentColor }));
+  stoolCushion.position.y = 2.0;
+  stoolCushion.castShadow = true;
+  pawnGroup.add(stoolCushion);
+
+  // Agent Body
+  const devBodyGroup = new THREE.Group();
+  devBodyGroup.position.y = 2.3;
+
+  const pawnRingGeo = new THREE.CylinderGeometry(1.1, 1.3, 0.5, 18);
+  const shirtMat = new THREE.MeshLambertMaterial({ color: config.shirtColor });
+  const pawnRing = new THREE.Mesh(pawnRingGeo, shirtMat);
+  pawnRing.position.y = 0.25;
+  pawnRing.castShadow = true;
+  devBodyGroup.add(pawnRing);
+
+  const torsoGeo = new THREE.CylinderGeometry(0.65, 1.1, 2.2, 18);
+  const torso = new THREE.Mesh(torsoGeo, shirtMat);
+  torso.position.y = 1.5;
+  torso.castShadow = true;
+  devBodyGroup.add(torso);
+
+  const collarGeo = new THREE.TorusGeometry(0.66, 0.12, 12, 24);
+  collarGeo.rotateX(Math.PI / 2);
+  const collar = new THREE.Mesh(collarGeo, whiteMat);
+  collar.position.y = 2.5;
+  devBodyGroup.add(collar);
+
+  const headGeo = new THREE.SphereGeometry(0.85, 20, 20);
+  const skinMat = new THREE.MeshLambertMaterial({ color: config.skinColor });
+  const head = new THREE.Mesh(headGeo, skinMat);
+  head.position.y = 3.4;
+  head.castShadow = true;
+  devBodyGroup.add(head);
+
+  // Floating status orb
+  const orbGeo = new THREE.SphereGeometry(0.24, 12, 12);
+  const orbMat = new THREE.MeshBasicMaterial({ color: config.orbColor });
+  const orb = new THREE.Mesh(orbGeo, orbMat);
+  orb.position.y = 4.8;
+  devBodyGroup.add(orb);
+
+  // Name tag facing isometric camera (+X, +Y, +Z -> angle 45 deg Y)
+  const tagCanvas = document.createElement('canvas');
+  tagCanvas.width = 256;
+  tagCanvas.height = 64;
+  const tctx = tagCanvas.getContext('2d');
+  tctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+  tctx.beginPath();
+  tctx.roundRect(8, 8, 240, 48, 24);
+  tctx.fill();
+  tctx.fillStyle = '#ffffff';
+  tctx.font = 'bold 20px sans-serif';
+  tctx.textAlign = 'center';
+  tctx.fillText(config.shortName, 128, 40);
+
+  const tagTexture = new THREE.CanvasTexture(tagCanvas);
+  const tagPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.0, 0.75),
+    new THREE.MeshBasicMaterial({ map: tagTexture, transparent: true, side: THREE.DoubleSide })
+  );
+  tagPlane.position.y = 5.5;
+  tagPlane.rotation.y = Math.PI / 4;
+  devBodyGroup.add(tagPlane);
+
+  pawnGroup.add(devBodyGroup);
+
+  head.userData = { type: 'agent', ...config };
+  torso.userData = { type: 'agent', ...config };
+  interactables.push(head, torso);
+
+  devPawns.push({
+    group: devBodyGroup,
+    initialY: 2.3,
+    phase: Math.random() * Math.PI * 2,
+    orb: orb,
+    config: config
+  });
+
+  scene.add(pawnGroup);
+  return pawnGroup;
+}
+
+// Function to Create Domain Desk
+// All monitors face the camera (+Z / +X side).
+function createDomainDesk(x, z, rotationY, deskConfig) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, z);
+  group.rotation.y = rotationY;
+
+  const deskLength = 25;
+  const deskWidth = 5.6;
+  const deskHeight = 3.2;
+
+  // Domain Floor Mat - Richer, vibrant pastel tone for strong boundary definition
+  const matGeo = new THREE.PlaneGeometry(deskLength + 6, deskWidth + 9);
+  matGeo.rotateX(-Math.PI / 2);
+  const matMaterial = new THREE.MeshLambertMaterial({ color: deskConfig.matColor, transparent: true, opacity: 0.88 });
+  const zoneMat = new THREE.Mesh(matGeo, matMaterial);
+  zoneMat.position.y = 0.04;
+  zoneMat.receiveShadow = true;
+  group.add(zoneMat);
+
+  // Main Desktop - Distinct tinted surface per domain (not washed out white)
+  const topGeo = new THREE.BoxGeometry(deskLength, 0.52, deskWidth);
+  const deskTopMat = new THREE.MeshLambertMaterial({ color: deskConfig.deskSurfaceColor });
+  const topMesh = new THREE.Mesh(topGeo, deskTopMat);
+  topMesh.position.y = deskHeight;
+  topMesh.castShadow = true;
+  topMesh.receiveShadow = true;
+  group.add(topMesh);
+
+  // Bold Accent Trim along desk edge
+  const trimGeo = new THREE.BoxGeometry(deskLength + 0.15, 0.28, deskWidth + 0.15);
+  const trimMat = new THREE.MeshLambertMaterial({ color: deskConfig.accentColor });
+  const trimMesh = new THREE.Mesh(trimGeo, trimMat);
+  trimMesh.position.y = deskHeight - 0.22;
+  group.add(trimMesh);
+
+  // Desk Legs
+  const legGeo = new THREE.CylinderGeometry(0.32, 0.32, deskHeight - 0.2, 12);
+  const legPositions = [
+    [-deskLength / 2 + 1.2, (deskHeight - 0.2) / 2, -deskWidth / 2 + 0.8],
+    [deskLength / 2 - 1.2, (deskHeight - 0.2) / 2, -deskWidth / 2 + 0.8],
+    [-deskLength / 2 + 1.2, (deskHeight - 0.2) / 2, deskWidth / 2 - 0.8],
+    [deskLength / 2 - 1.2, (deskHeight - 0.2) / 2, deskWidth / 2 - 0.8],
+    [0, (deskHeight - 0.2) / 2, -deskWidth / 2 + 0.8],
+    [0, (deskHeight - 0.2) / 2, deskWidth / 2 - 0.8]
+  ];
+  legPositions.forEach(pos => {
+    const leg = new THREE.Mesh(legGeo, metalLegMat);
+    leg.position.set(...pos);
+    leg.castShadow = true;
+    group.add(leg);
+  });
+
+  // EXAGGERATED BIGGER DOMAIN MONITOR (Width: 14, Height: 5.6)
+  const monWidth = 14;
+  const monHeight = 5.6;
+  const monGroup = new THREE.Group();
+  monGroup.position.set(0, deskHeight + 0.25, -deskWidth / 2 + 1.2);
+
+  // Monitor Stand
+  const standStem = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.8, 12), darkMetalMat);
+  standStem.position.y = 0.9;
+  monGroup.add(standStem);
+  const standBase = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.2, 1.6), darkMetalMat);
+  standBase.position.y = 0.1;
+  monGroup.add(standBase);
+
+  // Monitor Frame & Screen
+  const frameGeo = new THREE.BoxGeometry(monWidth, monHeight, 0.45);
+  const frame = new THREE.Mesh(frameGeo, monitorFrameMat);
+  frame.position.y = 3.6;
+  frame.castShadow = true;
+  monGroup.add(frame);
+
+  const screenTex = createMonitorTexture(deskConfig.title, deskConfig.steps, deskConfig.progress, deskConfig.hexColor);
+  const screenMat = new THREE.MeshBasicMaterial({ map: screenTex });
+  const screenGeo = new THREE.PlaneGeometry(monWidth - 0.4, monHeight - 0.4);
+  const screenMesh = new THREE.Mesh(screenGeo, screenMat);
+  screenMesh.position.set(0, 3.6, 0.24);
+  monGroup.add(screenMesh);
+
+  screenMesh.userData = { type: 'monitor', ...deskConfig };
+  interactables.push(screenMesh);
+  group.add(monGroup);
+
+  // ==========================================
+  // UNIFIED INBOX (All Desks: Royal Blue Tray #2563eb)
+  // ==========================================
+  const inboxGroup = new THREE.Group();
+  inboxGroup.position.set(-deskLength / 2 + 2.5, deskHeight + 0.25, 0.4);
+
+  const trayGeo = new THREE.BoxGeometry(2.8, 0.7, 3.5);
+  const tray = new THREE.Mesh(trayGeo, inboxTrayMat);
+  tray.position.y = 0.35;
+  tray.castShadow = true;
+  inboxGroup.add(tray);
+
+  for (let i = 0; i < 6; i++) {
+    const doc = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 2.9), paperMat);
+    doc.position.y = 0.75 + i * 0.11;
+    doc.rotation.y = (Math.random() - 0.5) * 0.18;
+    doc.castShadow = true;
+    inboxGroup.add(doc);
+  }
+  
+  // Distinct "INBOX" Flag Badge
+  const inboxSign = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 0.12), inboxSignMat);
+  inboxSign.position.set(0, 0.9, 1.82);
+  inboxGroup.add(inboxSign);
+
+  tray.userData = { type: 'inbox', ...deskConfig };
+  interactables.push(tray);
+  group.add(inboxGroup);
+
+  // ==========================================
+  // UNIFIED OUTBOX (All Desks: Emerald Green Tray #059669)
+  // ==========================================
+  const outboxGroup = new THREE.Group();
+  outboxGroup.position.set(deskLength / 2 - 2.5, deskHeight + 0.25, 0.4);
+
+  const outTray = new THREE.Mesh(trayGeo, outboxTrayMat);
+  outTray.position.y = 0.35;
+  outTray.castShadow = true;
+  outboxGroup.add(outTray);
+
+  for (let i = 0; i < 5; i++) {
+    const doc = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 2.9), paperMat);
+    doc.position.y = 0.75 + i * 0.11;
+    doc.rotation.y = (Math.random() - 0.5) * 0.15;
+    doc.castShadow = true;
+    outboxGroup.add(doc);
+  }
+  
+  // Distinct "OUTBOX" Flag Badge
+  const outboxSign = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 0.12), outboxSignMat);
+  outboxSign.position.set(0, 0.9, 1.82);
+  outboxGroup.add(outboxSign);
+
+  outTray.userData = { type: 'outbox', ...deskConfig };
+  interactables.push(outTray);
+  group.add(outboxGroup);
+
+  // Floating Domain Header Badge
+  const badgeCanvas = document.createElement('canvas');
+  badgeCanvas.width = 360;
+  badgeCanvas.height = 70;
+  const bctx = badgeCanvas.getContext('2d');
+  bctx.fillStyle = deskConfig.hexColor;
+  bctx.beginPath();
+  bctx.roundRect(10, 10, 340, 50, 14);
+  bctx.fill();
+  bctx.fillStyle = '#ffffff';
+  bctx.font = 'bold 24px sans-serif';
+  bctx.textAlign = 'center';
+  bctx.fillText(deskConfig.domainBadge, 180, 44);
+
+  const badgeTex = new THREE.CanvasTexture(badgeCanvas);
+  const badgePlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(6.2, 1.2),
+    new THREE.MeshBasicMaterial({ map: badgeTex, transparent: true, side: THREE.DoubleSide })
+  );
+  badgePlane.position.set(0, deskHeight + 7.4, -deskWidth / 2 + 1.2);
+  badgePlane.rotation.y = Math.PI / 4;
+  group.add(badgePlane);
+
+  topMesh.userData = { type: 'desk', ...deskConfig };
+  interactables.push(topMesh);
+
+  scene.add(group);
+  return group;
+}
+
+// MINOR NON-INTERACTIVE WHITE DECORATIONS
+function createWhitePlant(x, z, scale = 1) {
+  const plantGroup = new THREE.Group();
+  plantGroup.position.set(x, 0, z);
+  plantGroup.scale.set(scale, scale, scale);
+
+  const potGeo = new THREE.CylinderGeometry(1.2, 0.9, 2.4, 20);
+  const pot = new THREE.Mesh(potGeo, decoWhiteMat);
+  pot.position.y = 1.2;
+  pot.castShadow = true;
+  pot.receiveShadow = true;
+  plantGroup.add(pot);
+
+  const soilGeo = new THREE.CylinderGeometry(1.15, 1.15, 0.2, 20);
+  const soil = new THREE.Mesh(soilGeo, decoWhiteLightMat);
+  soil.position.y = 2.35;
+  plantGroup.add(soil);
+
+  const leafMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const leafCount = 7;
+  for (let i = 0; i < leafCount; i++) {
+    const angle = (i / leafCount) * Math.PI * 2;
+    const leafHeight = 3.2 + (i % 3) * 0.6;
+    const leafGeo = new THREE.ConeGeometry(0.5, leafHeight, 5);
+    const leaf = new THREE.Mesh(leafGeo, leafMat);
+    leaf.position.set(Math.cos(angle) * 0.4, 2.4 + leafHeight / 2, Math.sin(angle) * 0.4);
+    leaf.rotation.x = Math.sin(angle) * 0.28;
+    leaf.rotation.z = -Math.cos(angle) * 0.28;
+    leaf.castShadow = true;
+    plantGroup.add(leaf);
+  }
+
+  scene.add(plantGroup);
+}
+
+function createWhiteTrashCan(x, z) {
+  const canGroup = new THREE.Group();
+  canGroup.position.set(x, 0, z);
+
+  const binGeo = new THREE.CylinderGeometry(0.9, 0.75, 2.2, 18, 1, true);
+  const bin = new THREE.Mesh(binGeo, decoWhiteMat);
+  bin.position.y = 1.1;
+  bin.castShadow = true;
+  canGroup.add(bin);
+
+  const baseGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.1, 18);
+  const base = new THREE.Mesh(baseGeo, decoWhiteMat);
+  base.position.y = 0.05;
+  canGroup.add(base);
+
+  const ringGeo = new THREE.TorusGeometry(0.9, 0.06, 8, 20);
+  ringGeo.rotateX(Math.PI / 2);
+  const ring = new THREE.Mesh(ringGeo, decoWhiteMat);
+  ring.position.y = 2.2;
+  canGroup.add(ring);
+
+  scene.add(canGroup);
+}
+
+createWhitePlant(-28, 28, 1.1);
+createWhitePlant(-28, -26, 1.2);
+createWhitePlant(28, 26, 1.1);
+createWhitePlant(10, -28, 1.0);
+createWhitePlant(32, -8, 1.15);
+
+createWhiteTrashCan(-1.5, 21);
+createWhiteTrashCan(-1.5, -9);
+createWhiteTrashCan(27, 8);
+createWhiteTrashCan(12, -18);
+
+// =========================================================================
+// 4 WORKSTATIONS - ALL ROTATED TO FACE CAMERA + NOTICEABLE DOMAIN COLORING
+// =========================================================================
+
+// 1. FRONTEND DESK (Noticeable Indigo / Lavender Blue)
+createDomainDesk(-15, 17, 0, {
+  title: 'Frontend Engine',
+  steps: '9/14',
+  progress: 64,
+  hexColor: '#4f46e5',
+  accentColor: 0x4f46e5,
+  deskSurfaceColor: 0xe0e7ff, // Clear soft indigo surface
+  matColor: 0xc7d2fe,         // Vibrant floor zone
+  domainBadge: '● FRONTEND DESK',
+  agentsCount: '5 Active',
+  inboxCount: '7 Pending Epics',
+  outboxCount: '12 PRs Merged'
+});
+
+const feDevs = [
+  { x: -23, z: 21.8, name: 'Claude 3.7 Sonnet', shortName: 'Sonnet-FE', shirtColor: 0xd97706, skinColor: 0xf5d0b5, orbColor: 0xf59e0b, role: 'Lead UI Architect', speed: '98 t/s' },
+  { x: -19, z: 21.8, name: 'GPT-4o Canvas', shortName: 'Omni-FE', shirtColor: 0x10b981, skinColor: 0xfcd34d, orbColor: 0x10b981, role: 'Design Systems Eng', speed: '112 t/s' },
+  { x: -15, z: 21.8, name: 'Gemini 1.5 Pro', shortName: 'Gemini-FE', shirtColor: 0x3b82f6, skinColor: 0xffedd5, orbColor: 0x60a5fa, role: 'State Machine Spec', speed: '84 t/s' },
+  { x: -11, z: 21.8, name: 'Llama-3 70B', shortName: 'Llama-FE', shirtColor: 0x8b5cf6, skinColor: 0xd97706, orbColor: 0xa78bfa, role: 'Tailwind Optimizer', speed: '76 t/s' },
+  { x: -7,  z: 21.8, name: 'DeepSeek-V3', shortName: 'Seek-FE', shirtColor: 0x06b6d4, skinColor: 0xfde047, orbColor: 0x22d3ee, role: 'DOM Virtualizer', speed: '130 t/s' },
+];
+feDevs.forEach(dev => createDevPawn(dev.x, dev.z, 0, dev));
+
+// 2. BACKEND DESK (Noticeable Emerald / Jade Green)
+createDomainDesk(-15, -13, 0, {
+  title: 'Backend Microservices',
+  steps: '11/18',
+  progress: 61,
+  hexColor: '#059669',
+  accentColor: 0x059669,
+  deskSurfaceColor: 0xd1fae5, // Clear soft emerald surface
+  matColor: 0xa7f3d0,         // Vibrant floor zone
+  domainBadge: '● BACKEND DESK',
+  agentsCount: '4 Active',
+  inboxCount: '5 Events Waiting',
+  outboxCount: '9 Endpoints Live'
+});
+
+const beDevs = [
+  { x: -21, z: -8.2, name: 'Claude 3.5 Sonnet', shortName: 'Sonnet-BE', shirtColor: 0xb45309, skinColor: 0xfbcfe8, orbColor: 0xf59e0b, role: 'Distributed Systems', speed: '94 t/s' },
+  { x: -17, z: -8.2, name: 'DeepSeek-R1 Reasoner', shortName: 'Seek-R1', shirtColor: 0x0891b2, skinColor: 0xfde047, orbColor: 0x06b6d4, role: 'Event Broker Lead', speed: '142 t/s' },
+  { x: -13, z: -8.2, name: 'GPT-4o Backend', shortName: 'Omni-BE', shirtColor: 0x059669, skinColor: 0xfecdd3, orbColor: 0x34d399, role: 'Auth & Cryptography', speed: '108 t/s' },
+  { x: -9,  z: -8.2, name: 'Llama-3.1 405B', shortName: 'Llama-405B', shirtColor: 0x7c3aed, skinColor: 0xd97706, orbColor: 0xc4b5fd, role: 'Data Pipeline Syncer', speed: '62 t/s' },
+];
+beDevs.forEach(dev => createDevPawn(dev.x, dev.z, 0, dev));
+
+// 3. DATABASE & STORAGE DESK (Noticeable Warm Amber / Gold)
+createDomainDesk(15, 17, 0, {
+  title: 'Database & Vector Store',
+  steps: '4/6',
+  progress: 67,
+  hexColor: '#d97706',
+  accentColor: 0xd97706,
+  deskSurfaceColor: 0xfef3c7, // Clear soft warm amber surface
+  matColor: 0xfde68a,         // Vibrant floor zone
+  domainBadge: '● DATABASE CLUSTER',
+  agentsCount: '3 Active',
+  inboxCount: '2 Sharding Tasks',
+  outboxCount: '4 Schemas Indexed'
+});
+
+const dbDevs = [
+  { x: 9,  z: 21.8, name: 'Claude 3.7 DB', shortName: 'Sonnet-DB', shirtColor: 0xb45309, skinColor: 0xf5d0b5, orbColor: 0xf59e0b, role: 'Vector Partitioning', speed: '88 t/s' },
+  { x: 15, z: 21.8, name: 'Omni-DB Specialist', shortName: 'Omni-DB', shirtColor: 0x10b981, skinColor: 0xfef08a, orbColor: 0x10b981, role: 'RAG Index Caching', speed: '115 t/s' },
+  { x: 21, z: 21.8, name: 'Gemini Flash DB', shortName: 'Gemini-DB', shirtColor: 0x2563eb, skinColor: 0xfcd34d, orbColor: 0x60a5fa, role: 'Query Optimizer', speed: '140 t/s' },
+];
+dbDevs.forEach(dev => createDevPawn(dev.x, dev.z, 0, dev));
+
+// 4. PRODUCT MANAGER CORNER SUITE (Noticeable Rose / Coral Pink)
+function createPMCornerSuite(x, z) {
+  const pmGroup = new THREE.Group();
+  pmGroup.position.set(x, 0, z);
+
+  // Soft Rose Zone Rug
+  const rug = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 16),
+    new THREE.MeshLambertMaterial({ color: 0xfecdd3, transparent: true, opacity: 0.9 })
+  );
+  rug.rotateX(-Math.PI / 2);
+  rug.position.y = 0.04;
+  rug.receiveShadow = true;
+  pmGroup.add(rug);
+
+  // Whiteboard with roadmap stickies behind desk
+  const boardFrame = new THREE.Mesh(new THREE.BoxGeometry(10, 5.5, 0.3), darkMetalMat);
+  boardFrame.position.set(0, 4.4, -6.5);
+  pmGroup.add(boardFrame);
+
+  const boardFace = new THREE.Mesh(new THREE.PlaneGeometry(9.6, 5.1), whiteMat);
+  boardFace.position.set(0, 4.4, -6.34);
+  pmGroup.add(boardFace);
+
+  const stickyColors = [0xf43f5e, 0xfbbf24, 0x10b981, 0x3b82f6];
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 5; c++) {
+      const sticky = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.3, 1.3),
+        new THREE.MeshBasicMaterial({ color: stickyColors[(r * 5 + c) % stickyColors.length] })
+      );
+      sticky.position.set(-3.4 + c * 1.7, 5.2 - r * 1.7, -6.32);
+      pmGroup.add(sticky);
+    }
+  }
+
+  // Executive Corner Desk with Noticeable Coral Tint
+  const execTop = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 0.52, 4.5),
+    new THREE.MeshLambertMaterial({ color: 0xffe4e6 })
+  );
+  execTop.position.set(0, 3.2, -1.8);
+  execTop.castShadow = true;
+  pmGroup.add(execTop);
+
+  // Executive Trim
+  const execTrim = new THREE.Mesh(
+    new THREE.BoxGeometry(10.15, 0.28, 4.65),
+    new THREE.MeshLambertMaterial({ color: 0xe11d48 })
+  );
+  execTrim.position.set(0, 3.0, -1.8);
+  pmGroup.add(execTrim);
+
+  // Executive Legs
+  const eLegGeo = new THREE.CylinderGeometry(0.3, 0.3, 3.0, 12);
+  [[-4.5, 1.5, -3.5], [4.5, 1.5, -3.5], [-4.5, 1.5, -0.1], [4.5, 1.5, -0.1]].forEach(pos => {
+    const el = new THREE.Mesh(eLegGeo, metalLegMat);
+    el.position.set(...pos);
+    pmGroup.add(el);
+  });
+
+  // PM Dedicated Inbox (Royal Blue) & Outbox (Emerald Green)
+  const pmInbox = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 2.6), inboxTrayMat);
+  pmInbox.position.set(-3.6, 3.55, -1.5);
+  pmInbox.castShadow = true;
+  pmInbox.userData = { type: 'inbox', title: 'PM Inbound PRDs', steps: 'Sprint 09', progress: 85, hexColor: '#e11d48', domainBadge: '★ PM SUITE' };
+  interactables.push(pmInbox);
+  pmGroup.add(pmInbox);
+
+  const pmOutbox = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.6, 2.6), outboxTrayMat);
+  pmOutbox.position.set(-3.6, 3.55, -3.2);
+  pmOutbox.castShadow = true;
+  pmOutbox.userData = { type: 'outbox', title: 'PM Approved Epics', steps: 'Sprint 09', progress: 85, hexColor: '#e11d48', domainBadge: '★ PM SUITE' };
+  interactables.push(pmOutbox);
+  pmGroup.add(pmOutbox);
+
+  // EXAGGERATED PM MONITOR - Facing camera directly
+  const pmMonWidth = 7.5;
+  const pmMonHeight = 4.2;
+  const pmMon = new THREE.Mesh(new THREE.BoxGeometry(pmMonWidth, pmMonHeight, 0.35), monitorFrameMat);
+  pmMon.position.set(0.8, 5.8, -2.8);
+  pmGroup.add(pmMon);
+
+  const pmScreenTex = createMonitorTexture('PM Strategy Hub', 'SPRINT 09', 85, '#e11d48');
+  const pmScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(pmMonWidth - 0.3, pmMonHeight - 0.3),
+    new THREE.MeshBasicMaterial({ map: pmScreenTex })
+  );
+  pmScreen.position.set(0.8, 5.8, -2.61);
+  pmGroup.add(pmScreen);
+
+  // Stand
+  const pmStand = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.15, 1.2), darkMetalMat);
+  pmStand.position.set(0.8, 3.5, -2.8);
+  pmGroup.add(pmStand);
+
+  // Coffee Espresso Machine in white & red mug
+  const coffeeMachine = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.0, 1.3), decoWhiteMat);
+  coffeeMachine.position.set(4.0, 4.45, -1.8);
+  pmGroup.add(coffeeMachine);
+  const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.45, 12), new THREE.MeshLambertMaterial({ color: 0xf43f5e }));
+  mug.position.set(3.0, 3.65, -1.2);
+  pmGroup.add(mug);
+
+  // PM Suite Badge
+  const pmBadgeCanvas = document.createElement('canvas');
+  pmBadgeCanvas.width = 320;
+  pmBadgeCanvas.height = 70;
+  const pmctx = pmBadgeCanvas.getContext('2d');
+  pmctx.fillStyle = '#e11d48';
+  pmctx.beginPath();
+  pmctx.roundRect(8, 8, 304, 54, 14);
+  pmctx.fill();
+  pmctx.fillStyle = '#ffffff';
+  pmctx.font = 'bold 22px sans-serif';
+  pmctx.textAlign = 'center';
+  pmctx.fillText('★ PM CORNER SUITE', 160, 43);
+
+  const pmBadgeTex = new THREE.CanvasTexture(pmBadgeCanvas);
+  const pmBadgePlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.2, 1.15),
+    new THREE.MeshBasicMaterial({ map: pmBadgeTex, transparent: true, side: THREE.DoubleSide })
+  );
+  pmBadgePlane.position.set(0.8, 8.6, -2.8);
+  pmBadgePlane.rotation.y = Math.PI / 4;
+  pmGroup.add(pmBadgePlane);
+
+  execTop.userData = {
+    type: 'pm_suite',
+    title: 'Product Management Suite',
+    status: 'Sprint 09 Deployment in Progress',
+    burnRate: '$34.20/hr',
+    lead: 'Architect AI Prime'
+  };
+  pmScreen.userData = {
+    type: 'monitor',
+    title: 'Product Management Suite',
+    steps: 'SPRINT 09',
+    progress: 85,
+    hexColor: '#e11d48',
+    domainBadge: '★ PM SUITE'
+  };
+  interactables.push(execTop, pmScreen);
+
+  scene.add(pmGroup);
+}
+
+createPMCornerSuite(18, -14);
+
+// The PM Dev Pawn Agent seated facing the monitor
+const pmAgent = {
+  x: 18.8,
+  z: -12.2,
+  name: 'PM AI Prime (Claude Opus)',
+  shortName: 'PM-Prime',
+  shirtColor: 0xe11d48,
+  skinColor: 0xffedd5,
+  orbColor: 0xf43f5e,
+  role: 'Chief Autonomous Product Lead',
+  speed: 'Strategy Core'
+};
+createDevPawn(pmAgent.x, pmAgent.z, 0, pmAgent);
+
+// Mouse and Interaction Listeners
+function onPointerMove(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(interactables);
+
+  if (intersects.length > 0) {
+    renderer.domElement.style.cursor = 'pointer';
+    hoveredObject = intersects[0].object;
+  } else {
+    renderer.domElement.style.cursor = 'default';
+    hoveredObject = null;
+  }
+}
+
+function onPointerDown(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(interactables);
+
+  if (intersects.length > 0) {
+    const data = intersects[0].object.userData;
+    
+    // Scale bounce feedback
+    const obj = intersects[0].object;
+    const origScale = obj.scale.clone();
+    obj.scale.set(origScale.x * 1.12, origScale.y * 1.12, origScale.z * 1.12);
+    setTimeout(() => {
+      obj.scale.copy(origScale);
+    }, 180);
+
+    // Dispatch global custom event for HTML UI HUD & Modal
+    window.dispatchEvent(new CustomEvent('tycoon-item-selected', { detail: data }));
+  }
+}
+
+renderer.domElement.addEventListener('pointermove', onPointerMove);
+renderer.domElement.addEventListener('pointerdown', onPointerDown);
+
+// Responsive Resize Listener
+function onWindowResize() {
+  const newWidth = container.clientWidth || window.innerWidth;
+  const newHeight = container.clientHeight || window.innerHeight;
+  const newAspect = newWidth / newHeight;
+
+  camera.left = -frustumSize * newAspect;
+  camera.right = frustumSize * newAspect;
+  camera.top = frustumSize;
+  camera.bottom = -frustumSize;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(newWidth, newHeight);
+}
+window.addEventListener('resize', onWindowResize);
+
+// Animation Loop
+let clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsed = clock.getElapsedTime();
+
+  // Subtle idle bobbing for dev pawns
+  devPawns.forEach(dev => {
+    dev.group.position.y = dev.initialY + Math.sin(elapsed * 2.2 + dev.phase) * 0.12;
+    if (dev.orb) {
+      dev.orb.position.y = 4.8 + Math.sin(elapsed * 3.5 + dev.phase) * 0.18;
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+animate();
+})();
+</script>
+</div>
+<!-- STITCH_THREEJS_END:ANIMATION_8 -->
+<!-- ========================================================================= -->
+<!-- 1. TOP EXECUTIVE HUD NAV                                                  -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 inset-x-0 w-full z-40 px-hud-inset-desktop pt-hud-inset-desktop pointer-events-none">
+<div class="flex justify-between items-center max-w-7xl mx-auto h-14 px-panel-padding-lg rounded-full bg-surface-container-lowest/90 dark:bg-inverse-surface/90 border border-outline-variant/30 shadow-sm backdrop-blur-xl pointer-events-auto">
+<!-- Studio Identity & Version -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-lg" data-icon="deployed_code">deployed_code</span>
+</div>
+<div>
+<span class="font-headline-md text-headline-md font-bold text-on-surface dark:text-inverse-on-surface tracking-tight">Axiom Studio AI</span>
+<span class="ml-2 px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-label-code text-label-code">DLC: Project Synthetica v2.4</span>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-primary dark:text-primary-fixed-dim font-semibold border-b-2 border-primary dark:border-primary-fixed-dim pb-1 font-body-md text-body-md" href="#overview">Overview</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface transition-colors pb-1 font-body-md text-body-md" href="#departments">Departments</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface transition-colors pb-1 font-body-md text-body-md" href="#roadmap">Roadmap</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-on-surface transition-colors pb-1 font-body-md text-body-md" href="#analytics">Analytics</a>
+</nav>
+<!-- Tycoon Speed Controller & Executive Controls -->
+<div class="flex items-center gap-3">
+<!-- Unified Pill Speed Segmenter -->
+<div class="flex items-center bg-surface-container-low border border-outline-variant/40 rounded-full p-1 shadow-inner">
+<button class="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors" id="btn-pause" onclick="setSpeed(0)" title="Pause Simulation">
+<span class="material-symbols-outlined text-base" data-icon="pause">pause</span>
+</button>
+<button class="w-7 h-7 rounded-full bg-surface-container-lowest text-primary font-metric-body text-metric-body font-bold shadow-sm flex items-center justify-center" id="btn-1x" onclick="setSpeed(1)" title="1x Speed">
+            1x
+          </button>
+<button class="w-7 h-7 rounded-full text-on-surface-variant hover:text-on-surface font-metric-body text-metric-body flex items-center justify-center" id="btn-2x" onclick="setSpeed(2)" title="2x Speed">
+            2x
+          </button>
+<button class="w-7 h-7 rounded-full text-on-surface-variant hover:text-on-surface font-metric-body text-metric-body flex items-center justify-center" id="btn-5x" onclick="setSpeed(5)" title="5x Warp Speed">
+            5x
+          </button>
+</div>
+<!-- Trailing Actions -->
+<button class="px-3.5 py-1.5 rounded-full border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-caps text-label-caps active:scale-95 transition-all" onclick="toggleAction('pause')">
+          Pause Sim
+        </button>
+<button class="px-4 py-1.5 rounded-full bg-primary text-on-primary font-label-caps text-label-caps hover:bg-primary-container shadow-md active:scale-95 transition-all flex items-center gap-1.5" onclick="triggerSprintDeploy()">
+<span class="material-symbols-outlined text-sm" data-icon="rocket_launch">rocket_launch</span>
+          Deploy Sprint
+        </button>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- 2. SIDE HUD BAR                                                           -->
+<!-- ========================================================================= -->
+<aside class="fixed left-hud-inset-desktop top-24 bottom-hud-inset-desktop w-64 rounded-xl z-40 bg-surface-container-lowest/85 dark:bg-inverse-surface/85 backdrop-blur-lg border border-outline-variant/40 shadow-lg pointer-events-auto flex flex-col justify-between p-panel-padding-md">
+<div>
+<!-- Workspace Header -->
+<div class="flex items-center gap-3 pb-3 border-b border-outline-variant/30">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-primary/20 text-primary">
+<span class="material-symbols-outlined text-xl" data-icon="memory">memory</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight leading-tight">Project Synthetica</h2>
+<p class="font-label-code text-label-code text-on-surface-variant">Seed Stage • Day 48</p>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="mt-4 flex flex-col gap-1">
+<a class="flex items-center gap-element-gap px-panel-padding-md py-panel-padding-sm rounded-lg bg-surface-container-high text-primary font-semibold transition-all" href="#workspaces">
+<span class="material-symbols-outlined text-lg" data-icon="domain">domain</span>
+<span class="font-body-md text-body-md">Workspaces</span>
+</a>
+<a class="flex items-center gap-element-gap px-panel-padding-md py-panel-padding-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" href="#agents">
+<span class="material-symbols-outlined text-lg" data-icon="smart_toy">smart_toy</span>
+<span class="font-body-md text-body-md">Agents</span>
+<span class="ml-auto px-1.5 py-0.5 rounded-full bg-secondary/15 text-secondary font-label-code text-label-code">12/16</span>
+</a>
+<a class="flex items-center gap-element-gap px-panel-padding-md py-panel-padding-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" href="#tasks">
+<span class="material-symbols-outlined text-lg" data-icon="checklist">checklist</span>
+<span class="font-body-md text-body-md">Tasks</span>
+<span class="ml-auto px-1.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-label-code text-label-code">30</span>
+</a>
+<a class="flex items-center gap-element-gap px-panel-padding-md py-panel-padding-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" href="#infrastructure">
+<span class="material-symbols-outlined text-lg" data-icon="dns">dns</span>
+<span class="font-body-md text-body-md">Infrastructure</span>
+</a>
+<a class="flex items-center gap-element-gap px-panel-padding-md py-panel-padding-sm rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" href="#finances">
+<span class="material-symbols-outlined text-lg" data-icon="account_balance">account_balance</span>
+<span class="font-body-md text-body-md">Finances</span>
+</a>
+</div>
+<!-- Realtime Studio Vital Sparklines -->
+<div class="mt-6 pt-4 border-t border-outline-variant/30 space-y-3">
+<div class="flex items-center justify-between font-label-caps text-label-caps text-on-surface-variant">
+<span>BUDGET RUNWAY</span>
+<span class="text-secondary font-label-code text-label-code font-bold">5.8 MO</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 57%;"></div>
+</div>
+<div class="flex items-center justify-between text-xs font-metric-body text-metric-body text-on-surface">
+<span>$142,850</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">/ $250,000</span>
+</div>
+<div class="flex items-center justify-between font-label-caps text-label-caps text-on-surface-variant pt-2">
+<span>SIM BURN RATE</span>
+<span class="text-error font-label-code text-label-code font-bold">-$34.20/hr</span>
+</div>
+</div>
+</div>
+<!-- CTA & Footer -->
+<div class="space-y-3">
+<button class="w-full py-2.5 px-4 rounded-xl bg-on-surface text-surface-container-lowest font-headline-md text-headline-md font-semibold text-sm shadow-md hover:bg-on-surface-variant active:scale-[0.98] transition-transform flex items-center justify-center gap-2" onclick="openHireModal()">
+<span class="material-symbols-outlined text-lg" data-icon="person_add">person_add</span>
+        Hire AI Agent
+      </button>
+<div class="pt-2 border-t border-outline-variant/30 flex flex-col gap-1">
+<a class="flex items-center gap-2 px-2 py-1 rounded text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm" href="#docs">
+<span class="material-symbols-outlined text-base" data-icon="menu_book">menu_book</span>
+          Documentation
+        </a>
+<a class="flex items-center gap-2 px-2 py-1 rounded text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm" href="#settings">
+<span class="material-symbols-outlined text-base" data-icon="tune">tune</span>
+          System Settings
+        </a>
+</div>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- 3. TOP-RIGHT FLOATING VELOCITY POD & CLOCK                                -->
+<!-- ========================================================================= -->
+<div class="fixed right-hud-inset-desktop top-24 z-40 flex flex-col gap-3 pointer-events-none">
+<!-- Time & Sprint Velocity Clock -->
+<div class="bg-surface-container-lowest/90 backdrop-blur-xl border border-outline-variant/40 rounded-2xl p-panel-padding-md shadow-md pointer-events-auto flex items-center gap-4">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="hourglass_top">hourglass_top</span>
+</div>
+<div>
+<div class="font-label-code text-label-code text-on-surface-variant uppercase tracking-wider">Elapsed Time</div>
+<div class="font-metric-display text-metric-display text-on-surface font-bold tracking-tight">Day 48 • 14:32:10</div>
+</div>
+<div class="pl-3 border-l border-outline-variant/30 text-right">
+<div class="font-label-caps text-label-caps text-on-surface-variant">VELOCITY</div>
+<div class="text-secondary font-metric-body text-metric-body font-bold">+18.4 FP/d</div>
+</div>
+</div>
+<!-- Active Feature Progress Stack -->
+<div class="w-80 bg-surface-container-lowest/90 backdrop-blur-xl border border-outline-variant/40 rounded-2xl p-panel-padding-md shadow-md pointer-events-auto space-y-2.5">
+<div class="flex items-center justify-between pb-1">
+<span class="font-label-caps text-label-caps text-on-surface tracking-wider">ACTIVE SPRINT MILESTONES</span>
+<span class="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-label-code text-label-code font-bold">SPRINT 09</span>
+</div>
+<!-- Frontend Ticket -->
+<div class="p-2 rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-[#4f46e5]/40 cursor-pointer transition-colors" onclick="openDeskMonitor('FE')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-[#4f46e5] flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-[#4f46e5] inline-block"></span>
+            FE • Canvas Virtualizer
+          </span>
+<span class="font-label-code text-label-code text-on-surface-variant">9/14 (64%)</span>
+</div>
+<div class="w-full h-1.5 bg-white rounded-full overflow-hidden shadow-inner">
+<div class="bg-[#4f46e5] h-full rounded-full transition-all duration-500" style="width: 64%;"></div>
+</div>
+</div>
+<!-- Backend Ticket -->
+<div class="p-2 rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-[#059669]/40 cursor-pointer transition-colors" onclick="openDeskMonitor('BE')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-[#059669] flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-[#059669] inline-block"></span>
+            BE • Event Sourcing Broker
+          </span>
+<span class="font-label-code text-label-code text-on-surface-variant">11/18 (61%)</span>
+</div>
+<div class="w-full h-1.5 bg-white rounded-full overflow-hidden shadow-inner">
+<div class="bg-[#059669] h-full rounded-full transition-all duration-500" style="width: 61%;"></div>
+</div>
+</div>
+<!-- Database Ticket -->
+<div class="p-2 rounded-xl bg-surface-container-low border border-outline-variant/20 hover:border-[#d97706]/40 cursor-pointer transition-colors" onclick="openDeskMonitor('DB')">
+<div class="flex items-center justify-between mb-1">
+<span class="text-xs font-semibold text-[#d97706] flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-[#d97706] inline-block"></span>
+            DB • Vector Partitioning
+          </span>
+<span class="font-label-code text-label-code text-on-surface-variant">4/6 (67%)</span>
+</div>
+<div class="w-full h-1.5 bg-white rounded-full overflow-hidden shadow-inner">
+<div class="bg-[#d97706] h-full rounded-full transition-all duration-500" style="width: 67%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- 4. BOTTOM FLOATING STUDIO COMMAND DOCK                                    -->
+<!-- ========================================================================= -->
+<div class="fixed bottom-hud-inset-desktop inset-x-0 z-40 flex justify-center pointer-events-none">
+<div class="bg-surface-container-lowest/92 backdrop-blur-2xl border border-outline-variant/40 rounded-full px-4 py-2 shadow-2xl flex items-center gap-3 pointer-events-auto">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-surface-container text-on-surface font-body-sm text-body-sm transition-colors active:scale-95" onclick="quickJumpMarker('all')">
+<span class="material-symbols-outlined text-lg" data-icon="grid_view">grid_view</span>
+<span>Center Studio</span>
+</button>
+<div class="h-5 w-px bg-outline-variant/40"></div>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-surface-container text-[#4f46e5] font-body-sm text-body-sm transition-colors active:scale-95" onclick="quickJumpMarker('fe')">
+<span class="w-2 h-2 rounded-full bg-[#4f46e5]"></span>
+<span>Frontend Desk</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-surface-container text-[#059669] font-body-sm text-body-sm transition-colors active:scale-95" onclick="quickJumpMarker('be')">
+<span class="w-2 h-2 rounded-full bg-[#059669]"></span>
+<span>Backend Desk</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-surface-container text-[#d97706] font-body-sm text-body-sm transition-colors active:scale-95" onclick="quickJumpMarker('db')">
+<span class="w-2 h-2 rounded-full bg-[#d97706]"></span>
+<span>Database Cluster</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-surface-container text-[#e11d48] font-body-sm text-body-sm transition-colors active:scale-95" onclick="quickJumpMarker('pm')">
+<span class="w-2 h-2 rounded-full bg-[#e11d48]"></span>
+<span>PM Suite</span>
+</button>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- 5. INTERACTIVE 3D SELECTION INSPECTOR MODALS                              -->
+<!-- ========================================================================= -->
+<!-- MODAL 1: RICH AGENT DETAIL SHEET (Triggered on Pawn Click) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/30 backdrop-blur-md hidden" id="modal-agent" onclick="handleBackdropClick(event, 'modal-agent')">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-2xl p-panel-padding-lg relative animate-in fade-in zoom-in duration-150 pointer-events-auto" onclick="event.stopPropagation()">
+<!-- Close button -->
+<button class="absolute top-4 right-4 w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" onclick="closeModal('modal-agent')">
+<span class="material-symbols-outlined text-lg" data-icon="close">close</span>
+</button>
+<!-- Agent Header Dossier -->
+<div class="flex items-center gap-4 pb-4 border-b border-outline-variant/30">
+<div class="w-16 h-16 rounded-2xl bg-surface-container-high border-2 border-outline-variant/40 flex items-center justify-center shadow-inner relative" id="agent-avatar-wrap">
+<span class="material-symbols-outlined text-3xl" data-icon="smart_toy" id="agent-avatar-icon">smart_toy</span>
+<span class="w-3 h-3 rounded-full bg-emerald-500 absolute -top-1 -right-1 ring-2 ring-white" id="agent-status-dot"></span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface" id="agent-name">Sonnet-FE</h3>
+<span class="px-2 py-0.5 rounded-full text-xs font-label-code text-label-code font-bold" id="agent-model-pill">Claude 3.7 Sonnet</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5" id="agent-role">Lead UI Architect</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="font-label-code text-label-code text-emerald-700 font-semibold" id="agent-active-badge">Status: Autonomous Inference</span>
+</div>
+</div>
+</div>
+<!-- Agent Real-time Metrics Grid -->
+<div class="mt-4 grid grid-cols-3 gap-2.5">
+<div class="p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20 text-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">VELOCITY</span>
+<div class="font-metric-display text-metric-display text-on-surface font-bold mt-0.5" id="agent-speed">98 <span class="text-xs font-normal">t/s</span></div>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20 text-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">CONSUMPTION</span>
+<div class="font-metric-display text-metric-display text-on-surface font-bold mt-0.5" id="agent-consumption">18.4k <span class="text-xs font-normal">tok</span></div>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20 text-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">CONTEXT LOAD</span>
+<div class="font-metric-display text-metric-display text-on-surface font-bold mt-0.5" id="agent-context">34% <span class="text-xs font-normal">RAM</span></div>
+</div>
+</div>
+<!-- Current Active Subtask -->
+<div class="mt-4 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ACTIVE SUBTASK OBJECTIVE</span>
+<span class="font-label-code text-label-code text-primary font-bold">In-Progress</span>
+</div>
+<p class="font-label-code text-xs text-on-surface bg-white dark:bg-inverse-surface p-2.5 rounded-lg border border-outline-variant/20 overflow-hidden text-ellipsis leading-relaxed" id="agent-subtask">
+          "Optimizing virtual DOM layout pipeline &amp; canvas render tree under 60fps budget."
+        </p>
+</div>
+<!-- Agent Interactive Action Buttons -->
+<div class="mt-5 grid grid-cols-3 gap-2">
+<button class="py-2 px-2.5 rounded-xl border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-caps text-label-caps transition-colors flex items-center justify-center gap-1" onclick="simulateToast('Inspecting system prompt stream...')">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+          Prompt
+        </button>
+<button class="py-2 px-2.5 rounded-xl border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-caps text-label-caps transition-colors flex items-center justify-center gap-1" onclick="simulateToast('Task backlog rebalanced for agent')">
+<span class="material-symbols-outlined text-sm" data-icon="swap_horiz">swap_horiz</span>
+          Reassign
+        </button>
+<button class="py-2 px-2.5 rounded-xl bg-primary text-on-primary font-label-caps text-label-caps shadow hover:bg-primary-container transition-colors flex items-center justify-center gap-1" onclick="simulateToast('GPU Clock boosted by 1.5x inference!')">
+<span class="material-symbols-outlined text-sm" data-icon="bolt">bolt</span>
+          Boost Clock
+        </button>
+</div>
+</div>
+</div>
+<!-- MODAL 2: DESK / MONITOR / QUEUE DETAIL SHEET (Triggered on 3D Monitor, Desk or Tray Click) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/30 backdrop-blur-md hidden" id="modal-desk" onclick="handleBackdropClick(event, 'modal-desk')">
+<div class="w-full max-w-lg bg-surface-container-lowest rounded-2xl border border-outline-variant/40 shadow-2xl p-panel-padding-lg relative animate-in fade-in zoom-in duration-150 pointer-events-auto" onclick="event.stopPropagation()">
+<button class="absolute top-4 right-4 w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" onclick="closeModal('modal-desk')">
+<span class="material-symbols-outlined text-lg" data-icon="close">close</span>
+</button>
+<div class="flex items-center gap-3 pb-3 border-b border-outline-variant/30">
+<div class="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center" id="desk-modal-icon">
+<span class="material-symbols-outlined text-2xl" data-icon="domain">domain</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface" id="desk-modal-title">Frontend Engine</h3>
+<p class="font-label-code text-label-code text-on-surface-variant" id="desk-modal-sub">Sprint Cycle 09 • Autonomous Workspace</p>
+</div>
+</div>
+<div class="mt-4 space-y-3">
+<!-- Progress bar row -->
+<div>
+<div class="flex justify-between font-label-caps text-label-caps text-on-surface-variant mb-1">
+<span>DOMAIN SPRINT PIPELINE</span>
+<span class="font-label-code text-label-code font-bold text-primary" id="desk-modal-steps">Step 9/14 (64%)</span>
+</div>
+<div class="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-300" id="desk-modal-bar" style="width: 64%;"></div>
+</div>
+</div>
+<!-- Real-time metrics from 3D object -->
+<div class="grid grid-cols-3 gap-2 pt-2">
+<div class="p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/20 text-center">
+<span class="font-label-code text-label-code text-on-surface-variant">ACTIVE AGENTS</span>
+<div class="font-metric-body text-metric-body text-on-surface font-bold mt-0.5" id="desk-modal-agents">5 Active</div>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/20 text-center">
+<span class="font-label-code text-label-code text-on-surface-variant">INBOX QUEUE</span>
+<div class="font-metric-body text-metric-body text-on-surface font-bold mt-0.5" id="desk-modal-inbox">7 Pending</div>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/20 text-center">
+<span class="font-label-code text-label-code text-on-surface-variant">OUTBOX READY</span>
+<div class="font-metric-body text-metric-body text-secondary font-bold mt-0.5" id="desk-modal-outbox">12 Merged</div>
+</div>
+</div>
+<!-- Pending Tasks Queue in Department -->
+<div class="mt-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">DISPATCHED WORK ITEMS</span>
+<div class="mt-2 space-y-1.5 max-h-36 overflow-y-auto pr-1" id="desk-modal-tasklist">
+<div class="p-2 rounded-lg bg-surface-container-low border border-outline-variant/20 flex items-center justify-between">
+<span class="font-label-code text-xs text-on-surface">#TSK-01 • Kernel Shading Engine</span>
+<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Passed</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-low border border-outline-variant/20 flex items-center justify-between">
+<span class="font-label-code text-xs text-on-surface">#TSK-02 • Virtualizer Grid Stress Test</span>
+<span class="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">In-Review</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-5 flex justify-end gap-2">
+<button class="px-4 py-2 rounded-xl border border-outline-variant/50 font-body-md text-body-md hover:bg-surface-container text-on-surface" onclick="closeModal('modal-desk')">
+          Dismiss
+        </button>
+<button class="px-4 py-2 rounded-xl bg-primary text-on-primary font-body-md text-body-md shadow hover:bg-primary-container" onclick="simulateToast('Department sprint cycle re-indexed!')">
+          Prioritize Queue
+        </button>
+</div>
+</div>
+</div>
+<!-- Toast Notification HUD -->
+<div class="fixed bottom-20 right-hud-inset-desktop z-50 px-4 py-2.5 rounded-full bg-on-surface text-on-primary font-body-sm text-body-sm shadow-xl flex items-center gap-2 transform translate-y-12 opacity-0 transition-all duration-300 pointer-events-none" id="toast">
+<span class="material-symbols-outlined text-emerald-400 text-base" data-icon="check_circle">check_circle</span>
+<span id="toast-msg">Sprint deployed successfully!</span>
+</div>
+<!-- ========================================================================= -->
+<!-- JAVASCRIPT HUD CONTROLLERS & 3D CUSTOM EVENT LISTENER                     -->
+<!-- ========================================================================= -->
+<script>
+    let isPaused = false;
+
+    // Listen for custom event emitted by Three.js interactive scene
+    window.addEventListener('tycoon-item-selected', (event) => {
+      const data = event.detail;
+      if (!data) return;
+
+      if (data.type === 'agent') {
+        // Open Rich Agent Detail Sheet
+        document.getElementById('agent-name').innerText = data.shortName || data.name || 'AI Dev';
+        document.getElementById('agent-model-pill').innerText = data.name || 'Autonomous Agent';
+        document.getElementById('agent-role').innerText = data.role || 'Autonomous Engineer';
+        document.getElementById('agent-speed').innerHTML = `${data.speed || '98 t/s'}`;
+        
+        // Avatar icon background
+        const avatarWrap = document.getElementById('agent-avatar-wrap');
+        avatarWrap.style.backgroundColor = data.hexColor || (data.shirtColor ? `#${data.shirtColor.toString(16).padStart(6, '0')}` : '#e0e7ff');
+        avatarWrap.style.borderColor = data.accentColor ? `#${data.accentColor.toString(16).padStart(6, '0')}` : '#818cf8';
+
+        const subtasks = [
+          `Optimizing virtual DOM layout pipeline & canvas render tree under 60fps budget.`,
+          `Verifying zero-knowledge rollup proofs against Raft consensus logs.`,
+          `Re-indexing vector embeddings using dynamic HNSW graph partitioning.`,
+          `Synthesizing user story telemetry into Sprint 10 functional requirements.`
+        ];
+        const randomSubtask = subtasks[Math.floor(Math.random() * subtasks.length)];
+        document.getElementById('agent-subtask').innerText = `"${randomSubtask}"`;
+
+        const modalAgent = document.getElementById('modal-agent');
+        modalAgent.classList.remove('hidden');
+      } else if (data.type === 'desk' || data.type === 'monitor' || data.type === 'inbox' || data.type === 'outbox' || data.type === 'pm_suite') {
+        // Open Desk / Monitor / Queue Domain Sheet
+        const modalDesk = document.getElementById('modal-desk');
+        document.getElementById('desk-modal-title').innerText = data.title || (data.type === 'pm_suite' ? 'Product Management Suite' : 'Department Desk');
+        
+        const stepText = data.steps ? `Step ${data.steps} (${data.progress}%)` : (data.progress ? `${data.progress}% Complete` : 'Sprint Active');
+        document.getElementById('desk-modal-steps').innerText = stepText;
+        
+        const prog = data.progress || 65;
+        const bar = document.getElementById('desk-modal-bar');
+        bar.style.width = `${prog}%`;
+        bar.style.backgroundColor = data.hexColor || '#4648d4';
+
+        document.getElementById('desk-modal-agents').innerText = data.agentsCount || '4 Seated';
+        document.getElementById('desk-modal-inbox').innerText = data.inboxCount || '5 Pending';
+        document.getElementById('desk-modal-outbox').innerText = data.outboxCount || '8 Completed';
+
+        modalDesk.classList.remove('hidden');
+      }
+    });
+
+    // Close Modals
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function handleBackdropClick(event, id) {
+      if (event.target === document.getElementById(id)) {
+        closeModal(id);
+      }
+    }
+
+    // Speed Pill Controller
+    function setSpeed(multiplier) {
+      const btnP = document.getElementById('btn-pause');
+      const btn1 = document.getElementById('btn-1x');
+      const btn2 = document.getElementById('btn-2x');
+      const btn5 = document.getElementById('btn-5x');
+
+      [btnP, btn1, btn2, btn5].forEach(b => {
+        b.className = "w-7 h-7 rounded-full text-on-surface-variant hover:text-on-surface font-metric-body text-metric-body flex items-center justify-center transition-colors";
+      });
+
+      if (multiplier === 0) {
+        btnP.className = "w-7 h-7 rounded-full bg-surface-container-lowest text-error font-metric-body text-metric-body font-bold shadow-sm flex items-center justify-center";
+        simulateToast("Simulation Paused");
+      } else if (multiplier === 1) {
+        btn1.className = "w-7 h-7 rounded-full bg-surface-container-lowest text-primary font-metric-body text-metric-body font-bold shadow-sm flex items-center justify-center";
+        simulateToast("1x Normal Speed");
+      } else if (multiplier === 2) {
+        btn2.className = "w-7 h-7 rounded-full bg-surface-container-lowest text-primary font-metric-body text-metric-body font-bold shadow-sm flex items-center justify-center";
+        simulateToast("2x Fast Speed");
+      } else if (multiplier === 5) {
+        btn5.className = "w-7 h-7 rounded-full bg-surface-container-lowest text-amber-600 font-metric-body text-metric-body font-bold shadow-sm flex items-center justify-center";
+        simulateToast("5x Warp Speed");
+      }
+    }
+
+    function toggleAction(action) {
+      if (action === 'pause') {
+        isPaused = !isPaused;
+        setSpeed(isPaused ? 0 : 1);
+      }
+    }
+
+    function triggerSprintDeploy() {
+      simulateToast("Sprint 09 Deployed to Autonomous Canary Cluster!");
+    }
+
+    function openHireModal() {
+      simulateToast("Recruitment Pipeline opened: 3 Candidate Agents found");
+    }
+
+    function openDeskMonitor(dept) {
+      if (dept === 'FE') {
+        window.dispatchEvent(new CustomEvent('tycoon-item-selected', {
+          detail: {
+            type: 'monitor',
+            title: 'Frontend Department Monitor',
+            steps: '9/14',
+            progress: 64,
+            hexColor: '#4f46e5',
+            agentsCount: '5 Active',
+            inboxCount: '7 Pending Epics',
+            outboxCount: '12 PRs Merged'
+          }
+        }));
+      } else if (dept === 'BE') {
+        window.dispatchEvent(new CustomEvent('tycoon-item-selected', {
+          detail: {
+            type: 'monitor',
+            title: 'Backend Department Monitor',
+            steps: '11/18',
+            progress: 61,
+            hexColor: '#059669',
+            agentsCount: '4 Active',
+            inboxCount: '5 Events Waiting',
+            outboxCount: '9 Endpoints Live'
+          }
+        }));
+      } else if (dept === 'DB') {
+        window.dispatchEvent(new CustomEvent('tycoon-item-selected', {
+          detail: {
+            type: 'monitor',
+            title: 'Database & Storage Cluster',
+            steps: '4/6',
+            progress: 67,
+            hexColor: '#d97706',
+            agentsCount: '3 Active',
+            inboxCount: '2 Sharding Tasks',
+            outboxCount: '4 Schemas Indexed'
+          }
+        }));
+      }
+    }
+
+    function quickJumpMarker(marker) {
+      simulateToast(`Focus shifted to ${marker.toUpperCase()} zone`);
+    }
+
+    function simulateToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-msg');
+      text.innerText = msg;
+      toast.classList.remove('translate-y-12', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-12', 'opacity-0');
+      }, 2500);
+    }
+  </script>
+</body></html>
