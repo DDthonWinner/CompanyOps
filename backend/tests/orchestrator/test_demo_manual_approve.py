@@ -56,25 +56,33 @@ def test_manual_plan_approve_during_replay(uow):
         assert r.phase == "EXECUTING"
 
 
-def test_plan_approval_phase_gets_10s_grace(uow):
+def test_plan_approval_holds_for_operator_grace(uow):
+    """PLAN_APPROVAL must not auto-approve until the 10s operator grace elapses."""
     with uow() as db:
         pid = _project(db)
         plan = service.create_plan(db, pid, {"requestId": "c1", "instruction": "X",
             "steps": [{"title": "Impl", "roleCode": "BACKEND", "milestoneTitle": "M1"}]})
+        service.review_complete(db, plan["id"], {"requestId": "rc", "expectedVersion": 1})
         p = db.get(Project, pid)
         p.active_plan_id, p.active_plan_version = plan["id"], plan["version"]
         db.add(DemoReplay(project_id=pid, backup_path="/tmp/x.db", enabled=1,
-                          phase="PLAN_REVIEW", interval_seconds=3, completion_seconds=15,
+                          phase="PLAN_APPROVAL", interval_seconds=3, completion_seconds=15,
                           next_tick_at=_past()))
         db.flush()
-        before = datetime.now(timezone.utc)
-        demo.tick(db, pid, force=True)
-        r = db.get(DemoReplay, pid)
-        assert r.phase == "PLAN_APPROVAL"
-        nxt = datetime.fromisoformat(r.next_tick_at)
-        grace = (nxt - before).total_seconds()
-        print("GRACE SECONDS:", round(grace, 2))
-        assert 9 <= grace <= 12  # ~10s window (not the 3s interval)
+        # First tick opens the grace window; plan stays awaiting approval (button visible).
+        demo.tick(db, pid, force=False)
+        assert db.get(DemoReplay, pid).phase == "PLAN_APPROVAL"
+        assert db.get(PlanVersion, plan["id"]).status == "FINAL_APPROVAL_PENDING"
+        # Expire the deadline → next tick auto-approves and advances.
+        pl = db.get(PlanVersion, plan["id"])
+        scope = dict(pl.scope or {})
+        scope["attentionGrace"] = {"plan_approval": _past()}
+        pl.scope = scope
+        db.get(DemoReplay, pid).next_tick_at = _past()
+        db.flush()
+        demo.tick(db, pid, force=False)
+        assert db.get(DemoReplay, pid).phase == "EXECUTING"
+        assert db.get(PlanVersion, plan["id"]).status == "EXECUTING"
 
 
 def test_manual_milestone_review_during_replay(uow):
