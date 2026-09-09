@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { api } from "../../api/client";
 import type { ProjectListItem } from "../../api/types";
 import { Button } from "../../components/ui/Button";
+import { DemoPasswordDialog, isProjectLocked } from "../../components/ui/DemoPasswordDialog";
 import { Icon } from "../../components/ui/Icon";
 import { pushToast } from "../../components/ui/toast";
 import { useStore } from "../../store/useStore";
@@ -17,13 +18,8 @@ type ProjectSize = "SMALL" | "MEDIUM" | "LARGE";
 type DragRef = MutableRefObject<{ moved: boolean }>;
 type FocusRef = MutableRefObject<{ pos: [number, number] | null; nonce: number }>;
 
-// Demo gating: during the demo only the flagship Neobank project can be entered.
-const DEMO_UNLOCKED_PROJECT = "Neobank Super App";
-const isProjectLocked = (p: ProjectListItem | null | undefined) => !!p && p.name !== DEMO_UNLOCKED_PROJECT;
-const LOCKED_TOOLTIP = "해당 프로젝트는 잠겨있습니다.";
-// Demo gating: creating a new project requires this password. Client-side only —
-// a lightweight gate for the demo, not real access control.
-const DEMO_CREATE_PASSWORD = "demo";
+// Locked projects can still be entered during the demo, but only after the password.
+const LOCKED_TOOLTIP = "패스워드 입력 후 들어갈 수 있습니다.";
 
 const SIZE_LABELS: Record<ProjectSize, string> = {
   SMALL: "S",
@@ -35,6 +31,13 @@ const SIZE_COPY: Record<ProjectSize, string> = {
   SMALL: "작고 빠른 실험",
   MEDIUM: "균형 잡힌 제품 개발",
   LARGE: "장기 운영 프로젝트",
+};
+
+// Rough budget guidance per size (demo figures; L ≈ $250,000).
+const SIZE_BUDGET: Record<ProjectSize, string> = {
+  SMALL: "약 $50,000",
+  MEDIUM: "약 $120,000",
+  LARGE: "약 $250,000",
 };
 
 // Cheerful Animal-Crossing-ish palette: pastel walls with a warm contrasting roof.
@@ -77,10 +80,11 @@ export function ProjectCreationGate() {
   const [hoveredProject, setHoveredProject] = useState<ProjectListItem | null>(null);
   // The project whose glass info card is pinned open (set by clicking a house).
   const [pinnedProject, setPinnedProject] = useState<ProjectListItem | null>(null);
-  // Demo password gate shown before actually creating a project (Step 3).
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
-  const [password, setPassword] = useState("");
-  const [passwordError, setPasswordError] = useState(false);
+  // Demo password gate: the action to run once the correct password is entered
+  // (creating a project, or entering a locked project). null hides the prompt.
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  // Copy shown inside the password prompt, tailored to the pending action.
+  const [passwordMessage, setPasswordMessage] = useState("");
   const cardRef = useRef<HTMLDivElement>(null);
   const pinnedCardRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
@@ -169,16 +173,26 @@ export function ProjectCreationGate() {
     setStage("name");
   };
 
+  // Ask for the demo password, then run `action` if it's correct.
+  const requirePassword = (message: string, action: () => void) => {
+    setPasswordMessage(message);
+    setPendingAction(() => action);
+  };
+
+  const enterProject = (project: ProjectListItem) => {
+    if (isProjectLocked(project.name)) {
+      requirePassword("데모 단계에서는 인증된 사용자만 프로젝트에 들어갈 수 있습니다.", () => setActiveProject(project.id));
+      return;
+    }
+    setActiveProject(project.id);
+  };
+
   const enterSelectedProject = () => {
     if (!selectedProject) {
       pushToast("입장할 프로젝트 집을 선택하세요.", "error");
       return;
     }
-    if (isProjectLocked(selectedProject)) {
-      pushToast(LOCKED_TOOLTIP, "error");
-      return;
-    }
-    setActiveProject(selectedProject.id);
+    enterProject(selectedProject);
   };
 
   const continueFromName = () => {
@@ -195,19 +209,13 @@ export function ProjectCreationGate() {
       pushToast("프로젝트 정보를 완성하세요.", "error");
       return;
     }
-    setPassword("");
-    setPasswordError(false);
-    setShowPasswordPrompt(true);
+    requirePassword("데모 단계에서는 인증된 사용자만 프로젝트를 생성할 수 있습니다.", submit);
   };
 
   const confirmPassword = () => {
-    if (password !== DEMO_CREATE_PASSWORD) {
-      setPasswordError(true);
-      return;
-    }
-    setShowPasswordPrompt(false);
-    setPassword("");
-    submit();
+    const action = pendingAction;
+    setPendingAction(null);
+    action?.();
   };
 
   const submit = async () => {
@@ -308,11 +316,11 @@ export function ProjectCreationGate() {
               <Button
                 onClick={enterSelectedProject}
                 disabled={!selectedProject}
-                title={isProjectLocked(selectedProject) ? LOCKED_TOOLTIP : undefined}
-                className={`flex-1 justify-center ${isProjectLocked(selectedProject) ? "project-gate-locked-btn" : ""}`}
+                title={isProjectLocked(selectedProject?.name) ? LOCKED_TOOLTIP : undefined}
+                className="flex-1 justify-center"
               >
                 프로젝트 들어가기
-                {isProjectLocked(selectedProject) && <Icon name="lock" size={16} />}
+                {isProjectLocked(selectedProject?.name) && <Icon name="lock" size={16} />}
               </Button>
               <Button variant="ghost" onClick={startNewProject} className="flex-1 justify-center">새 프로젝트 시작</Button>
             </div>
@@ -356,20 +364,14 @@ export function ProjectCreationGate() {
                 <div><dt>에이전트</dt><dd>{pinnedProject.assignedAgentCount} / {pinnedProject.maxAgentCount}명</dd></div>
                 <div><dt>규모</dt><dd>{SIZE_LABELS[normalizeSize(pinnedProject.projectSize)]}</dd></div>
               </dl>
-              {isProjectLocked(pinnedProject) ? (
-                <Button
-                  className="project-gate-pincard-enter project-gate-locked-btn w-full justify-center"
-                  title={LOCKED_TOOLTIP}
-                  onClick={() => pushToast(LOCKED_TOOLTIP, "error")}
-                >
-                  <Icon name="lock" size={16} />
-                  이 프로젝트는 잠겨있습니다
-                </Button>
-              ) : (
-                <Button className="project-gate-pincard-enter w-full justify-center" onClick={() => setActiveProject(pinnedProject.id)}>
-                  이 프로젝트 들어가기 →
-                </Button>
-              )}
+              <Button
+                className="project-gate-pincard-enter w-full justify-center"
+                title={isProjectLocked(pinnedProject.name) ? LOCKED_TOOLTIP : undefined}
+                onClick={() => enterProject(pinnedProject)}
+              >
+                {isProjectLocked(pinnedProject.name) && <Icon name="lock" size={16} />}
+                이 프로젝트 들어가기 →
+              </Button>
             </div>
           );
         })()}
@@ -408,6 +410,7 @@ export function ProjectCreationGate() {
                 <button key={size} onClick={() => { setProjectSize(size); setStage("description"); }}>
                   <strong>{SIZE_LABELS[size]}</strong>
                   <span>{SIZE_COPY[size]}</span>
+                  <span className="project-gate-size-budget">{SIZE_BUDGET[size]}</span>
                 </button>
               ))}
             </div>
@@ -450,30 +453,12 @@ export function ProjectCreationGate() {
           </section>
         )}
 
-        {showPasswordPrompt && (
-          <div className="project-gate-modal-backdrop" role="dialog" aria-modal="true" aria-label="프로젝트 생성 인증">
-            <div className="project-gate-modal">
-              <h3>패스워드를 입력하세요</h3>
-              <p>데모 단계에서는 인증된 사용자만 프로젝트를 생성할 수 있습니다.</p>
-              <input
-                autoFocus
-                type="password"
-                className="input"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") confirmPassword();
-                  if (e.key === "Escape") setShowPasswordPrompt(false);
-                }}
-                placeholder="패스워드"
-              />
-              {passwordError && <span className="project-gate-modal-error">패스워드가 올바르지 않습니다.</span>}
-              <div className="project-gate-actions">
-                <Button variant="ghost" onClick={() => setShowPasswordPrompt(false)}>취소</Button>
-                <Button onClick={confirmPassword}>확인</Button>
-              </div>
-            </div>
-          </div>
+        {pendingAction && (
+          <DemoPasswordDialog
+            message={passwordMessage}
+            onConfirm={confirmPassword}
+            onCancel={() => setPendingAction(null)}
+          />
         )}
       </div>
     </div>
@@ -1259,7 +1244,7 @@ function ScaleHouse({
       </mesh>
       <mesh castShadow receiveShadow position={[0, 0, 0]}>
         <boxGeometry args={[5.8, 4.2, 5.2]} />
-        <meshStandardMaterial color={selected ? "#4648d4" : wallColor} roughness={0.62} />
+        <meshStandardMaterial color={wallColor} roughness={0.62} />
       </mesh>
       <GableRoof width={5.8} depth={5.2} y={2.1} rise={1.9} color={roofColor} />
       <mesh castShadow position={[0, -0.85, 2.7]}>

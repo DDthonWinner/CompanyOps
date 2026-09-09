@@ -2,13 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { ProjectListItem } from "../api/types";
+import { DemoPasswordDialog, isProjectLocked } from "../components/ui/DemoPasswordDialog";
 import { Icon } from "../components/ui/Icon";
-import { pushToast } from "../components/ui/toast";
 import { useStore } from "../store/useStore";
 
-// Demo gating: during the demo only the flagship Neobank project can be entered.
-const DEMO_UNLOCKED_PROJECT = "Neobank Super App";
-const LOCKED_TOOLTIP = "해당 프로젝트는 잠겨있습니다.";
+// Locked projects can still be switched to during the demo, but only after the password.
+const LOCKED_TOOLTIP = "패스워드 입력 후 들어갈 수 있습니다.";
 
 const CONN_META: Record<string, { label: string; color: string }> = {
   CONNECTING: { label: "연결 중", color: "#d97706" },
@@ -95,6 +94,8 @@ function ProjectSwitcher({
   onSelect: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  // The locked project awaiting the demo password before we switch to it.
+  const [pendingId, setPendingId] = useState<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const current = projects.find((p) => p.id === activeProjectId) ?? null;
 
@@ -136,23 +137,20 @@ function ProjectSwitcher({
             <p className="px-3 py-2 text-sm text-on-background/60">아직 프로젝트가 없습니다.</p>
           )}
           {projects.map((p) => {
-            const locked = p.name !== DEMO_UNLOCKED_PROJECT;
+            const locked = isProjectLocked(p.name);
             return (
               <button
                 key={p.id}
                 role="option"
                 aria-selected={p.id === activeProjectId}
-                aria-disabled={locked}
                 title={locked ? LOCKED_TOOLTIP : undefined}
                 onClick={() => {
-                  if (locked) { pushToast(LOCKED_TOOLTIP, "error"); return; }
-                  onSelect(p.id);
                   setOpen(false);
+                  if (locked) { setPendingId(p.id); return; }
+                  onSelect(p.id);
                 }}
-                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition ${
-                  locked
-                    ? "cursor-not-allowed text-on-background/40"
-                    : `hover:bg-surface-high ${p.id === activeProjectId ? "bg-surface-high text-primary" : "text-on-background/85"}`
+                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-surface-high ${
+                  p.id === activeProjectId ? "bg-surface-high text-primary" : "text-on-background/85"
                 }`}
               >
                 <span className="flex min-w-0 items-center gap-1.5">
@@ -164,6 +162,13 @@ function ProjectSwitcher({
             );
           })}
         </div>
+      )}
+      {pendingId && (
+        <DemoPasswordDialog
+          message="데모 단계에서는 인증된 사용자만 프로젝트에 들어갈 수 있습니다."
+          onConfirm={() => { onSelect(pendingId); setPendingId(null); }}
+          onCancel={() => setPendingId(null)}
+        />
       )}
     </div>
   );
