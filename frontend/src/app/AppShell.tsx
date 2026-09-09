@@ -1,9 +1,7 @@
 import { useEffect } from "react";
 import { api } from "../api/client";
 import type { TycoonSelection } from "../api/types";
-import { BrandLogo } from "../components/ui/BrandLogo";
 import { Toaster } from "../components/ui/toast";
-import { openProjectVillage } from "../features/tycoon/projectCreationNavigation";
 import { AdminView } from "../features/admin/AdminView";
 import { DashboardView } from "../features/dashboard/DashboardView";
 import { AgentSheet } from "../features/tycoon/hud/AgentSheet";
@@ -42,16 +40,7 @@ export function AppShell() {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {/* White plate is a bit larger than the logo so the mark sits comfortably inside. */}
-      <button
-        onClick={openProjectVillage}
-        title="마을 뷰로 이동"
-        aria-label="마을 뷰로 이동"
-        data-testid="app-brand"
-        className="fixed left-4 top-4 z-50 flex items-center justify-center !bg-white px-4.5 py-3 text-on-background shadow-sm transition hover:text-primary"
-      >
-        <BrandLogo className="pointer-events-none scale-[0.85]" />
-      </button>
+      {/* Brand logo now lives inside GlobalExecutiveBar's left HUD box, next to the project switcher. */}
       <GlobalExecutiveBar />
       {/* Tycoon is full-bleed (3D fills behind the floating GNB); other tabs clear the bar. */}
       <main className={`h-full w-full ${activeTab === "tycoon" ? "" : "pt-44 sm:pt-32 lg:pt-20"}`}>
