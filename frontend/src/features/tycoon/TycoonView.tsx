@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useStore } from "../../store/useStore";
+import { ProjectCreationGate } from "./ProjectCreationGate";
 import { TycoonCanvas } from "./TycoonCanvas";
 import { WebGLFallback, isWebGLAvailable } from "./WebGLFallback";
 import { AgentList } from "./hud/AgentList";
@@ -23,7 +24,7 @@ export function TycoonView() {
   const snapshot = useStore((s) => s.snapshot);
   const webgl = useMemo(() => isWebGLAvailable(), []);
 
-  if (!activeProjectId) return <Empty msg="프로젝트를 선택하세요" />;
+  if (!activeProjectId) return <ProjectCreationGate />;
   if (!webgl) return <WebGLFallback />;
   if (!snapshot) return <Empty msg="로딩 중…" />;
 

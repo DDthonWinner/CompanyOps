@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .admin import routes as admin_routes
 from .common.errors import AppError, app_error_handler, unhandled_handler
 from .config import get_settings
 from .db import init_db

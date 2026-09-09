@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore, type DashboardPanel } from "../../store/useStore";
 import { ActiveTaskList } from "./ActiveTaskList";
 import { ActivityTimeline } from "./ActivityTimeline";
@@ -9,6 +9,7 @@ import { TokenUsage } from "./TokenUsage";
 
 const TABS: [DashboardPanel, string][] = [["overview", "요약"], ["tasks", "작업"], ["plan", "계획 검토"], ["quality", "품질"], ["resources", "토큰"], ["activity", "활동"], ["artifacts", "결과물"]];
 export function DashboardDetails() {
+  const [expanded, setExpanded] = useState(true);
   const selected = useStore((s) => s.ui.dashboardPanel) ?? "overview";
   const scrollRequest = useStore((s) => s.dashboardScrollRequest);
   const select = useStore((s) => s.setDashboardPanel);
@@ -17,11 +18,18 @@ export function DashboardDetails() {
   const panel = TABS.some(([id]) => id === selected) ? selected : "overview";
   useEffect(() => {
     if (!scrollRequest || scrollRequest.panel !== panel) return;
+    setExpanded(true);
     if (panel !== "overview") root.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
     useStore.setState({ dashboardScrollRequest: null });
   }, [panel, scrollRequest]);
   const pendingPlans = snapshot?.plans.filter((p) => p.status === "REVIEW" || p.status === "FINAL_APPROVAL_PENDING").length ?? 0;
-  return <section ref={root} aria-label="프로젝트 상세 탐색" className="scroll-mb-24" data-testid="dashboard-details">
+  return <section ref={root} aria-label="프로젝트 상세 탐색" className="scroll-mb-24 rounded-2xl border border-outline-variant bg-surface/40 p-3 sm:p-4" data-testid="dashboard-details">
+    <div className={`flex items-center justify-between gap-3 ${expanded ? "mb-3" : ""}`}>
+      <div><h2 className="display text-sm font-semibold">프로젝트 상세</h2>
+      <p className="mt-1 text-[11px] text-on-background/50">작업과 실행 현황을 탭별로 확인합니다.</p></div>
+      <button type="button" aria-expanded={expanded} aria-controls="dashboard-details-content" onClick={() => setExpanded((value) => !value)} className="shrink-0 rounded-lg border border-outline-variant bg-white px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 focus-visible:outline-primary">{expanded ? "접기 ∧" : "펼치기 ∨"}</button>
+    </div>
+    <div id="dashboard-details-content" hidden={!expanded}>
     <div role="tablist" aria-label="프로젝트 상세" className="mb-3 flex gap-1 overflow-x-auto rounded-xl border border-outline-variant/60 bg-white/70 p-1">
       {TABS.map(([id, label], index) => <button key={id} type="button" role="tab" id={`dashboard-tab-${id}`} aria-controls={`dashboard-panel-${id}`} aria-selected={panel === id} tabIndex={panel === id ? 0 : -1}
         onClick={() => select(id)} onKeyDown={(event) => {
@@ -44,6 +52,7 @@ export function DashboardDetails() {
       {panel === "resources" && <><TokenUsage /><p className="px-4 py-2 text-xs text-on-background/55">AI 활용 Score와 Feedback은 프로젝트 완료 후 확인할 수 있습니다.</p></>}
       {panel === "activity" && <ActivityTimeline />}
       {panel === "artifacts" && <RecentArtifacts />}
+    </div>
     </div>
   </section>;
 }

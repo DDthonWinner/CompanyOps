@@ -131,3 +131,36 @@ def test_completion_auto_generates_report(uow):
             assert reports[0]["scoreVersion"] == "UF_MVP_V1"
     finally:
         deps.set_utilization_port(NoopUtilization())
+
+
+def test_preview_works_before_completion_without_persisting_or_unlocking_project(uow):
+    from app.uf.models import Feedback, UtilizationMetric, UtilizationReport
+    with uow() as db:
+        project = pm.create_project(db, {"name": "Preview", "budgetLevel": "LOW", "projectSize": "SMALL"})
+        pid = project["id"]
+        before = (db.get(Project, pid).status, db.get(Project, pid).revision)
+        preview = uf.preview_report(db, pid)
+        assert preview["testMode"] is True
+        assert preview["report"]["status"] == "PREVIEW"
+        assert preview["report"]["utilizationScore"] is None
+        assert len(preview["feedbacks"]) == 3
+        db.flush()
+        assert (db.get(Project, pid).status, db.get(Project, pid).revision) == before
+        for model in (UtilizationReport, UtilizationMetric, Feedback):
+            assert list(db.execute(select(model)).scalars()) == []
+        with pytest.raises(AppError) as exc:
+            uf.create_report(db, pid)
+        assert exc.value.code == "PROJECT_NOT_COMPLETED"
+
+
+def test_preview_uses_the_same_calculations_as_a_completed_report(uow):
+    deps.set_utilization_port(NoopUtilization())
+    pid = _drive_to_completed(uow)
+    with uow() as db:
+        preview = uf.preview_report(db, pid)
+        assert uf.list_reports(db, pid) == []
+        actual = uf.create_report(db, pid)
+        for key in ("utilizationScore", "aspectScores", "metrics", "scoreVersion"):
+            assert preview["report"][key] == actual[key]
+        observations = {f["aspect"]: f["observation"] for f in uf.list_feedbacks(db, actual["reportId"])}
+        assert {f["aspect"]: f["observation"] for f in preview["feedbacks"]} == observations

@@ -21,6 +21,12 @@ def list_reports(projectId: str = Query(...)):
     return read(lambda db: {"items": service.list_reports(db, projectId)})
 
 
+# TEMP UF_TEST_PREVIEW: read-only test generation for unfinished projects.
+@router.post("/utilization/preview")
+def preview_report(body: s.CreateReportIn):
+    return read(lambda db: service.preview_report(db, body.projectId))
+
+
 @router.get("/utilization/{report_id}")
 def get_report(report_id: str):
     return read(lambda db: service.get_report(db, report_id))

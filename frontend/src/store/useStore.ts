@@ -16,7 +16,7 @@ interface StoreState {
   snapshot: Snapshot | null;
   lastSyncAt: string | null;
   connection: ConnState;
-  ui: { activeTab: "tycoon" | "dashboard"; camera: { target?: string }; dashboardPanel?: DashboardPanel };
+  ui: { activeTab: "tycoon" | "dashboard" | "admin"; camera: { target?: string }; dashboardPanel?: DashboardPanel };
   // One-shot navigation intent; never persisted with the selected panel.
   dashboardScrollRequest: { panel: DashboardPanel } | null;
   openSheet: OpenSheet | null;
@@ -26,7 +26,7 @@ interface StoreState {
   setActiveProject: (id: string | null) => void;
   applySnapshot: (s: Snapshot) => void;
   setConnection: (c: ConnState) => void;
-  setActiveTab: (t: "tycoon" | "dashboard") => void;
+  setActiveTab: (t: "tycoon" | "dashboard" | "admin") => void;
   setCamera: (target?: string) => void;
   setDashboardPanel: (panel: DashboardPanel) => void;
   openAgentSheet: (projectAgentId: string) => void;

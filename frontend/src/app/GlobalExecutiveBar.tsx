@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { ProjectListItem } from "../api/types";
 import { Button } from "../components/ui/Button";
+import { Icon } from "../components/ui/Icon";
+import { openProjectCreationGate } from "../features/tycoon/projectCreationNavigation";
 import { useStore } from "../store/useStore";
 
 const CONN_META: Record<string, { label: string; color: string }> = {
@@ -25,10 +27,15 @@ export function GlobalExecutiveBar() {
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
 
   useEffect(() => {
-    api
-      .listProjects()
-      .then((res) => setProjects(Array.isArray(res) ? res : res.items))
-      .catch(() => setProjects([]));
+    const load = () => {
+      api
+        .listProjects()
+        .then((res) => setProjects(Array.isArray(res) ? res : res.items))
+        .catch(() => setProjects([]));
+    };
+    load();
+    window.addEventListener("companyops:projects-changed", load);
+    return () => window.removeEventListener("companyops:projects-changed", load);
   }, []);
 
   const conn = CONN_META[connection] ?? CONN_META.DISCONNECTED;
@@ -64,10 +71,16 @@ export function GlobalExecutiveBar() {
         <TabButton id="dashboard" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")}>
           Dashboard
         </TabButton>
+        <TabButton id="admin" active={activeTab === "admin"} onClick={() => setActiveTab("admin")}>
+          Dev Admin
+        </TabButton>
       </nav>
 
       {/* right: connection + plan review */}
       <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
+        <Button variant="ghost" onClick={openProjectCreationGate} data-testid="gebar-project-create">
+          <Icon name="add" size={16} /> 새 프로젝트
+        </Button>
         <span data-testid="gebar-connection" className="flex flex-wrap items-center gap-1.5 text-xs">
           <span aria-hidden style={{ color: conn.color }}>●</span>
           <span>{conn.label}</span>
