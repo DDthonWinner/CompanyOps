@@ -8,9 +8,9 @@
 
 | # | 요구사항/문제 | 핵심 설계 결정 | 구현 | 검증 |
 | --- | --- | --- | --- | --- |
-| 1 | 팀 배정 후 첫 계획을 만들 경로가 없어 신규 사용자가 멈춤. 계획은 승인 전에 실행되면 안 됨 | READY 상태 전용 첫 계획 단계 + 사람 승인 게이트 | `PlanReviewPanel.tsx`, `DashboardView.tsx`, `orchestrator/service.approve_plan` | `PlanReviewPanel.test.tsx`, `test_flow.py`, 화면 01·02 |
-| 2 | 생성 파일이 아니라 백엔드 자체를 검증할 위험. QA 통과 없이 게시되면 안 됨 | 작업용 저장소(checkout) 경로를 권위 있는 실행 위치로 전달, 없으면 ERROR | `ports/git_port.py`, `git_interface/interface.py`, `worker.py`, `qa.py` | `test_qa_workspace.py`, `test_git_interface.py`, 화면 03·04 |
-| 3 | 작업 100%와 프로젝트 완료를 혼동. 임시 지표를 정식 성과로 오인할 위험 | 완료에 마일스톤 결과 승인 요구, 피드백 기본 접힘·완료 후 진입, 정식/테스트 구분 | `FeedbackSection.tsx`, `HeaderStrip.tsx`, `orchestrator/service.maybe_complete_project` | `FeedbackSection.test.tsx`, 화면 05 |
+| 1 | 팀 배정 후 첫 계획을 만들 경로가 없어 신규 사용자가 멈춤. 계획은 승인 전에 실행되면 안 됨 | READY 상태 전용 첫 계획 단계 + 사람 승인 게이트 | `PlanReviewPanel.tsx`, `DashboardView.tsx`, `orchestrator/service.approve_plan` | `PlanReviewPanel.test.tsx`, `test_flow.py`, screenshots/ 폴더 |
+| 2 | 생성 파일이 아니라 백엔드 자체를 검증할 위험. QA 통과 없이 게시되면 안 됨 | 작업용 저장소(checkout) 경로를 권위 있는 실행 위치로 전달, 없으면 ERROR | `ports/git_port.py`, `git_interface/interface.py`, `worker.py`, `qa.py` | `test_qa_workspace.py`, `test_git_interface.py`, screenshots/ 폴더 |
+| 3 | 작업 100%와 프로젝트 완료를 혼동. 임시 지표를 정식 성과로 오인할 위험 | 완료에 마일스톤 결과 승인 요구, 피드백 기본 접힘·완료 후 진입, 정식/테스트 구분 | `FeedbackSection.tsx`, `HeaderStrip.tsx`, `orchestrator/service.maybe_complete_project` | `FeedbackSection.test.tsx`, screenshots/ 폴더 |
 | 4(보완) | 로컬 브라우저 외 출처의 변경 요청·오류 상세 노출 | 신뢰 Origin 외 쓰기 403, 500 응답에서 상세 제거·상관 ID 로깅 | `common/access.py`, `common/errors.py`, `config.py` | `test_access.py` |
 
 ## 사례 1 — 계획 승인 게이트와 신규 사용자의 첫 계획 진입
@@ -27,7 +27,7 @@
 **검증.**
 - `frontend/src/features/dashboard/__tests__/PlanReviewPanel.test.tsx`: `registers an explicit assigned-role task without approving it`(배정된 역할로 작업 등록, 자동 승인하지 않음), `FINAL_APPROVAL_PENDING shows final approval with version guard`(버전 가드 포함 최종 승인).
 - `backend/tests/orchestrator/test_flow.py`: `test_plan_version_guard_and_approval`(오래된 버전 거부, 검토 완료→승인→작업 구성).
-- 화면: [screenshots/01-first-plan.png](../../screenshots/01-first-plan.png), [screenshots/02-plan-approval.png](../../screenshots/02-plan-approval.png).
+- 화면 증거: [screenshots/](../../screenshots/) 폴더(첫 계획·계획 승인 화면 포함).
 
 ## 사례 2 — 생성 파일 검증 → 게시 → 완료의 실제 경로
 
@@ -45,7 +45,7 @@
 - `backend/tests/orchestrator/test_qa_workspace.py`: `test_real_qa_refuses_missing_or_relative_workspace`(없는 경로·상대 경로 거부), `test_real_qa_reports_missing_executable`(없는 실행 파일 처리).
 - `backend/tests/git_interface/test_git_interface.py`: `test_worker_checks_generated_project_before_publishing`(제어된 실행 제공자가 `generated.py`·`validate.py`를 생성 → 실제 파이썬으로 생성물 검증 → 실제 로컬 bare Git에 게시. 정상 값은 통과·게시·완료, 잘못된 값은 QA 실패·게시 없음. 프로세스 현재 폴더에 다른 `validate.py`를 두어 잘못된 폴더 검증이 통과할 수 없게 함), `test_connected_flow_with_real_git`.
 - 이 테스트들은 외부 모델을 호출하지 않는 통합 테스트입니다.
-- 화면: [screenshots/03-development-flow.png](../../screenshots/03-development-flow.png), [screenshots/04-result-approval.png](../../screenshots/04-result-approval.png).
+- 화면 증거: [screenshots/](../../screenshots/) 폴더(개발 흐름·결과 승인 화면 포함).
 
 ## 사례 3 — 프로젝트 완료와 AI 활용 평가의 분리
 
@@ -60,7 +60,7 @@
 
 **검증.**
 - `frontend/src/features/dashboard/__tests__/FeedbackSection.test.tsx`: 완료 전 비활성, 생성/조회, 테스트 모드 미리보기, 실패 후 재시도.
-- 화면: [screenshots/05-feedback.png](../../screenshots/05-feedback.png).
+- 화면 증거: [screenshots/](../../screenshots/) 폴더(완료 후 피드백 화면 포함).
 
 ## 사례 4(보완) — 로컬 브라우저 접근 경계와 오류 처리
 
@@ -90,4 +90,4 @@
 - 백엔드 전체 `pytest`: 49개 통과.
 - 프론트엔드 타입 검사(`tsc --noEmit`): 통과.
 - 프론트엔드 전체 `vitest`: 55개 통과, 3개 실패. 실패 3개(`GlobalExecutiveBar.test.tsx`, `ScrollWorld.test.tsx`, `flow.test.tsx`)는 이번 안정성 개선과 무관하며, 병합된 마을 뷰 네비게이션 개편에서 컴포넌트 대비 테스트가 갱신되지 않아 발생합니다(개선 전 베이스 커밋에서도 동일하게 실패 확인). 해당 화면을 작업한 담당자가 테스트를 갱신하는 것이 적절합니다.
-- UI 전체 흐름은 실행 중인 로컬 서버에서 예제 실행 설정으로 확인했습니다([screenshots/README.md](../../screenshots/README.md)). 예제 모델·모의 게시 화면이며 실제 모델·원격 게시 성과로 설명하지 않습니다.
+- UI 전체 흐름은 실행 중인 로컬 서버에서 예제 실행 설정으로 확인했습니다([screenshots/](../../screenshots/) 폴더). 예제 모델·모의 게시 화면이며 실제 모델·원격 게시 성과로 설명하지 않습니다.
