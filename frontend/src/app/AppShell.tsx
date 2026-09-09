@@ -46,7 +46,7 @@ export function AppShell() {
         onClick={openProjectVillage}
         title="마을 뷰로 이동"
         testId="app-brand"
-        className="fixed left-4 top-4 z-50 rounded-xl !bg-white px-5 py-3 text-on-background shadow-sm transition hover:text-primary"
+        className="fixed left-4 top-4 z-50 rounded-none !bg-white px-7 py-4 text-on-background shadow-sm transition hover:text-primary"
       />
       <GlobalExecutiveBar />
       {/* Tycoon is full-bleed (3D fills behind the floating GNB); other tabs clear the bar. */}
