@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { useStore } from "../../../store/useStore";
 import { CAMERA_CMD_EVENT, dragGuard, type CameraCmd } from "./cameraControl";
+import { agentDrag } from "./agentDrag";
 
 export type FocusPoint = { pos: [number, number, number]; zoomMult?: number };
 
@@ -32,6 +33,7 @@ export function CameraControls({
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
   const cameraTarget = useStore((s) => s.ui.camera.target);
+  const setCamera = useStore((s) => s.setCamera);
 
   const target = useRef(new THREE.Vector3(...defaultTarget));
   const desired = useRef<THREE.Vector3 | null>(null);
@@ -63,6 +65,18 @@ export function CameraControls({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraTarget]);
 
+  // Always open at the default view — ignore any persisted camera focus.
+  useEffect(() => {
+    target.current.set(...defaultTarget);
+    camera.zoom = baseZoom();
+    camera.updateProjectionMatrix();
+    desired.current = null;
+    desiredZoom.current = null;
+    sync();
+    if (useStore.getState().ui.camera.target) setCamera(undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useFrame(() => {
     let moved = false;
     if (desired.current) {
@@ -87,7 +101,7 @@ export function CameraControls({
   // Drag-to-pan + wheel-to-zoom on the canvas element.
   useEffect(() => {
     const el = gl.domElement;
-    let panning = false;
+    let down = false;
     const right = new THREE.Vector3();
     const up = new THREE.Vector3();
     const cancelFocus = () => {
@@ -96,12 +110,15 @@ export function CameraControls({
     };
 
     const onDown = () => {
-      panning = true;
+      down = true;
       dragGuard.start();
-      cancelFocus();
     };
     const onMove = (e: PointerEvent) => {
-      if (!panning) return;
+      // The pan/no-pan decision is made at move time (not pointerdown) so the
+      // agent-grab flag — set synchronously during the pointerdown dispatch — is
+      // reliably visible here regardless of listener order.
+      if (!down || agentDrag.suppressPan || agentDrag.activeId) return;
+      cancelFocus();
       dragGuard.move(e.movementX, e.movementY);
       const wpp = 1 / camera.zoom;
       right.setFromMatrixColumn(camera.matrixWorld, 0);
@@ -115,9 +132,9 @@ export function CameraControls({
       sync();
     };
     const onUp = () => {
-      if (!panning) return;
-      panning = false;
+      down = false;
       dragGuard.end();
+      agentDrag.suppressPan = false; // self-heal: never leave panning disabled
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();

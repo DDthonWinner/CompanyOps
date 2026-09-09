@@ -11,7 +11,7 @@ export function VelocityPod() {
   return (
     <GlassPanel
       level={2}
-      className="pointer-events-auto absolute right-4 top-4 max-h-[calc(100vh-2rem)] w-72 overflow-auto p-4"
+      className="pointer-events-auto w-full max-h-[calc(100vh-11rem)] overflow-auto p-4"
       data-testid="velocity-pod"
     >
       <div className="display mb-2 text-sm font-semibold">Active Sprint Milestones</div>

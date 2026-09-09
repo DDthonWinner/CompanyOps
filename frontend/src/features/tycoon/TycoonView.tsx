@@ -5,6 +5,7 @@ import { TycoonCanvas } from "./TycoonCanvas";
 import { WebGLFallback, isWebGLAvailable } from "./WebGLFallback";
 import { AgentList } from "./hud/AgentList";
 import { CommandDock } from "./hud/CommandDock";
+import { HireButton } from "./hud/HireButton";
 import { SideHUD } from "./hud/SideHUD";
 import { VelocityPod } from "./hud/VelocityPod";
 import { ViewControls } from "./hud/ViewControls";
@@ -34,7 +35,11 @@ export function TycoonView() {
         <SideHUD />
         <AgentList />
       </div>
-      <VelocityPod />
+      {/* Right column: hire CTA + sprint milestones, hugging the top-right corner */}
+      <div className="pointer-events-none absolute bottom-4 right-4 top-4 flex w-72 flex-col gap-3">
+        <HireButton />
+        <VelocityPod />
+      </div>
       <ViewControls />
       <CommandDock />
     </div>
