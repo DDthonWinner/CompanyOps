@@ -1,0 +1,46 @@
+.orchestration-flow { container-type: inline-size; }
+.flow-stage { position: relative; margin-top: 16px; border-radius: 12px; padding: 12px; }
+.flow-role-card { height: 146px; }
+.flow-stage-title { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: #596477; font-size: 10px; font-weight: 600; letter-spacing: .04em; }
+.flow-stage-title > span { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: #eaeaf8; color: #4648d4; font-family: monospace; }
+.flow-execution-cards { display: grid; gap: 10px; }
+.flow-caption { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 14px 0; color: #6366a7; font-size: 10px; }
+.flow-handoff { color: #0284c7; }
+.flow-loop-label { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px; margin-top: 10px; border-radius: 8px; font-size: 10px; }
+.flow-control-label { color: #be3457; background: #fff0f4; }
+.flow-feedback-label { color: #a26410; background: #fff6e6; }
+.flow-connectors { display: none; }
+@container (min-width: 580px) {
+  .flow-stage { height: 620px; padding: 0; }
+  .flow-connectors { display: block; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .flow-plan, .flow-validation { position: absolute; left: 38%; width: 24%; }
+  .flow-plan { top: 32px; }
+  .flow-validation { top: 448px; }
+  .flow-stage-title { position: absolute; top: -28px; white-space: nowrap; }
+  .flow-execution { position: absolute; left: 12%; width: 76%; top: 240px; }
+  .flow-validation .flow-stage-title { left: -108%; }
+  .flow-execution .flow-stage-title { top: -49px; }
+  .flow-stage-title { background: #fcfcff; padding-right: 4px; border-radius: 4px; }
+  .flow-execution-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.63%; }
+  .flow-caption { position: absolute; left: 50%; transform: translateX(-50%); padding: 2px 8px; border: 1px solid #e7e6f4; border-radius: 20px; background: #fcfcff; white-space: nowrap; }
+  .flow-dispatch { top: 186px; }
+  .flow-handoff { top: 395px; }
+  .flow-loop-label { position: absolute; top: 286px; margin: 0; writing-mode: vertical-rl; padding: 8px 4px; letter-spacing: .1em; }
+  .flow-control-label { right: 3.1%; }
+  .flow-feedback-label { left: 3.1%; }
+}
+
+/* Directional illustration; these streams do not represent live API messages. */
+.flow-stream {
+  stroke-dasharray: 6 14;
+  stroke-linecap: round;
+  animation: orchestration-stream 1.2s linear infinite;
+}
+.flow-stream-control, .flow-stream-feedback { animation-duration: 1.6s; }
+@keyframes orchestration-stream {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -20; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-stream { animation: none; }
+}

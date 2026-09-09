@@ -13,8 +13,35 @@ function snapshot(): Snapshot {
     tasks: ["RUNNING", "FAILED", "CANCELLED"].map((status, i) => ({ id: `t${i}`, title: `작업 ${i}`, roleId: "fe", assignedProjectAgentId: "a0", sprintMilestoneId: null, status: status as Snapshot["tasks"][number]["status"], executionMode: null, priority: "P1", sortOrder: i, dependencyTaskIds: [], waitReasons: ["DEPENDENCY"] })),
     milestones: [], plans: [{ id: "plan", version: 2, status: "EXECUTING", request: "현재 계획" }], pendingDecisions: [], qaRuns: [], git: [] };
 }
-beforeEach(() => useStore.setState({ activeProjectId: "p", snapshot: snapshot(), rolesById: { fe: { code: "FRONTEND", name: "Frontend" } }, ui: { activeTab: "dashboard", camera: {} } }));
+beforeEach(() => useStore.setState({ activeProjectId: "p", dashboardScrollRequest: null, snapshot: snapshot(), rolesById: { fe: { code: "FRONTEND", name: "Frontend" } }, ui: { activeTab: "dashboard", camera: {} } }));
 describe("compact dashboard exploration", () => {
+  it("does not scroll on restored panel entry, but follows explicit navigation", async () => {
+    const scroll = vi.fn();
+    const original = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scroll;
+    try {
+      useStore.setState({ ui: { activeTab: "dashboard", camera: {}, dashboardPanel: "tasks" } });
+      let view = render(<DashboardDetails />);
+      expect(scroll).not.toHaveBeenCalled();
+      act(() => useStore.getState().setCamera("PM"));
+      expect(scroll).not.toHaveBeenCalled();
+      act(() => useStore.getState().setDashboardPanel("tasks"));
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(useStore.getState().dashboardScrollRequest).toBeNull();
+      view.unmount();
+      act(() => useStore.getState().setActiveTab("tycoon"));
+      act(() => useStore.getState().setDashboardPanel("plan"));
+      view = render(<DashboardDetails />);
+      expect(scroll).toHaveBeenCalledTimes(2);
+      view.unmount();
+      act(() => useStore.getState().setActiveTab("tycoon"));
+      act(() => useStore.getState().setActiveTab("dashboard"));
+      render(<DashboardDetails />);
+      expect(scroll).toHaveBeenCalledTimes(2);
+    } finally {
+      HTMLElement.prototype.scrollIntoView = original;
+    }
+  });
   it("keeps details out of the overview and supports keyboard tabs and task filters", async () => {
     await act(async () => { render(<DashboardDetails />); });
     expect(screen.queryByLabelText("작업 검색")).not.toBeInTheDocument();
@@ -45,15 +72,19 @@ describe("compact dashboard exploration", () => {
     act(() => useStore.getState().setDashboardPanel("plan"));
     expect(screen.getByTestId("plan-feedback-input")).toHaveValue("예외 처리를 추가해 주세요");
   });
-  it("pages through all agents in a maximum four-card row", () => {
+  it("shows all assigned agents and reflects roster changes", () => {
     render(<AgentOverview />);
-    expect(screen.getByText("Agent 0")).toBeInTheDocument();
-    expect(screen.queryByText("Agent 4")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "다음 에이전트" }));
-    expect(screen.getByText("Agent 4")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "다음 에이전트" }));
-    expect(screen.getByText("Agent 8")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "다음 에이전트" })).toBeDisabled();
+    expect(screen.getByText("전체 9명")).toBeInTheDocument();
+    for (let i = 0; i < 9; i++) expect(screen.getByText(`Agent ${i}`)).toBeInTheDocument();
+    const s = snapshot();
+    s.agents[0].status = "REMOVED";
+    s.agents.push({ ...s.agents[1], id: "new", displayName: "New agent" });
+    act(() => useStore.setState({ snapshot: s }));
+    expect(screen.queryByText("Agent 0")).not.toBeInTheDocument();
+    expect(screen.getByText("New agent")).toBeInTheDocument();
+    act(() => useStore.setState({ snapshot: { ...s, agents: [] } }));
+    expect(screen.getByText("전체 0명")).toBeInTheDocument();
+    expect(screen.getByText("배정된 Agent가 없습니다.")).toBeInTheDocument();
   });
   it("does not treat running QA or skipped checks as a completed pass rate", () => {
     const s = snapshot(); s.qaRuns = [

@@ -21,6 +21,8 @@ export function HeaderStrip() {
   const rolesById = useStore((s) => s.rolesById);
   if (!snapshot) return null;
   const p = snapshot.project;
+  const agents = snapshot.agents.filter((agent) => agent.status !== "REMOVED");
+  const workingAgentCount = agents.filter((agent) => agent.status === "WORKING").length;
   const running = snapshot.tasks.filter((t) => t.status === "RUNNING");
   const waiting = snapshot.tasks.filter((t) => t.status === "WAITING" || t.status === "BLOCKED").length;
   const attention = deriveAttention(snapshot).length;
@@ -66,7 +68,7 @@ export function HeaderStrip() {
 
         {/* Right: KPI tiles */}
         <div className="grid grid-cols-3 gap-3 lg:w-72">
-          <Kpi label="활성 에이전트" value={`${p.workingAgentCount}`} sub={`/ ${p.assignedAgentCount}`} icon="smart_toy" onClick={() => document.getElementById("dashboard-agents")?.scrollIntoView({ block: "center", behavior: "smooth" })} />
+          <Kpi label="활성 에이전트" value={`${workingAgentCount}`} sub={`/ ${agents.length}`} icon="smart_toy" onClick={() => document.getElementById("dashboard-agents")?.scrollIntoView({ block: "center", behavior: "smooth" })} />
           <Kpi label="진행 중 작업" value={String(running.length)} sub={waiting ? `${waiting} 대기` : undefined} icon="pending_actions" onClick={() => selectPanel("tasks")} />
           <Kpi label="확인 필요" value={String(attention)} icon="notifications_active" alert={attention > 0} onClick={() => document.getElementById("dashboard-attention")?.scrollIntoView({ block: "center", behavior: "smooth" })} />
         </div>

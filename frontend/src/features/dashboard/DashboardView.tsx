@@ -8,7 +8,7 @@ import { AgentOverview } from "./AgentOverview";
 import { WorkspaceBrief } from "./WorkspaceBrief";
 import { AttentionCenter } from "./AttentionCenter";
 import { CommandInput } from "./CommandInput";
-import { CityWorkspace } from "./CityWorkspace";
+import { DevelopmentFlow } from "./DevelopmentFlow";
 import { FeedbackSection } from "./FeedbackSection";
 import { DashboardDetails } from "./DashboardDetails";
 import { HeaderStrip } from "./HeaderStrip";
@@ -55,7 +55,7 @@ export function DashboardView() {
             {/* Center flow + Attention Center (04 §23) */}
             <div className="flex flex-col gap-4 lg:flex-row">
               <div className="order-2 min-w-0 flex-1 lg:order-1">
-                <CityWorkspace compact />
+                <DevelopmentFlow />
               </div>
               <div id="dashboard-attention" className="order-1 flex w-full flex-col gap-3 lg:order-2 lg:w-80 lg:flex-shrink-0">
                 <AttentionCenter />

@@ -875,3 +875,12 @@ QA Run → Milestone Result → Human review / Additional validation plan
 - 일반 사용자 지시의 계획 피드백(19장), Milestone 결과 수정 요청(9장), 추가 검증(13장)은 오케스트레이터의 별도 동작이다. UF Comment를 Agent에게 전달하거나 Comment 저장을 실행·재작업 지시로 해석하지 않는다.
 - AI 활용 Score는 Task 진행률·QA Gate·제품 품질 Score와 구분한다. 미수집 지표는 0으로 바꾸지 않고 `미수집`으로 표시하며, 비교 대상의 규모·성격이 다르면 비교 한계를 표시한다.
 - 인수 기준: ACTIVE Project의 Report/Comment 생성은 거부되고 완료 안내가 표시됨; COMPLETED Project는 AI 수행 Task 비율·Token/Cost·영역별 분포·Score/Comment를 조회 가능; Comment 기록만으로 Task/Agent/진행률/Git 상태가 변하지 않음.
+
+
+## 31. PM 중심 역할 흐름도 (2026-09-09 보완)
+
+- 역할 구성은 타이쿤과 동일한 PM / Frontend / Backend / Database / QA를 사용한다. 기존 `PM → Frontend/Backend → QA` 도식은 이 절의 PM 중심 구조로 대체한다.
+- PM의 계획·조율 → Frontend/Backend/Database 역할별 실행 → QA 검증을 단계별로 배치한다. PM에서 각 실행 역할로 분기하고 각 역할에서 QA로 합류하는 단방향 화살표를 제공한다. PM → QA 직접 검증 지시와 QA → PM 결과 보고·재계획은 별도 외곽 루프로 표시한다.
+- 연결선은 역할 간 조율 관계다. 고정된 순차 실행이나 실제 메시지 전송을 의미하지 않으며, 실제 실행은 Task 의존성·계획 승인·기술 QA Gate 등 기존 조건을 따른다.
+- Dashboard는 흐름도만 제공하며 3D 도시 및 보기 전환 UI는 제거한다. 흐름도의 역할 집합은 타이쿤 역할 목록을 따른다. 역할 노드는 복수 에이전트의 배정 수와 역할 작업 진행률을 집계하고, 단일 에이전트는 개인 상세, 복수 또는 미배정 역할은 부서 상세로 연결한다.
+- API 계약 조정과 타이쿤 생성·배정 및 실제 오케스트레이션 연동은 각 유닛 개발 완료 후 적용한다. 본 단계는 Dashboard 표현을 정렬한다.

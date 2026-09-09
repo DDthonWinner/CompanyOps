@@ -17,6 +17,8 @@ interface StoreState {
   lastSyncAt: string | null;
   connection: ConnState;
   ui: { activeTab: "tycoon" | "dashboard"; camera: { target?: string }; dashboardPanel?: DashboardPanel };
+  // One-shot navigation intent; never persisted with the selected panel.
+  dashboardScrollRequest: { panel: DashboardPanel } | null;
   openSheet: OpenSheet | null;
   rolesById: Record<string, { code: string; name: string }>;
 
@@ -40,12 +42,13 @@ export const useStore = create<StoreState>()(
       lastSyncAt: null,
       connection: "DISCONNECTED",
       ui: { activeTab: "tycoon", camera: {} },
+      dashboardScrollRequest: null,
       openSheet: null,
       rolesById: {},
 
       setRoles: (roles) =>
         set({ rolesById: Object.fromEntries(roles.map((r) => [r.id, { code: r.code, name: r.name }])) }),
-      setActiveProject: (id) => set({ activeProjectId: id, snapshot: null }),
+      setActiveProject: (id) => set({ activeProjectId: id, snapshot: null, dashboardScrollRequest: null }),
       applySnapshot: (s) => {
         const current = get().snapshot;
         // Ignore stale/duplicate revisions (FR-TY-2).
@@ -53,8 +56,8 @@ export const useStore = create<StoreState>()(
         set({ snapshot: s, lastSyncAt: new Date().toISOString() });
       },
       setConnection: (c) => set({ connection: c }),
-      setActiveTab: (t) => set((st) => ({ ui: { ...st.ui, activeTab: t } })),
-      setDashboardPanel: (dashboardPanel) => set((st) => ({ ui: { ...st.ui, activeTab: "dashboard", dashboardPanel } })),
+      setActiveTab: (t) => set((st) => ({ ui: { ...st.ui, activeTab: t }, dashboardScrollRequest: null })),
+      setDashboardPanel: (dashboardPanel) => set((st) => ({ ui: { ...st.ui, activeTab: "dashboard", dashboardPanel }, dashboardScrollRequest: { panel: dashboardPanel } })),
       setCamera: (target) => set((st) => ({ ui: { ...st.ui, camera: { target } } })),
       openAgentSheet: (projectAgentId) => set({ openSheet: { kind: "agent", id: projectAgentId } }),
       openDeskSheet: (roleCode) => set({ openSheet: { kind: "desk", id: roleCode } }),
