@@ -25,5 +25,9 @@
 
 .world-hiring{flex-shrink:0;margin:0 0 16px;padding:10px 12px;border-left:2px solid #b6e7c3;background:#18302b9c}.world-hiring>p{font-size:13px;color:#d6eddd;margin:0 0 9px}.world-hiring-list{display:flex;flex-wrap:wrap;gap:6px}.world-hiring-list span{font-size:12px;line-height:1.5;color:#b7cbc2;padding:3px 7px;border:1px solid #6a8f7a66;border-radius:3px}.world-project-panel{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}.world-project-list{flex-shrink:0;max-height:24svh}
 @media(max-height:720px){.world-hiring{margin-bottom:10px;padding:8px 10px}.world-project-panel .world-description{display:block}.world-project-list{max-height:18svh}}
-.world-lounge{position:absolute;right:3%;top:23%;width:51%;height:59%;z-index:2;background:radial-gradient(ellipse at 50% 65%,#173b3866,transparent 70%)}.world-lounge-title{position:absolute;top:0;left:6%;right:6%;z-index:1;font:12px "JetBrains Mono",monospace;letter-spacing:1.5px;color:#c8e5d4;display:flex;justify-content:space-between;gap:14px}.world-lounge-title span{color:#a0b7b3;letter-spacing:.3px}.world-office-copy{max-width:48%;left:5%;top:23%}.world-office-copy h2{font-size:clamp(28px,2.8vw,43px)}
-@media(max-width:700px){.world-lounge{top:52%;right:0;width:100%;height:34%;pointer-events:none}.world-project-panel{top:17%;max-height:34%;z-index:3}.world-lounge-title{font-size:11px}.world-office-copy{max-width:none;right:7%;top:20%}.world-office-copy h2{font-size:28px}}
+.world-office-copy{max-width:48%;left:5%;top:23%}.world-office-copy h2{font-size:clamp(28px,2.8vw,43px)}
+@media(max-width:700px){.world-office-copy{max-width:none;right:7%;top:20%}.world-office-copy h2{font-size:28px}}
+
+.world-center-scroll{position:absolute;bottom:112px;left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 22px;border:0;background:transparent;color:var(--world-ink);font:13px Inter,system-ui,sans-serif;letter-spacing:.5px;white-space:nowrap;cursor:pointer;text-shadow:0 2px 12px #000}.world-center-scroll>span:last-child{font-size:28px;color:var(--world-accent);animation:world-down 2s infinite}.world-center-scroll:hover{color:var(--world-accent)}
+@media(max-width:640px){.world-center-scroll{bottom:98px;font-size:12px;gap:4px}}
+@media(max-height:720px){.world-center-scroll{bottom:88px;padding:5px 12px;gap:3px}}

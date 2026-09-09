@@ -61,11 +61,13 @@ describe("scroll world project-to-office journey", () => {
   it("keeps the office inert during the transition and can return to project selection", async () => {
     render(<ScrollWorld />);
     const node = setupScroll();
-    await moveTo(node, 0.88);
+    await moveTo(node, 0.89);
+    expect(screen.queryByLabelText("프로젝트 오피스")).not.toBeInTheDocument();
+    await moveTo(node, 0.94);
     await screen.findByTestId("existing-office");
     expect(screen.getByLabelText("프로젝트 오피스")).toHaveAttribute("inert");
     await moveTo(node, 1);
-    fireEvent.click(screen.getByRole("button", { name: /도시 · 프로젝트 선택/ }));
+    fireEvent.click(screen.getByRole("button", { name: /프로젝트 선택/ }));
     await waitFor(() => expect(screen.getByRole("heading", { name: /어떤 가능성을/ })).toBeInTheDocument());
     expect(screen.queryByTestId("existing-office")).not.toBeInTheDocument();
   });
@@ -75,7 +77,7 @@ describe("scroll world project-to-office journey", () => {
     render(<ScrollWorld />);
     const node = setupScroll();
     await moveTo(node, 0.32);
-    expect(await screen.findByText("아직 입주한 프로젝트가 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 생성한 프로젝트가 없습니다.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /첫 프로젝트 만들러/ }));
     expect(await screen.findByTestId("existing-office")).toHaveTextContent("empty:dashboard");
   });
