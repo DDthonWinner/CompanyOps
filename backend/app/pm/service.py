@@ -358,9 +358,13 @@ def assign_agents(session: Session, project_id: str, req: dict) -> dict:
 _DESK_ROLE_CODES = ["FRONTEND", "BACKEND", "DATABASE", "QA"]
 
 
-def hire_one_agent(session: Session, project_id: str) -> dict:
-    """Hire one additional agent onto the least-staffed desk. Creates a fresh
-    profile so it can always add someone (Tycoon Office 'Agent 고용하기')."""
+def hire_one_agent(session: Session, project_id: str, req: dict | None = None) -> dict:
+    """Hire one agent (Tycoon Office 'Agent 고용하기').
+
+    With `agentProfileId` the chosen profile is deployed to the chosen desk/model;
+    with an empty request it auto-picks the least-staffed desk (creating a fresh
+    profile so it can always add someone)."""
+    req = req or {}
     p = _require_project(session, project_id)
     existing = list(session.execute(
         select(ProjectAgent).where(ProjectAgent.project_id == project_id)
@@ -368,33 +372,57 @@ def hire_one_agent(session: Session, project_id: str) -> dict:
     active = [a for a in existing if a.status != "REMOVED"]
     if len(active) >= p.max_agent_count:
         raise conflict(f"정원({p.max_agent_count})에 도달했습니다.", code="CAP_REACHED")
+    used = {a.agent_profile_id for a in existing}
 
-    role_by_id = {r.id: r for r in session.execute(select(Role)).scalars()}
-    counts = {code: 0 for code in _DESK_ROLE_CODES}
-    for a in active:
-        code = role_by_id[a.role_id].code if a.role_id in role_by_id else None
-        if code in counts:
-            counts[code] += 1
-    target_code = min(_DESK_ROLE_CODES, key=lambda c: counts[c])
-    role = _role_by_code(session, target_code)
-    model = session.execute(select(LlmModel).where(LlmModel.is_active == 1)).scalars().first()
-    if model is None:
-        raise conflict("사용 가능한 LLM 모델이 없습니다.", code="NO_MODEL")
-
-    seq = len(existing) + 1
-    color = rec.ROLE_COLOR.get(target_code, "#4F46E5")
-    icon = rec.ROLE_ICON.get(target_code, "cog")
-    profile = AgentProfile(
-        name=f"{target_code.title()} Recruit #{seq}", role_id=role.id,
-        default_llm_model_id=model.id, skill_level="MID",
-        default_color=color, default_icon_key=icon, is_active=1,
-    )
-    session.add(profile)
-    session.flush()
+    if req.get("agentProfileId"):
+        profile = session.get(AgentProfile, req["agentProfileId"])
+        if profile is None or not profile.is_active:
+            raise bad_request("유효하지 않거나 비활성 Agent Profile입니다.", code="INVALID_PROFILE")
+        if profile.id in used:
+            raise conflict("이미 배정된 Agent Profile입니다.", code="DUPLICATE_PROFILE")
+        role = _role_by_code(session, req["roleCode"]) if req.get("roleCode") else session.get(Role, profile.role_id)
+        model = session.get(LlmModel, req.get("llmModelId") or profile.default_llm_model_id)
+        if model is None or not model.is_active:
+            raise bad_request("유효하지 않거나 비활성 LLM 모델입니다.", code="INVALID_MODEL")
+        color = req.get("displayColor") or profile.default_color or rec.ROLE_COLOR.get(role.code, "#4F46E5")
+        if not _valid_hex(color):
+            raise bad_request("displayColor는 #RRGGBB 형식이어야 합니다.", code="INVALID_COLOR")
+        display_name = (req.get("displayName") or profile.name).strip()
+        if not display_name:
+            raise bad_request("displayName은 비어 있을 수 없습니다.", code="INVALID_DISPLAY_NAME")
+        icon = profile.default_icon_key or rec.ROLE_ICON.get(role.code, "cog")
+        profile_id = profile.id
+        model_id = model.id
+    else:
+        # Auto-pick: least-staffed desk, with a freshly-created profile.
+        role_by_id = {r.id: r for r in session.execute(select(Role)).scalars()}
+        counts = {code: 0 for code in _DESK_ROLE_CODES}
+        for a in active:
+            code = role_by_id[a.role_id].code if a.role_id in role_by_id else None
+            if code in counts:
+                counts[code] += 1
+        target_code = min(_DESK_ROLE_CODES, key=lambda c: counts[c])
+        role = _role_by_code(session, target_code)
+        model = session.execute(select(LlmModel).where(LlmModel.is_active == 1)).scalars().first()
+        if model is None:
+            raise conflict("사용 가능한 LLM 모델이 없습니다.", code="NO_MODEL")
+        seq = len(existing) + 1
+        color = rec.ROLE_COLOR.get(target_code, "#4F46E5")
+        icon = rec.ROLE_ICON.get(target_code, "cog")
+        fresh = AgentProfile(
+            name=f"{target_code.title()} Recruit #{seq}", role_id=role.id,
+            default_llm_model_id=model.id, skill_level="MID",
+            default_color=color, default_icon_key=icon, is_active=1,
+        )
+        session.add(fresh)
+        session.flush()
+        profile_id = fresh.id
+        model_id = model.id
+        display_name = f"Recruit {target_code.title()} #{seq}"
 
     pa = ProjectAgent(
-        project_id=project_id, agent_profile_id=profile.id, role_id=role.id,
-        llm_model_id=model.id, display_name=f"Recruit {target_code.title()} #{seq}",
+        project_id=project_id, agent_profile_id=profile_id, role_id=role.id,
+        llm_model_id=model_id, display_name=display_name,
         display_color=color, icon_key=icon, status="ASSIGNED", is_primary_pm=0,
         assignment_reason="Hired from Tycoon Office",
     )

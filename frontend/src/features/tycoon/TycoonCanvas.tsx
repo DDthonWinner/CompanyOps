@@ -12,6 +12,7 @@ import { DomainDesk } from "./scene/DomainDesk";
 import { DevPawn } from "./scene/DevPawn";
 import { FireDoor } from "./scene/FireDoor";
 import { FloorGrid } from "./scene/FloorGrid";
+import { IntroGroup } from "./scene/IntroGroup";
 import { Lighting } from "./scene/Lighting";
 import { OfficeDecor } from "./scene/OfficeDecor";
 import { PMSuite } from "./scene/PMSuite";
@@ -27,6 +28,20 @@ const DOMAIN_LAYOUT: Record<string, [number, number]> = {
 const PM_POS: [number, number] = [66, 0];
 const FIRE_POS: [number, number, number] = [58, 0, -40.3]; // 해고 door, set into the back wall
 const DEFAULT_TARGET: [number, number, number] = [18, 3, 0];
+
+// Desk footprints wandering agents must walk around (world [minX, maxX, minZ, maxZ]).
+const OBSTACLES: Array<[number, number, number, number]> = [
+  [-36, -8, 13, 19], // FRONTEND
+  [8, 36, 13, 19], // DATABASE
+  [-36, -8, -19, -13], // BACKEND
+  [8, 36, -19, -13], // QA
+  [61, 71, -4, 1], // PM exec desk
+];
+const OBSTACLE_INDEX: Record<string, number> = { FRONTEND: 0, DATABASE: 1, BACKEND: 2, QA: 3, PM: 4 };
+// Each agent avoids every desk *except its own* (so it can reach its own seat).
+const OBSTACLES_BY_ROLE: Record<string, Array<[number, number, number, number]>> = Object.fromEntries(
+  Object.entries(OBSTACLE_INDEX).map(([code, idx]) => [code, OBSTACLES.filter((_, i) => i !== idx)]),
+);
 
 // Spots idle agents wander to (world [x, z]); standY lifts them (e.g. onto a sofa).
 const WANDER_POINTS: Array<{ pos: [number, number]; standY?: number }> = [
@@ -157,12 +172,20 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
       <color attach="background" args={["#e9ebf2"]} />
       <Lighting />
       <CameraControls focusPoints={focusPoints} defaultTarget={DEFAULT_TARGET} />
-      <FloorGrid />
-      {tier !== "LOW" && <Decor />}
-      <OfficeDecor tier={tier} />
 
-      {/* Domain desks */}
-      {(Object.keys(DOMAIN_LAYOUT) as Array<keyof typeof DOMAIN_LAYOUT>).map((code) => {
+      {/* 1) Office shell floats in first */}
+      <IntroGroup delay={0} rise={3}>
+        <FloorGrid />
+      </IntroGroup>
+
+      {/* 2) Decor + desks */}
+      <IntroGroup delay={0.4} rise={2.5}>
+        {tier !== "LOW" && <Decor />}
+        <OfficeDecor tier={tier} />
+        <FireDoor position={FIRE_POS} />
+
+        {/* Domain desks */}
+        {(Object.keys(DOMAIN_LAYOUT) as Array<keyof typeof DOMAIN_LAYOUT>).map((code) => {
         const r = perRole[code];
         return (
           <DomainDesk
@@ -187,36 +210,37 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
         percent={perRole.PM.percent}
         done={perRole.PM.outbox}
         total={perRole.PM.total}
-        inboxCount={perRole.PM.inbox}
-        outboxCount={perRole.PM.outbox}
-      />
+          inboxCount={perRole.PM.inbox}
+          outboxCount={perRole.PM.outbox}
+        />
+      </IntroGroup>
 
-      {/* 해고 (fire) door in front of the PM */}
-      <FireDoor position={FIRE_POS} />
-
-      {/* All agents (flat list — stable instances survive reassignment) */}
-      {layout.all.map((a) => {
-        const { eff, seat } = layout.info[a.id];
-        const reassigned = reassignments[a.id] != null;
-        const color = reassigned ? roleColor(eff) : a.displayColor || roleColor(eff);
-        return (
-          <DevPawn
-            key={a.id}
-            projectId={projectId}
-            projectAgentId={a.id}
-            color={color}
-            status={a.status}
-            name={a.displayName}
-            position={seat}
-            roleCode={eff}
-            tier={tier}
-            resolveDeskAt={resolveDeskAt}
-            onPuff={onPuff}
-            onFire={onFire}
-            wanderPoints={WANDER_POINTS}
-          />
-        );
-      })}
+      {/* 3) Agents walk in last (flat list — stable instances survive reassignment) */}
+      <IntroGroup delay={0.75} rise={2.5}>
+        {layout.all.map((a) => {
+          const { eff, seat } = layout.info[a.id];
+          const reassigned = reassignments[a.id] != null;
+          const color = reassigned ? roleColor(eff) : a.displayColor || roleColor(eff);
+          return (
+            <DevPawn
+              key={a.id}
+              projectId={projectId}
+              projectAgentId={a.id}
+              color={color}
+              status={a.status}
+              name={a.displayName}
+              position={seat}
+              roleCode={eff}
+              tier={tier}
+              resolveDeskAt={resolveDeskAt}
+              onPuff={onPuff}
+              onFire={onFire}
+              wanderPoints={WANDER_POINTS}
+              obstacles={OBSTACLES_BY_ROLE[eff] ?? OBSTACLES}
+            />
+          );
+        })}
+      </IntroGroup>
 
       {puffs.map((p) => (
         <SmokePuff key={p.id} position={p.pos} onDone={() => removePuff(p.id)} />

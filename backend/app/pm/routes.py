@@ -106,8 +106,8 @@ def assign(project_id: str, body: s.AssignIn):
 
 
 @router.post("/projects/{project_id}/agents/hire")
-def hire(project_id: str):
-    return mutate(lambda db: service.hire_one_agent(db, project_id))
+def hire(project_id: str, body: s.HireIn):
+    return mutate(lambda db: service.hire_one_agent(db, project_id, body.model_dump(exclude_none=True)))
 
 
 @router.get("/projects/{project_id}/agents")

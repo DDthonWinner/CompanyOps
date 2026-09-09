@@ -29,6 +29,7 @@ def _agent(a: ProjectAgent, token_total: int | None = None) -> dict:
         "isPrimaryPm": bool(a.is_primary_pm), "currentTaskId": a.current_task_id,
         "nextTaskId": a.next_task_id, "activitySummary": a.activity_summary,
         "llmModelId": a.llm_model_id, "tokenTotal": token_total,
+        "agentProfileId": a.agent_profile_id,
     }
 
 

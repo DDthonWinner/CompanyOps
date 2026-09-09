@@ -60,7 +60,8 @@ export const api = {
     request(`/api/projects/${pid}/agent-recommendations`, { method: "POST", body: JSON.stringify(body) }),
   assignAgents: (pid: string, body: Record<string, unknown>) =>
     request(`/api/projects/${pid}/agents`, { method: "POST", body: JSON.stringify(body) }),
-  hireAgent: (pid: string) => request(`/api/projects/${pid}/agents/hire`, { method: "POST" }),
+  hireAgent: (pid: string, body: Record<string, unknown> = {}) =>
+    request(`/api/projects/${pid}/agents/hire`, { method: "POST", body: JSON.stringify(body) }),
   removeAgent: (pid: string, agentId: string) =>
     request(`/api/projects/${pid}/agents/${agentId}`, { method: "DELETE" }),
   createMilestone: (pid: string, body: Record<string, unknown>) =>

@@ -96,6 +96,7 @@ export function DevPawn({
   onPuff,
   onFire,
   wanderPoints,
+  obstacles,
 }: {
   projectId: string;
   projectAgentId: string;
@@ -109,6 +110,7 @@ export function DevPawn({
   onPuff: (pos: [number, number, number]) => void;
   onFire: (agentId: string) => void;
   wanderPoints: Array<{ pos: [number, number]; standY?: number }>;
+  obstacles: Array<[number, number, number, number]>; // desk footprints to avoid
 }) {
   const badge = tier === "HIGH" ? "#f5c542" : tier === "MEDIUM" ? "#c9ccd6" : "#cd8f5a";
   const root = useRef<THREE.Group>(null);
@@ -152,6 +154,9 @@ export function DevPawn({
   const wt = useRef({ x: position[0], z: position[1], standY: 0 });
   const dwelling = useRef(false);
   const dwellEnd = useRef(0);
+  const returning = useRef(false); // running back to the desk (recall)
+  const stall = useRef(0);
+  const prevD = useRef(Infinity);
   const pickPOI = useCallback(() => {
     // Occasionally head back to the desk; otherwise a random spot *within a radius*
     // of a point of interest so agents don't stack on the exact same coordinate.
@@ -260,13 +265,16 @@ export function DevPawn({
       if (lastRecall.current !== recallRef.current) {
         lastRecall.current = recallRef.current;
         wt.current = { x: seat.current.x, z: seat.current.z, standY: 0 };
-        dwelling.current = false; // walk back to the desk
+        dwelling.current = false;
+        returning.current = true; // run back to the desk
+        stall.current = 0;
       }
       const arrived = Math.abs(wt.current.x - cur.x) + Math.abs(wt.current.z - cur.z) < 1.2;
       if (arrived) {
+        returning.current = false;
         if (!dwelling.current) {
           dwelling.current = true;
-          dwellEnd.current = t + DWELL_MIN + Math.random() * 15; // linger ≥30s
+          dwellEnd.current = t + DWELL_MIN + Math.random() * 15;
         } else if (t > dwellEnd.current) {
           dwelling.current = false;
           wt.current = pickPOI();
@@ -287,14 +295,36 @@ export function DevPawn({
       const dz = wt.current.z - cur.z;
       const d = Math.hypot(dx, dz);
       if (!dwelling.current && d > 0.05) {
-        // Constant, slow walking speed (not distance-proportional easing).
-        const step = Math.min(WALK_SPEED * dt, d);
-        cur.x += (dx / d) * step;
-        cur.z += (dz / d) * step;
+        // Constant speed (walk normally, run when recalled).
+        const spd = returning.current ? WALK_SPEED * 2 : WALK_SPEED;
+        const step = Math.min(spd * dt, d);
+        let nx = cur.x + (dx / d) * step;
+        let nz = cur.z + (dz / d) * step;
+        // Axis-separated sliding so agents don't phase through desks.
+        const M = 2.6;
+        for (const o of obstacles)
+          if (nx > o[0] - M && nx < o[1] + M && cur.z > o[2] - M && cur.z < o[3] + M) { nx = cur.x; break; }
+        for (const o of obstacles)
+          if (nx > o[0] - M && nx < o[1] + M && nz > o[2] - M && nz < o[3] + M) { nz = cur.z; break; }
+        cur.x = nx;
+        cur.z = nz;
         walking = d > 0.5;
+        // Retarget if stuck against a desk with no progress.
+        if (!returning.current) {
+          if (d > prevD.current - 0.02) stall.current += dt;
+          else stall.current = 0;
+          prevD.current = d;
+          if (stall.current > 2) {
+            wt.current = pickPOI();
+            stall.current = 0;
+            prevD.current = Infinity;
+          }
+        }
       } else {
         cur.x += dx * 0.1;
         cur.z += dz * 0.1;
+        stall.current = 0;
+        prevD.current = Infinity;
       }
       cur.y += ((dwelling.current ? wt.current.standY : 0) - cur.y) * 0.08;
     } else {
@@ -323,7 +353,7 @@ export function DevPawn({
       const headZ = wanderActive ? wt.current.z : seat.current.z;
       let targetY: number;
       if (walking && !dragging) targetY = Math.atan2(headX - cur.x, headZ - cur.z);
-      else if (st === "working" && !dragging) targetY = FACE_MONITOR;
+      else if ((st === "working" || st === "planning") && !dragging) targetY = FACE_MONITOR;
       else targetY = FACE_CAMERA;
       let diff = targetY - mascot.current.rotation.y;
       while (diff > Math.PI) diff -= Math.PI * 2;
@@ -332,9 +362,9 @@ export function DevPawn({
       if (st === "working" && !dragging && !walking) {
         mascot.current.rotation.x = 0.14 + Math.sin(t * 4 + phase) * 0.03;
         mascot.current.rotation.z = 0;
-      } else if (st === "planning" && !dragging) {
-        mascot.current.rotation.x = 0.03;
-        mascot.current.rotation.z = Math.sin(t * 0.8 + phase) * 0.05;
+      } else if (st === "planning" && !dragging && !walking) {
+        mascot.current.rotation.x = 0.08; // lean at the desk, still
+        mascot.current.rotation.z = 0;
       } else {
         mascot.current.rotation.x = 0;
         mascot.current.rotation.z = 0;
@@ -347,7 +377,8 @@ export function DevPawn({
         const cyc = (t * 0.42 + phase) % 1;
         body.current.position.y = cyc < 0.45 ? Math.sin((cyc / 0.45) * Math.PI) * 1.7 : 0;
       } else if (walking) {
-        body.current.position.y = Math.abs(Math.sin(t * 8 + phase)) * 0.16;
+        const f = returning.current ? 15 : 8;
+        body.current.position.y = Math.abs(Math.sin(t * f + phase)) * (returning.current ? 0.22 : 0.16);
       } else if (st === "working") {
         body.current.position.y = Math.sin(t * 2.2 + phase) * 0.06;
       } else {
@@ -365,22 +396,32 @@ export function DevPawn({
         armL.current.rotation.set(-2.3 + w, 0, 0);
         armR.current.rotation.set(-2.3 - w, 0, 0);
       } else if (walking) {
-        const s = Math.sin(t * 8 + phase) * 0.4;
+        const f = returning.current ? 16 : 8;
+        const a = returning.current ? 0.6 : 0.4;
+        const s = Math.sin(t * f + phase) * a;
         armL.current.rotation.set(s, 0, 0);
         armR.current.rotation.set(-s, 0, 0);
       } else if (st === "working") {
-        armL.current.rotation.set(0.18 + Math.sin(t * 10 + phase) * 0.28, 0, 0);
-        armR.current.rotation.set(0.18 + Math.sin(t * 10 + phase + Math.PI) * 0.28, 0, 0);
-      } else if (st === "planning") {
-        const s = Math.sin(t * 1.1 + phase) * 0.5 + 0.5;
-        armR.current.rotation.set(-0.3 * s, 0, -1.35 * s);
-        armL.current.rotation.set(0, 0, 0);
+        // Arms out onto the desk; hands tap up/down alternately → typing.
+        armL.current.rotation.set(-1.45 + Math.sin(t * 9 + phase) * 0.16, 0, 0);
+        armR.current.rotation.set(-1.45 + Math.sin(t * 9 + phase + Math.PI) * 0.16, 0, 0);
       } else {
+        // planning + idle-at-rest → arms still
         armL.current.rotation.set(0, 0, 0);
         armR.current.rotation.set(0, 0, 0);
       }
     }
-    if (bubble.current) bubble.current.position.y = 12.0 + Math.sin(t * 1.6 + phase) * 0.18;
+    if (bubble.current) {
+      bubble.current.position.y = 12.0 + Math.sin(t * 1.6 + phase) * 0.18;
+      if (st === "planning") {
+        // Blink: appear → hold → disappear → gone → reappear.
+        const c = (t * 0.5 + phase) % 1;
+        const s = c < 0.15 ? c / 0.15 : c < 0.7 ? 1 : c < 0.85 ? 1 - (c - 0.7) / 0.15 : 0;
+        bubble.current.scale.setScalar(s);
+      } else {
+        bubble.current.scale.setScalar(1);
+      }
+    }
 
     // Fade agents already at the desk currently under the dragged agent (drop preview).
     const dim = agentDrag.activeId !== null && !dragging && agentDrag.hoverRole === roleCode;
@@ -418,14 +459,14 @@ export function DevPawn({
     >
       {/* Red hover outline — warns that press-and-hold will pick this agent up */}
       {hovered && !dragged && (
-        <mesh position={[0, 0.16, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0.44, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[2.9, 3.5, 44]} />
           <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} toneMapped={false} />
         </mesh>
       )}
       {/* Selection highlight ring */}
       {isSelected && (
-        <mesh position={[0, 0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0.42, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[3.6, 4.3, 48]} />
           <meshBasicMaterial color={color} transparent opacity={0.85} side={THREE.DoubleSide} toneMapped={false} />
         </mesh>

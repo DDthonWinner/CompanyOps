@@ -71,6 +71,16 @@ class AssignIn(BaseModel):
     agents: list[AssignAgentIn]
 
 
+class HireIn(BaseModel):
+    # All optional: with an agentProfileId the given profile/role/model is hired;
+    # empty body falls back to auto-picking the least-staffed desk.
+    agentProfileId: str | None = None
+    roleCode: str | None = None
+    llmModelId: str | None = None
+    displayName: str | None = None
+    displayColor: str | None = None
+
+
 class ReplaceAgentIn(BaseModel):
     displayName: str | None = None
     displayColor: str | None = None

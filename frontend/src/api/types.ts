@@ -29,6 +29,7 @@ export interface Agent {
   displayColor: string;
   iconKey: string;
   status: string;
+  agentProfileId?: string;
   isPrimaryPm: boolean;
   currentTaskId: string | null;
   nextTaskId: string | null;
