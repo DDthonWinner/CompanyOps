@@ -36,5 +36,5 @@ def update_row(name: str, pk: str, body: dict[str, Any] = Body(...)):
 
 
 @router.delete("/tables/{name}/{pk}")
-def delete_row(name: str, pk: str):
-    return service.delete_row(name, pk)
+def delete_row(name: str, pk: str, cascade: bool = Query(False)):
+    return service.delete_row(name, pk, cascade)

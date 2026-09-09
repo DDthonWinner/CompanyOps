@@ -152,10 +152,11 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
-  adminDeleteRow: (table: string, pk: string) =>
-    request<{ deleted: boolean }>(`/api/admin/tables/${table}/${encodeURIComponent(pk)}`, {
-      method: "DELETE",
-    }),
+  adminDeleteRow: (table: string, pk: string, cascade = false) =>
+    request<{ deleted: boolean; deletedCounts?: Record<string, number> }>(
+      `/api/admin/tables/${table}/${encodeURIComponent(pk)}${cascade ? "?cascade=true" : ""}`,
+      { method: "DELETE" },
+    ),
 };
 
 export interface AdminColumn {

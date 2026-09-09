@@ -164,17 +164,70 @@ def update_row(name: str, pk_value: str, data: dict) -> dict:
     return dict(row) if row else {}
 
 
-def delete_row(name: str, pk_value: str) -> dict:
+def _child_fks(parent: Table) -> list[tuple[Table, Any, Any]]:
+    """Tables/columns whose FK points at `parent`, as (child_table, child_col, parent_col)."""
+    out: list[tuple[Table, Any, Any]] = []
+    for tbl in Base.metadata.tables.values():
+        for fk in tbl.foreign_keys:
+            if fk.column.table is parent:
+                out.append((tbl, fk.parent, fk.column))
+    return out
+
+
+def _delete_row_cascade(conn, table: Table, row: dict, visited: set, counts: dict) -> None:
+    """Depth-first delete: remove referencing rows before the row itself.
+
+    No FK in the schema declares ON DELETE CASCADE, so a generic delete of a
+    parent (e.g. a project) must clear every descendant by hand. `visited`
+    guards against FK cycles; `counts` accumulates per-table deletions.
+    """
+    pk_cols = list(table.primary_key.columns)
+    key = (table.name, tuple(row.get(c.name) for c in pk_cols))
+    if key in visited:
+        return
+    visited.add(key)
+    for child_table, child_col, parent_col in _child_fks(table):
+        parent_val = row.get(parent_col.name)
+        if parent_val is None:
+            continue
+        child_rows = conn.execute(
+            select(child_table).where(child_col == parent_val)
+        ).mappings().all()
+        for child in child_rows:
+            _delete_row_cascade(conn, child_table, dict(child), visited, counts)
+    where = [c == row.get(c.name) for c in pk_cols]
+    conn.execute(delete(table).where(*where))
+    counts[table.name] = counts.get(table.name, 0) + 1
+
+
+def delete_row(name: str, pk_value: str, cascade: bool = False) -> dict:
     table = _table(name)
     pk = _pk_column(table)
     pk_val = _coerce_pk(pk, pk_value)
     try:
         with engine.begin() as conn:
+            if cascade:
+                row = conn.execute(select(table).where(pk == pk_val)).mappings().first()
+                if row is None:
+                    raise not_found(f"행을 찾을 수 없습니다: {pk_value}", code="ROW_NOT_FOUND")
+                counts: dict[str, int] = {}
+                _delete_row_cascade(conn, table, dict(row), set(), counts)
+                return {
+                    "deleted": True,
+                    "table": name,
+                    "id": pk_value,
+                    "cascade": True,
+                    "deletedCounts": counts,
+                }
             res = conn.execute(delete(table).where(pk == pk_val))
             if res.rowcount == 0:
                 raise not_found(f"행을 찾을 수 없습니다: {pk_value}", code="ROW_NOT_FOUND")
     except IntegrityError as e:
-        raise conflict(f"외래키 참조로 삭제할 수 없습니다: {e.orig}", code="FK_CONSTRAINT")
+        raise conflict(
+            f"외래키 참조로 삭제할 수 없습니다: {e.orig}",
+            code="FK_CONSTRAINT",
+            details={"cascadeAvailable": True},
+        )
     except SQLAlchemyError as e:
         raise bad_request(f"삭제 실패: {e}", code="DELETE_FAILED")
     return {"deleted": True, "table": name, "id": pk_value}
