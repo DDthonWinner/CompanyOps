@@ -26,6 +26,9 @@ from .publishing import git_port
 ACTOR = "demo-replay"
 PM_INTERVAL_SECONDS = 0.1
 DEVELOPMENT_WORK_TICKS = 5
+# BACKEND (Core Banking, most tasks) and QA (runs last, alone) iterate a bit faster per task so
+# their solo stretches stay short/proportionate — they still run alone, just not for as long.
+SOLO_ROLE_WORK_TICKS = {"BACKEND": 4, "QA": 3}
 ATTENTION_GRACE_SECONDS = 10
 GRACE_POLL_SECONDS = 1
 BRIEF_BLOCK_REASONS = {
@@ -312,7 +315,7 @@ def _execute(db, r, force=False):
                     t.status = "BLOCKED"
                     t.wait_reasons = [f"DEMO_BLOCK:{BRIEF_BLOCK_REASONS[codes[t.role_id]]}"]
                     _touch_task(db, t)
-                elif state["workTicks"] >= DEVELOPMENT_WORK_TICKS:
+                elif state["workTicks"] >= SOLO_ROLE_WORK_TICKS.get(codes[t.role_id], DEVELOPMENT_WORK_TICKS):
                     _review_task(db, t)
         elif t.status == "REVIEW":
             # Rehydrate changeset after restart; fixture + plan ID is deterministic.
