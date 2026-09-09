@@ -1,3 +1,5 @@
+<img width="2172" height="724" alt="README_Image" src="https://github.com/user-attachments/assets/d8909b4a-e066-4583-8688-6b2fd3155fa9" />
+
 # CompanyOps
 
 AI 개발 팀을 구성하고 계획 승인부터 개발·검증·결과 회고까지 관리하는 타이쿤형 프로젝트 운영 서비스입니다.

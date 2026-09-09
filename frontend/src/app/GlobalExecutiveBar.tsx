@@ -3,9 +3,16 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { ProjectListItem } from "../api/types";
 import { BrandLogo } from "../components/ui/BrandLogo";
+import {
+  DemoPasswordDialog,
+  isProjectLocked,
+} from "../components/ui/DemoPasswordDialog";
 import { Icon } from "../components/ui/Icon";
 import { openProjectVillage } from "../features/tycoon/projectCreationNavigation";
 import { useStore } from "../store/useStore";
+
+// Locked projects can still be switched to during the demo, but only after the password.
+const LOCKED_TOOLTIP = "패스워드 입력 후 들어갈 수 있습니다.";
 
 const CONN_META: Record<string, { label: string; color: string }> = {
   CONNECTING: { label: "연결 중", color: "#d97706" },
@@ -33,7 +40,8 @@ export function GlobalExecutiveBar() {
     };
     load();
     window.addEventListener("companyops:projects-changed", load);
-    return () => window.removeEventListener("companyops:projects-changed", load);
+    return () =>
+      window.removeEventListener("companyops:projects-changed", load);
   }, []);
 
   const conn = CONN_META[connection] ?? CONN_META.DISCONNECTED;
@@ -67,21 +75,38 @@ export function GlobalExecutiveBar() {
 
       {/* center: tabs (the one pill that keeps a background) */}
       <nav className="pointer-events-auto absolute left-1/2 flex w-fit -translate-x-1/2 items-center gap-1 rounded-full bg-surface p-1 shadow-md">
-        <TabButton id="tycoon" active={activeTab === "tycoon"} onClick={() => setActiveTab("tycoon")}>
+        <TabButton
+          id="tycoon"
+          active={activeTab === "tycoon"}
+          onClick={() => setActiveTab("tycoon")}
+        >
           Tycoon Office
         </TabButton>
-        <TabButton id="dashboard" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")}>
+        <TabButton
+          id="dashboard"
+          active={activeTab === "dashboard"}
+          onClick={() => setActiveTab("dashboard")}
+        >
           Dashboard
         </TabButton>
-        <TabButton id="admin" active={activeTab === "admin"} onClick={() => setActiveTab("admin")}>
+        <TabButton
+          id="admin"
+          active={activeTab === "admin"}
+          onClick={() => setActiveTab("admin")}
+        >
           Dev Admin
         </TabButton>
       </nav>
 
       {/* right: connection status */}
       <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2">
-        <span data-testid="gebar-connection" className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span aria-hidden style={{ color: conn.color }}>●</span>
+        <span
+          data-testid="gebar-connection"
+          className="flex flex-wrap items-center gap-1.5 text-xs"
+        >
+          <span aria-hidden style={{ color: conn.color }}>
+            ●
+          </span>
           <span>{conn.label}</span>
           {lastSyncAt && (
             <span className="tabular text-on-background/50">
@@ -105,15 +130,20 @@ function ProjectSwitcher({
   onSelect: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  // The locked project awaiting the demo password before we switch to it.
+  const [pendingId, setPendingId] = useState<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const current = projects.find((p) => p.id === activeProjectId) ?? null;
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+      if (wrap.current && !wrap.current.contains(e.target as Node))
+        setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
     window.addEventListener("mousedown", onDown);
     window.addEventListener("keydown", onKey);
     return () => {
@@ -132,10 +162,16 @@ function ProjectSwitcher({
         onClick={() => setOpen((v) => !v)}
         className="flex min-w-0 max-w-[220px] items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-white transition hover:bg-white/10"
       >
-        <span className={`truncate font-semibold ${current ? "text-white" : "text-white/55"}`}>
+        <span
+          className={`truncate font-semibold ${current ? "text-white" : "text-white/55"}`}
+        >
           {current ? current.name : "프로젝트 선택"}
         </span>
-        <Icon name="expand_more" size={18} className={`shrink-0 text-white/60 transition ${open ? "rotate-180" : ""}`} />
+        <Icon
+          name="expand_more"
+          size={18}
+          className={`shrink-0 text-white/60 transition ${open ? "rotate-180" : ""}`}
+        />
       </button>
       {open && (
         <div
@@ -143,38 +179,78 @@ function ProjectSwitcher({
           className="glass-3 absolute left-0 top-[calc(100%+8px)] z-50 max-h-[320px] w-[260px] overflow-auto rounded-2xl border border-outline-variant p-1.5 shadow-xl"
         >
           {projects.length === 0 && (
-            <p className="px-3 py-2 text-sm text-on-background/60">아직 프로젝트가 없습니다.</p>
+            <p className="px-3 py-2 text-sm text-on-background/60">
+              아직 프로젝트가 없습니다.
+            </p>
           )}
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              role="option"
-              aria-selected={p.id === activeProjectId}
-              onClick={() => { onSelect(p.id); setOpen(false); }}
-              className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-surface-high ${
-                p.id === activeProjectId ? "bg-surface-high text-primary" : "text-on-background/85"
-              }`}
-            >
-              <span className="min-w-0 truncate font-medium">{p.name}</span>
-              <span className="shrink-0 text-xs text-on-background/50">{p.projectSize ?? p.budgetLevel}</span>
-            </button>
-          ))}
+          {projects.map((p) => {
+            const locked = isProjectLocked(p.name);
+            return (
+              <button
+                key={p.id}
+                role="option"
+                aria-selected={p.id === activeProjectId}
+                title={locked ? LOCKED_TOOLTIP : undefined}
+                onClick={() => {
+                  setOpen(false);
+                  if (locked) {
+                    setPendingId(p.id);
+                    return;
+                  }
+                  onSelect(p.id);
+                }}
+                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-surface-high ${
+                  p.id === activeProjectId
+                    ? "bg-surface-high text-primary"
+                    : "text-on-background/85"
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="min-w-0 truncate font-medium">{p.name}</span>
+                  {locked && <Icon name="lock" size={14} />}
+                </span>
+                <span className="shrink-0 text-xs text-on-background/50">
+                  {p.projectSize ?? p.budgetLevel}
+                </span>
+              </button>
+            );
+          })}
         </div>
+      )}
+      {pendingId && (
+        <DemoPasswordDialog
+          message="데모 단계에서는 인증된 사용자만 프로젝트에 들어갈 수 있습니다."
+          onConfirm={() => {
+            onSelect(pendingId);
+            setPendingId(null);
+          }}
+          onCancel={() => setPendingId(null)}
+        />
       )}
     </div>
   );
 }
 
 function TabButton({
-  id, active, onClick, children,
-}: { id: string; active: boolean; onClick: () => void; children: React.ReactNode }) {
+  id,
+  active,
+  onClick,
+  children,
+}: {
+  id: string;
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       data-testid={`gebar-tab-${id}`}
       onClick={onClick}
       aria-pressed={active}
       className={`whitespace-nowrap rounded-full px-4 py-1 text-sm font-medium transition ${
-        active ? "bg-surface-lowest text-primary shadow" : "text-on-background/70 hover:text-on-background"
+        active
+          ? "bg-surface-lowest text-primary shadow"
+          : "text-on-background/70 hover:text-on-background"
       }`}
     >
       {children}
