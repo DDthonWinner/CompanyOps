@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .admin import routes as admin_routes
 from .common.errors import AppError, app_error_handler, unhandled_handler
 from .config import get_settings
 from .db import init_db
@@ -85,6 +86,7 @@ app.add_exception_handler(Exception, unhandled_handler)
 app.include_router(pm_routes.router)
 app.include_router(orch_routes.router)
 app.include_router(uf_routes.router)
+app.include_router(admin_routes.router)
 
 
 @app.get("/health", tags=["platform"])

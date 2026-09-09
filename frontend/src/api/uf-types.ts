@@ -30,3 +30,11 @@ export interface Feedback {
   suggestion: string;
   source?: string; // "USER" | "SYSTEM" (rule-based auto-generated)
 }
+
+// TEMP UF_TEST_PREVIEW: ephemeral generation; never a persisted report.
+export interface UtilizationPreview {
+  testMode: true;
+  sourceRevision: number;
+  report: UtilizationReport;
+  feedbacks: Feedback[];
+}
