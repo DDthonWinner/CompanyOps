@@ -16,9 +16,11 @@ const ORB_COLOR: Record<string, string> = {
 };
 
 const MASCOT_SCALE = 2.7;
-const FACE_CAMERA = Math.PI / 4; // idle / planning → face the viewer
+const FACE_CAMERA = Math.PI / 4; // idle-at-rest / planning → face the viewer
 const FACE_MONITOR = Math.PI; // working → turn to the desk monitor (−z)
 const HOLD_MS = 200; // press-and-hold before an agent can be dragged
+const WALK_SPEED = 3.6; // world units / second — a leisurely idle stroll
+const DWELL_MIN = 10; // seconds an idle agent lingers at a point of interest
 
 type State = "working" | "idle" | "planning" | "blocked";
 function stateOf(status: string): State {
@@ -151,11 +153,18 @@ export function DevPawn({
   const dwelling = useRef(false);
   const dwellEnd = useRef(0);
   const pickPOI = useCallback(() => {
-    if (wanderPoints.length === 0 || Math.random() < 0.25) {
+    // Occasionally head back to the desk; otherwise a random spot *within a radius*
+    // of a point of interest so agents don't stack on the exact same coordinate.
+    if (wanderPoints.length === 0 || Math.random() < 0.2) {
       return { x: seat.current.x, z: seat.current.z, standY: 0 };
     }
     const p = wanderPoints[Math.floor(Math.random() * wanderPoints.length)];
-    return { x: p.pos[0], z: p.pos[1], standY: p.standY ?? 0 };
+    const R = 4.5;
+    return {
+      x: p.pos[0] + (Math.random() - 0.5) * 2 * R,
+      z: p.pos[1] + (Math.random() - 0.5) * 2 * R,
+      standY: p.standY ?? 0,
+    };
   }, [wanderPoints]);
 
   // Pointer → ground-plane projection for dragging.
@@ -238,8 +247,9 @@ export function DevPawn({
     }, HOLD_MS);
   };
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
+    const dt = Math.min(delta, 0.05); // clamp spikes (tab switches)
     const dragging = agentDrag.activeId === projectAgentId;
     const cur = pos.current;
 
@@ -250,14 +260,13 @@ export function DevPawn({
       if (lastRecall.current !== recallRef.current) {
         lastRecall.current = recallRef.current;
         wt.current = { x: seat.current.x, z: seat.current.z, standY: 0 };
-        dwelling.current = true;
-        dwellEnd.current = t + 10; // return and linger before wandering again
+        dwelling.current = false; // walk back to the desk
       }
-      const arrived = Math.abs(wt.current.x - cur.x) + Math.abs(wt.current.z - cur.z) < 1.3;
+      const arrived = Math.abs(wt.current.x - cur.x) + Math.abs(wt.current.z - cur.z) < 1.2;
       if (arrived) {
         if (!dwelling.current) {
           dwelling.current = true;
-          dwellEnd.current = t + 3.5 + (phase % 3);
+          dwellEnd.current = t + DWELL_MIN + Math.random() * 15; // linger ≥30s
         } else if (t > dwellEnd.current) {
           dwelling.current = false;
           wt.current = pickPOI();
@@ -268,27 +277,32 @@ export function DevPawn({
     }
 
     // ---- Position ----
-    let gx: number, gz: number, gy: number, speed: number;
+    let walking = false;
     if (dragging) {
-      gx = agentDrag.ground.x;
-      gz = agentDrag.ground.z;
-      gy = 2.2;
-      speed = 0.4;
+      cur.x += (agentDrag.ground.x - cur.x) * 0.4;
+      cur.z += (agentDrag.ground.z - cur.z) * 0.4;
+      cur.y += (2.2 - cur.y) * 0.4;
     } else if (wanderActive) {
-      gx = wt.current.x;
-      gz = wt.current.z;
-      gy = dwelling.current ? wt.current.standY : 0;
-      speed = 0.045;
+      const dx = wt.current.x - cur.x;
+      const dz = wt.current.z - cur.z;
+      const d = Math.hypot(dx, dz);
+      if (!dwelling.current && d > 0.05) {
+        // Constant, slow walking speed (not distance-proportional easing).
+        const step = Math.min(WALK_SPEED * dt, d);
+        cur.x += (dx / d) * step;
+        cur.z += (dz / d) * step;
+        walking = d > 0.5;
+      } else {
+        cur.x += dx * 0.1;
+        cur.z += dz * 0.1;
+      }
+      cur.y += ((dwelling.current ? wt.current.standY : 0) - cur.y) * 0.08;
     } else {
-      gx = seat.current.x;
-      gz = seat.current.z;
-      gy = 0;
-      speed = 0.09;
+      cur.x += (seat.current.x - cur.x) * 0.09;
+      cur.z += (seat.current.z - cur.z) * 0.09;
+      cur.y += (0 - cur.y) * 0.09;
+      walking = Math.abs(seat.current.x - cur.x) + Math.abs(seat.current.z - cur.z) > 0.8;
     }
-    cur.x += (gx - cur.x) * speed;
-    cur.z += (gz - cur.z) * speed;
-    cur.y += (gy - cur.y) * speed;
-    const walking = !dragging && Math.abs(gx - cur.x) + Math.abs(gz - cur.z) > 0.6;
 
     if (root.current) {
       root.current.position.copy(cur);
@@ -304,10 +318,18 @@ export function DevPawn({
     }
 
     if (mascot.current) {
-      const faceMonitor = st === "working" && !dragging && !walking;
-      const targetY = faceMonitor ? FACE_MONITOR : FACE_CAMERA;
-      mascot.current.rotation.y += (targetY - mascot.current.rotation.y) * 0.12;
-      if (st === "working" && !dragging) {
+      // Face the direction of travel while walking; otherwise face monitor/camera.
+      const headX = wanderActive ? wt.current.x : seat.current.x;
+      const headZ = wanderActive ? wt.current.z : seat.current.z;
+      let targetY: number;
+      if (walking && !dragging) targetY = Math.atan2(headX - cur.x, headZ - cur.z);
+      else if (st === "working" && !dragging) targetY = FACE_MONITOR;
+      else targetY = FACE_CAMERA;
+      let diff = targetY - mascot.current.rotation.y;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      mascot.current.rotation.y += diff * 0.15;
+      if (st === "working" && !dragging && !walking) {
         mascot.current.rotation.x = 0.14 + Math.sin(t * 4 + phase) * 0.03;
         mascot.current.rotation.z = 0;
       } else if (st === "planning" && !dragging) {
