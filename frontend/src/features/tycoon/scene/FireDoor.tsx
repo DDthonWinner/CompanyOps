@@ -47,12 +47,7 @@ export function FireDoor({ position }: { position: [number, number, number] }) {
 
   return (
     <group ref={grp} position={position}>
-      {/* Wall panel */}
-      <mesh position={[0, 6, 0]} castShadow receiveShadow>
-        <boxGeometry args={[11, 12, 1]} />
-        <meshStandardMaterial color="#e7e3d6" roughness={1} />
-      </mesh>
-      {/* Door frame */}
+      {/* Door frame (set into the back wall) */}
       <mesh position={[0, 4.4, 0.55]}>
         <boxGeometry args={[5.2, 8.8, 0.5]} />
         <meshStandardMaterial color="#7f1d1d" roughness={0.6} />
