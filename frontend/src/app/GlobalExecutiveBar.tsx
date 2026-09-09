@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { ProjectListItem } from "../api/types";
+import { BrandLogo } from "../components/ui/BrandLogo";
 import { Icon } from "../components/ui/Icon";
+import { openProjectVillage } from "../features/tycoon/projectCreationNavigation";
 import { useStore } from "../store/useStore";
 
 const CONN_META: Record<string, { label: string; color: string }> = {
@@ -37,17 +39,30 @@ export function GlobalExecutiveBar() {
   const conn = CONN_META[connection] ?? CONN_META.DISCONNECTED;
 
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-5 z-40 flex items-center justify-between pl-[13.5rem] pr-[20rem]">
-      {/* left: current-project switcher, sitting right next to the fixed brand logo */}
+    <header className="pointer-events-none fixed inset-x-0 top-5 z-40 flex items-center justify-between pl-5 pr-[20rem]">
+      {/* left: one HUD box holding the brand logo + project switcher, vertically centered */}
       <div className="pointer-events-auto flex min-w-0 items-center">
-        <ProjectSwitcher
-          projects={projects}
-          activeProjectId={activeProjectId}
-          onSelect={(id) => {
-            setActiveProject(id);
-            setActiveTab("tycoon");
-          }}
-        />
+        <div className="brand-hud rounded-hud flex items-center gap-1 py-1.5 pl-3 pr-2">
+          <button
+            type="button"
+            onClick={openProjectVillage}
+            title="마을 뷰로 이동"
+            aria-label="마을 뷰로 이동"
+            data-testid="app-brand"
+            className="flex shrink-0 items-center justify-center rounded-lg px-1.5 py-1 text-white transition hover:text-white/75"
+          >
+            <BrandLogo className="pointer-events-none scale-[0.8]" />
+          </button>
+          <span aria-hidden className="mx-0.5 h-6 w-px shrink-0 bg-white/15" />
+          <ProjectSwitcher
+            projects={projects}
+            activeProjectId={activeProjectId}
+            onSelect={(id) => {
+              setActiveProject(id);
+              setActiveTab("tycoon");
+            }}
+          />
+        </div>
       </div>
 
       {/* center: tabs (the one pill that keeps a background) */}
@@ -115,12 +130,12 @@ function ProjectSwitcher({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-w-0 max-w-[240px] items-center gap-1.5 rounded-full bg-surface-high px-4 py-2 text-sm font-medium text-on-background shadow-sm transition hover:bg-surface-highest"
+        className="flex min-w-0 max-w-[220px] items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-white transition hover:bg-white/10"
       >
-        <span className={`truncate font-semibold ${current ? "text-on-background" : "text-on-background/55"}`}>
+        <span className={`truncate font-semibold ${current ? "text-white" : "text-white/55"}`}>
           {current ? current.name : "프로젝트 선택"}
         </span>
-        <Icon name="expand_more" size={18} className={`shrink-0 text-on-background/60 transition ${open ? "rotate-180" : ""}`} />
+        <Icon name="expand_more" size={18} className={`shrink-0 text-white/60 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div

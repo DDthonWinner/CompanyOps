@@ -71,6 +71,14 @@ body {
     background: #ffffff;
     box-shadow: 0 10px 30px rgba(11, 28, 48, 0.18), 0 2px 8px rgba(11, 28, 48, 0.12);
   }
+  /* Dark HUD chip echoing the landing-page brand lockup (dark navy plate + white mark). */
+  .brand-hud {
+    background: linear-gradient(150deg, rgba(38, 50, 63, 0.94) 0%, rgba(15, 22, 31, 0.94) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(4, 10, 18, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
   .tabular { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; }
   .display { font-family: "Space Grotesk", sans-serif; }
   .msym {
