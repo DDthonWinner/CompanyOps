@@ -18,20 +18,21 @@ from .models import (
     QARun,
     SprintMilestone,
     TaskPublish,
+    TokenUsage,
 )
 
 
-def _agent(a: ProjectAgent) -> dict:
+def _agent(a: ProjectAgent, token_total: int | None = None) -> dict:
     return {
         "id": a.id, "roleId": a.role_id, "displayName": a.display_name,
         "displayColor": a.display_color, "iconKey": a.icon_key, "status": a.status,
         "isPrimaryPm": bool(a.is_primary_pm), "currentTaskId": a.current_task_id,
         "nextTaskId": a.next_task_id, "activitySummary": a.activity_summary,
-        "llmModelId": a.llm_model_id,
+        "llmModelId": a.llm_model_id, "tokenTotal": token_total,
     }
 
 
-def _task(t: ProjectTask) -> dict:
+def _task(t: ProjectTask, token_total: int | None = None) -> dict:
     return {
         "id": t.id, "sprintMilestoneId": t.sprint_milestone_id,
         "assignedProjectAgentId": t.assigned_project_agent_id, "roleId": t.role_id,
@@ -39,7 +40,42 @@ def _task(t: ProjectTask) -> dict:
         "executionMode": t.execution_mode, "priority": t.priority, "sortOrder": t.sort_order,
         "dependencyTaskIds": t.dependency_task_ids, "waitReasons": t.wait_reasons,
         "approvedPlanId": t.approved_plan_id, "approvedPlanVersion": t.approved_plan_version,
-        "revision": t.revision,
+        "revision": t.revision, "tokenTotal": token_total,
+    }
+
+
+def _token_aggregate(session: Session, project_id: str) -> dict:
+    """Sum persisted TokenUsage rows (06 §3.1) by agent / task / role for the snapshot.
+    Returns {} shape with collected=False when nothing has been measured yet."""
+    rows = list(session.execute(
+        select(TokenUsage).where(TokenUsage.project_id == project_id)
+    ).scalars())
+    by_agent: dict[str, int] = {}
+    by_task: dict[str, int] = {}
+    by_role: dict[str, int] = {}
+    total_in = total_out = total_all = 0
+    any_demo = False
+    for r in rows:
+        t = r.total_tokens if r.total_tokens is not None else (r.input_tokens or 0) + (r.output_tokens or 0)
+        total_in += r.input_tokens or 0
+        total_out += r.output_tokens or 0
+        total_all += t
+        if r.project_agent_id:
+            by_agent[r.project_agent_id] = by_agent.get(r.project_agent_id, 0) + t
+        if r.task_id:
+            by_task[r.task_id] = by_task.get(r.task_id, 0) + t
+        if r.role_code:
+            by_role[r.role_code] = by_role.get(r.role_code, 0) + t
+        if r.demo:
+            any_demo = True
+    return {
+        "summary": {
+            "collected": len(rows) > 0,
+            "demo": any_demo,
+            "totalInput": total_in, "totalOutput": total_out, "total": total_all,
+            "byRole": by_role, "byAgent": by_agent,
+        },
+        "byAgent": by_agent, "byTask": by_task,
     }
 
 
@@ -91,6 +127,8 @@ def build_snapshot(session: Session, project_id: str) -> dict:
 
     assigned = [a for a in agents if a.status != "REMOVED"]
     working = [a for a in agents if a.status == "WORKING"]
+    tokens = _token_aggregate(session, project_id)
+    tok_agent, tok_task = tokens["byAgent"], tokens["byTask"]
 
     return {
         "revision": project.revision,
@@ -105,9 +143,10 @@ def build_snapshot(session: Session, project_id: str) -> dict:
             "completedAt": project.completed_at,
             **progress.project_progress(session, project_id),
         },
-        "agents": [_agent(a) for a in agents],
-        "tasks": [_task(t) for t in tasks],
+        "agents": [_agent(a, tok_agent.get(a.id)) for a in agents],
+        "tasks": [_task(t, tok_task.get(t.id)) for t in tasks],
         "milestones": [_milestone(session, m) for m in milestones],
+        "tokenUsage": tokens["summary"],
         "plans": [
             {"id": p.id, "version": p.version, "status": p.status, "request": p.request,
              "steps": p.steps} for p in plans

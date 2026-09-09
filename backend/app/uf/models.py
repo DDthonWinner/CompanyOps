@@ -54,6 +54,7 @@ class Feedback(Base):
     observation = Column(Text, nullable=False, default="")
     impact = Column(Text, nullable=False, default="")
     suggestion = Column(Text, nullable=False, default="")
+    source = Column(String, nullable=False, default="USER")  # USER | SYSTEM (rule-based)
     created_at = Column(String, nullable=False, default=utcnow_iso)
     updated_at = Column(String, nullable=False, default=utcnow_iso)
     __table_args__ = (
@@ -62,4 +63,5 @@ class Feedback(Base):
             name="ck_feedback_aspect",
         ),
         CheckConstraint("severity IN ('HIGH','MEDIUM','LOW')", name="ck_feedback_severity"),
+        CheckConstraint("source IN ('USER','SYSTEM')", name="ck_feedback_source"),
     )

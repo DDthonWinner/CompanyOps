@@ -34,6 +34,7 @@ export interface Agent {
   nextTaskId: string | null;
   activitySummary: string | null;
   llmModelId: string;
+  tokenTotal?: number | null;
 }
 
 export interface Task {
@@ -49,6 +50,17 @@ export interface Task {
   sortOrder: number;
   dependencyTaskIds: string[];
   waitReasons: string[];
+  tokenTotal?: number | null;
+}
+
+export interface TokenUsageSummary {
+  collected: boolean;
+  demo: boolean;
+  totalInput: number;
+  totalOutput: number;
+  total: number;
+  byRole: Record<string, number>;
+  byAgent: Record<string, number>;
 }
 
 export interface Milestone {
@@ -77,6 +89,7 @@ export interface Snapshot {
   pendingDecisions: Array<{ id: string; reason?: string; options?: unknown[]; scopeTaskIds?: string[] }>;
   qaRuns: Array<{ id: string; taskId: string; runStatus: string; technicalGate: string; results?: unknown; demo?: boolean }>;
   git: Array<{ taskId: string; status: string; commitSha?: string | null; branchUrl?: string | null }>;
+  tokenUsage?: TokenUsageSummary;
 }
 
 export interface ProjectListItem {

@@ -5,6 +5,7 @@ export interface UtilizationReport {
   utilizationScore: number | null;
   scoreVersion?: string;
   status: string;
+  aspectScores?: Record<string, number | null>;
   metrics?: Record<string, number | string>;
   previousReportId?: string | null;
 }
@@ -27,4 +28,5 @@ export interface Feedback {
   observation: string;
   impact: string;
   suggestion: string;
+  source?: string; // "USER" | "SYSTEM" (rule-based auto-generated)
 }

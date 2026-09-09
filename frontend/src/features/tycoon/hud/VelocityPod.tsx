@@ -11,7 +11,7 @@ export function VelocityPod() {
   return (
     <GlassPanel
       level={2}
-      className="pointer-events-auto absolute right-6 top-24 w-72 p-4"
+      className="pointer-events-auto absolute right-4 top-4 max-h-[calc(100vh-2rem)] w-72 overflow-auto p-4"
       data-testid="velocity-pod"
     >
       <div className="display mb-2 text-sm font-semibold">Active Sprint Milestones</div>
@@ -30,9 +30,25 @@ export function VelocityPod() {
               >
                 <span className="truncate text-sm font-medium">{m.title}</span>
                 <span className="tabular text-xs text-on-background/60">
-                  {m.progressTotal === 0 ? "작업 없음" : `${m.progressCurrent}/${m.progressTotal} · ${m.progressPercent}%`}
+                  {m.progressTotal === 0 ? "작업 없음" : `${m.progressCurrent}/${m.progressTotal}`}
                 </span>
               </button>
+              {m.progressTotal > 0 && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span
+                    className="tabular w-9 shrink-0 text-left text-xs font-bold"
+                    style={{ color: m.displayColor ?? "#4f46e5" }}
+                  >
+                    {m.progressPercent}%
+                  </span>
+                  <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface-high">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${m.progressPercent}%`, backgroundColor: m.displayColor ?? "#4f46e5" }}
+                    />
+                  </div>
+                </div>
+              )}
               {m.reviewStatus && (
                 <div className="mt-1">
                   <StatusPill status={m.reviewStatus} testId={`mr-status-${m.id}`} />

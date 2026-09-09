@@ -3,9 +3,11 @@ import { GlassPanel } from "../../components/ui/GlassPanel";
 import { useStore } from "../../store/useStore";
 import { TycoonCanvas } from "./TycoonCanvas";
 import { WebGLFallback, isWebGLAvailable } from "./WebGLFallback";
+import { AgentList } from "./hud/AgentList";
 import { CommandDock } from "./hud/CommandDock";
 import { SideHUD } from "./hud/SideHUD";
 import { VelocityPod } from "./hud/VelocityPod";
+import { ViewControls } from "./hud/ViewControls";
 
 function Empty({ msg }: { msg: string }) {
   return (
@@ -27,8 +29,13 @@ export function TycoonView() {
   return (
     <div className="relative h-full w-full">
       <TycoonCanvas snapshot={snapshot} />
-      <SideHUD />
+      {/* Left column: project summary + agent roster, hugging the top-left corner */}
+      <div className="pointer-events-none absolute bottom-4 left-4 top-4 flex w-64 flex-col gap-3">
+        <SideHUD />
+        <AgentList />
+      </div>
       <VelocityPod />
+      <ViewControls />
       <CommandDock />
     </div>
   );

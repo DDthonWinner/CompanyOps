@@ -10,7 +10,7 @@ import logging
 from sqlalchemy import select
 
 from ..common import platform
-from ..common.models import ArtifactVersion, Project, ProjectTask, Role, TaskAttempt
+from ..common.models import ArtifactVersion, Project, ProjectAgent, ProjectTask, Role, TaskAttempt, TokenUsage
 from ..common.sse import broker
 from ..common.util import utcnow_iso
 from ..db import unit_of_work
@@ -92,6 +92,30 @@ def _run_one_task(project_id: str) -> bool:
         attempt.ended_at = utcnow_iso()
         task.execution_mode = result.execution_mode
         task.status = "REVIEW"
+        # Persist token usage (06 §3.1) so the snapshot can aggregate per project/agent/task/role.
+        tm = result.token_metrics or {}
+        _in, _out, _total = tm.get("input"), tm.get("output"), tm.get("total")
+        if _total is None and (_in is not None or _out is not None):
+            _total = (_in or 0) + (_out or 0)
+        if _in is not None or _out is not None or _total is not None:
+            # Tasks are role-assigned; resolve the acting agent from the role so per-agent
+            # token aggregation (snapshot byAgent) is populated.
+            agent_id = task.assigned_project_agent_id
+            if agent_id is None and task.role_id:
+                pa = session.execute(
+                    select(ProjectAgent).where(
+                        ProjectAgent.project_id == project_id,
+                        ProjectAgent.role_id == task.role_id,
+                        ProjectAgent.status != "REMOVED",
+                    )
+                ).scalars().first()
+                agent_id = pa.id if pa else None
+            session.add(TokenUsage(
+                project_id=project_id, task_id=task.id,
+                project_agent_id=agent_id, role_code=role_code,
+                stage="EXECUTION", input_tokens=_in, output_tokens=_out,
+                total_tokens=_total, demo=1 if result.demo else 0,
+            ))
         platform.touch(session, project_id, "artifact.updated", artifact.id,
                        payload={"tokens": result.token_metrics, "demo": result.demo})
         platform.touch(session, project_id, "task.updated", task.id)

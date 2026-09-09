@@ -60,6 +60,11 @@ def test_report_score_and_idempotent(uow):
         r1 = uf.create_report(db, pid)
         # 1 AI_AGENT completed task, core area BACKEND → Autonomy 100, Area 100, Resource N/A
         assert r1["utilizationScore"] == 100
+        # per-aspect breakdown accompanies the final score
+        assert r1["aspectScores"]["AUTONOMY"] == 100
+        assert r1["aspectScores"]["AREA_DISTRIBUTION"] == 100
+        assert r1["aspectScores"]["RESOURCE_EFFICIENCY"] is None  # no previous report → N/A
+        assert "aspectScore" not in r1["metrics"]  # kept out of the flat metrics map
         assert r1["metrics"]["aiCompletedTaskCount"] == "1"
         assert r1["metrics"]["estimatedCost"] == "미수집"
         r2 = uf.create_report(db, pid)
@@ -76,7 +81,43 @@ def test_feedback_post_completion(uow):
             "observation": "Backend tokens high", "impact": "cost", "suggestion": "split tasks",
         })
         assert fb["aspect"] == "RESOURCE_EFFICIENCY"
-        assert len(uf.list_feedbacks(db, report["reportId"])) == 1
+        assert fb["source"] == "USER"
+        fbs = uf.list_feedbacks(db, report["reportId"])
+        # rule-based SYSTEM drafts + the one USER comment just added
+        assert sum(1 for f in fbs if f["source"] == "USER") == 1
+        assert sum(1 for f in fbs if f["source"] == "SYSTEM") >= 1
+
+
+def test_report_auto_generates_rule_based_feedback(uow):
+    """create_report persists grounded SYSTEM feedback per aspect (00 §4.2 extension)."""
+    deps.set_utilization_port(NoopUtilization())
+    pid = _drive_to_completed(uow)
+    with uow() as db:
+        report = uf.create_report(db, pid)
+        system = [f for f in uf.list_feedbacks(db, report["reportId"]) if f["source"] == "SYSTEM"]
+        aspects = {f["aspect"] for f in system}
+        assert aspects == {"AUTONOMY", "AREA_DISTRIBUTION", "RESOURCE_EFFICIENCY"}
+        for f in system:
+            assert f["observation"] and f["suggestion"]  # grounded, non-empty
+        # idempotent: re-create does not duplicate feedback
+        uf.create_report(db, pid)
+        again = [f for f in uf.list_feedbacks(db, report["reportId"]) if f["source"] == "SYSTEM"]
+        assert len(again) == len(system)
+
+
+def test_generate_thresholds():
+    """Pure generator: severity + aspect coverage from scores/metrics."""
+    from app.uf import feedback_gen
+
+    metrics = {"aiCompletedTaskCount": "0", "eligibleTaskCount": "4", "mixedTaskCount": "0",
+               "coreAreasCompleted": "2", "coreAreasWithAi": "1",
+               "totalTokens": "미수집", "aiEquivalentTasks": "0"}
+    fbs = feedback_gen.generate(
+        {"AUTONOMY": 0, "AREA_DISTRIBUTION": 50, "RESOURCE_EFFICIENCY": None}, metrics)
+    by = {f["aspect"]: f for f in fbs}
+    assert by["AUTONOMY"]["severity"] == "HIGH"          # score < 50
+    assert by["AREA_DISTRIBUTION"]["severity"] == "MEDIUM"
+    assert "미수집" in by["RESOURCE_EFFICIENCY"]["observation"]
 
 
 def test_completion_auto_generates_report(uow):
