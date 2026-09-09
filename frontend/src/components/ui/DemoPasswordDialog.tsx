@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "./Button";
 
 // Demo gating shared across the village enter buttons, the project switcher, and the
@@ -29,7 +30,9 @@ export function DemoPasswordDialog({
     onConfirm();
   };
 
-  return (
+  // Rendered through a portal on <body> so the fixed overlay is anchored to the
+  // viewport, not to any transformed ancestor (e.g. the scaled ScrollWorld office).
+  return createPortal(
     <div
       className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       role="dialog"
@@ -58,6 +61,7 @@ export function DemoPasswordDialog({
           <Button onClick={submit}>확인</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
