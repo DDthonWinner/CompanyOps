@@ -39,6 +39,11 @@ BRIEF_BLOCK_REASONS = {
 }
 
 
+def replay_active(db, pid) -> bool:
+    """True when a project is owned by demo replay (row exists, enabled or stopped)."""
+    return db.get(m.DemoReplay, pid) is not None
+
+
 def require_demo():
     s = get_settings()
     if s.execution_mode != "demo" or s.git_mode != "stub" or s.qa_test_cmd:
@@ -275,6 +280,25 @@ def _grace_elapsed(plan, key, force):
     return now >= datetime.fromisoformat(deadline)
 
 
+def _apply_plan_approval(db, r, *, actor):
+    """Approve the active plan without recomposing tasks (demo keeps stable task IDs).
+
+    Shared by the paced scheduler (actor=demo-replay) and manual operator approval.
+    """
+    pid = r.project_id
+    p = db.get(m.Project, pid)
+    plan = db.get(m.PlanVersion, p.active_plan_id)
+    db.add(m.Approval(project_id=pid, kind="PLAN_EXECUTION", target_id=plan.id,
+                      target_version=plan.version, actor=actor))
+    plan.status, p.status = "EXECUTING", "ACTIVE"
+    git_port().initialize_project_repository(pid)
+    for t in db.scalars(select(m.ProjectTask).where(m.ProjectTask.project_id == pid)):
+        t.approved_plan_id, t.approved_plan_version = plan.id, plan.version
+        _touch_task(db, t)
+    r.phase = "EXECUTING"
+    platform.touch(db, pid, "plan.updated", plan.id, {"demo": True, "actor": actor})
+
+
 def _execute(db, r, force=False):
     pid = r.project_id
     tasks = list(db.scalars(select(m.ProjectTask).where(m.ProjectTask.project_id == pid)
@@ -382,11 +406,11 @@ def _execute(db, r, force=False):
 def _next_delay(db, r):
     if r.phase == "COMPLETED":
         return r.completion_seconds
-    if r.phase in ("PLAN_REVIEW", "PLAN_APPROVAL"):
+    if r.phase == "PLAN_REVIEW":
         return PM_INTERVAL_SECONDS
-    # While an approval/decision is awaiting the operator, poll fast so a manual action in the
-    # Attention Center is reflected almost immediately (and the grace deadline is enforced promptly).
-    if r.phase == "MILESTONE_REVIEW":
+    # While an approval/decision awaits the operator, poll fast so a manual action in the
+    # Attention Center reflects almost immediately (and the grace deadline is enforced promptly).
+    if r.phase in ("PLAN_APPROVAL", "MILESTONE_REVIEW"):
         return GRACE_POLL_SECONDS
     if db.scalars(select(m.Decision.id).where(
             m.Decision.project_id == r.project_id, m.Decision.status == "OPEN")).first():
@@ -399,6 +423,46 @@ def _next_delay(db, r):
     if not development_started and pm_pending:
         return PM_INTERVAL_SECONDS
     return r.interval_seconds
+
+
+def _resume_soon(db, r):
+    """After a manual approval, let the paced scheduler pick up the next phase promptly."""
+    if r.enabled:
+        r.next_tick_at = utcnow_iso()
+
+
+def manual_approve_plan(db, pid, req):
+    """Operator clicked the plan-approval button during the grace window (demo-safe path)."""
+    r = db.get(m.DemoReplay, pid)
+    p = db.get(m.Project, pid)
+    if r is not None and r.phase == "PLAN_APPROVAL":
+        _apply_plan_approval(db, r, actor="operator")
+        _resume_soon(db, r)
+        platform.touch(db, pid, "demo.updated", pid,
+                       {"demo": True, "phase": r.phase, "cycle": r.cycle, "actor": "operator"})
+    plan = db.get(m.PlanVersion, p.active_plan_id) if p and p.active_plan_id else None
+    return orchestration.plan_dict(plan) if plan else {"status": "OK"}
+
+
+def manual_review_milestone(db, pid, milestone_id, req):
+    """Operator reviewed a milestone result during the grace window (demo-safe path)."""
+    result = orchestration.review_milestone_result(db, milestone_id, req)
+    r = db.get(m.DemoReplay, pid)
+    if r is not None:
+        db.flush()
+        pending = db.scalars(select(m.MilestoneResult).where(
+            m.MilestoneResult.project_id == pid,
+            m.MilestoneResult.review_status == "PENDING")).first()
+        if pending is None and r.phase == "MILESTONE_REVIEW":
+            p = db.get(m.Project, pid)
+            r.phase = "COMPLETED" if p.status == "COMPLETED" else "EXECUTING"
+            if r.phase == "COMPLETED" and p.active_plan_id:
+                db.get(m.PlanVersion, p.active_plan_id).status = "COMPLETED"
+            _agents(db, pid)
+        _resume_soon(db, r)
+        platform.touch(db, pid, "demo.updated", pid,
+                       {"demo": True, "phase": r.phase, "cycle": r.cycle, "actor": "operator"})
+    return result
 
 
 def tick(db, pid, *, force=False):
@@ -422,16 +486,13 @@ def tick(db, pid, *, force=False):
     elif r.phase == "PLAN_APPROVAL":
         p = db.get(m.Project, pid)
         plan = db.get(m.PlanVersion, p.active_plan_id)
-        # Existing task IDs must remain stable; approve the existing plan without composing new tasks.
-        db.add(m.Approval(project_id=pid, kind="PLAN_EXECUTION", target_id=plan.id,
-                          target_version=plan.version, actor=ACTOR))
-        plan.status, p.status = "EXECUTING", "ACTIVE"
-        git_port().initialize_project_repository(pid)
-        for t in db.scalars(select(m.ProjectTask).where(m.ProjectTask.project_id == pid)):
-            t.approved_plan_id, t.approved_plan_version = plan.id, plan.version
-            _touch_task(db, t)
-        r.phase = "EXECUTING"
-        platform.touch(db, pid, "plan.updated", plan.id, {"demo": True, "actor": ACTOR})
+        # Hold up to ATTENTION_GRACE_SECONDS so the operator can approve in the Attention Center
+        # (plan approve is the normal API, routed to the demo-safe path). Auto-approve
+        # (actor=demo-replay) once the window elapses.
+        if plan is not None and not _grace_elapsed(plan, "plan_approval", force):
+            _agents(db, pid)  # keep the board live while waiting for the operator
+        else:
+            _apply_plan_approval(db, r, actor=ACTOR)
     elif r.phase == "EXECUTING":
         _execute(db, r, force=force)
     elif r.phase == "MILESTONE_REVIEW":
