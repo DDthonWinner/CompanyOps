@@ -98,6 +98,7 @@ export interface ProjectListItem {
   status: string;
   budgetLevel: string;
   budgetAmount: number;
+  projectSize?: string;
   assignedAgentCount: number;
   maxAgentCount: number;
   hasPrimaryPm: boolean;
