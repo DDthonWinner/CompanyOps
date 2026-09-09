@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { api } from "../api/client";
 import type { TycoonSelection } from "../api/types";
 import { Toaster } from "../components/ui/toast";
+import { AdminView } from "../features/admin/AdminView";
 import { DashboardView } from "../features/dashboard/DashboardView";
 import { AgentSheet } from "../features/tycoon/hud/AgentSheet";
 import { DeskSheet } from "../features/tycoon/hud/DeskSheet";
@@ -41,7 +42,7 @@ export function AppShell() {
     <div className="relative h-full w-full overflow-hidden">
       <GlobalExecutiveBar />
       <main className="h-full w-full pt-44 sm:pt-32 lg:pt-20">
-        {activeTab === "tycoon" ? <TycoonView /> : <DashboardView />}
+        {activeTab === "tycoon" ? <TycoonView /> : activeTab === "admin" ? <AdminView /> : <DashboardView />}
       </main>
       <AgentSheet
         open={openSheet?.kind === "agent"}
