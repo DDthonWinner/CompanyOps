@@ -33,6 +33,10 @@ export function FloorGrid() {
   }, []);
   useEffect(() => () => gridTex.dispose(), [gridTex]);
 
+  // DDThon 26 banner (hung on the shorter −x wall).
+  const bannerTex = useMemo(() => new THREE.TextureLoader().load("/ddthon-26-banner.png"), []);
+  useEffect(() => () => bannerTex.dispose(), [bannerTex]);
+
   return (
     <group position={[CENTER_X, 0, 0]}>
       {/* Recessed base lip — a deeper wood tone */}
@@ -60,6 +64,18 @@ export function FloorGrid() {
         <boxGeometry args={[1.4, WALL_H, D]} />
         <meshStandardMaterial color="#eeeae0" roughness={1} />
       </mesh>
+
+      {/* DDThon 26 banner on the shorter (−x) wall, facing into the room */}
+      <group position={[-W / 2 + 0.75, WALL_H * 0.6, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <mesh position={[0, 0, -0.05]}>
+          <planeGeometry args={[27.4, 9.2]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0, 0.06]}>
+          <planeGeometry args={[26, 7.85]} />
+          <meshBasicMaterial map={bannerTex} toneMapped={false} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
     </group>
   );
 }

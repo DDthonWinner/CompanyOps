@@ -32,7 +32,7 @@ export function TycoonView() {
     <div className="relative h-full w-full">
       <TycoonCanvas snapshot={snapshot} />
       {/* Left column: project summary + agent roster, hugging the top-left corner */}
-      <div className="pointer-events-none absolute bottom-4 left-4 top-4 flex w-64 flex-col gap-3">
+      <div className="pointer-events-none fixed bottom-4 left-4 top-20 flex w-64 flex-col gap-3">
         <SideHUD />
         <AgentList />
       </div>

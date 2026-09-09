@@ -46,10 +46,11 @@ export function AppShell() {
         onClick={openProjectVillage}
         title="마을 뷰로 이동"
         testId="app-brand"
-        className="fixed left-5 top-[26px] z-50 text-on-background transition hover:text-primary"
+        className="fixed left-4 top-4 z-50 rounded-xl !bg-white px-5 py-3 text-on-background shadow-sm transition hover:text-primary"
       />
       <GlobalExecutiveBar />
-      <main className="h-full w-full pt-44 sm:pt-32 lg:pt-20">
+      {/* Tycoon is full-bleed (3D fills behind the floating GNB); other tabs clear the bar. */}
+      <main className={`h-full w-full ${activeTab === "tycoon" ? "" : "pt-44 sm:pt-32 lg:pt-20"}`}>
         {activeTab === "tycoon" ? <TycoonView /> : activeTab === "admin" ? <AdminView /> : <DashboardView />}
       </main>
       <AgentSheet

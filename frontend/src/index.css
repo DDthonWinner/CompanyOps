@@ -26,6 +26,32 @@ body {
   font-family: Inter, system-ui, sans-serif;
 }
 
+/* Slim, translucent scrollbars that blend with the glass theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(118, 117, 134, 0.4) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(118, 117, 134, 0.38);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(70, 72, 212, 0.55);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 @layer components {
   /* Glassmorphism levels (Design §7) */
   .glass-2 {

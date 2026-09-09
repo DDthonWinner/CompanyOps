@@ -191,8 +191,31 @@ export function ProjectCreationGate() {
       ),
       new Promise((resolve) => setTimeout(resolve, 1200)),
     ]);
-    if (res && (res as any).id) {
-      setActiveProject((res as any).id);
+    const newId = (res as { id?: string } | undefined)?.id;
+    if (newId) {
+      // Auto-hire & assign the primary PM agent for the new project.
+      try {
+        const profiles = await api.listAgentProfiles();
+        const pm = profiles.find((p) => p.role?.code === "PM" && p.isActive) ?? profiles.find((p) => p.role?.code === "PM");
+        if (pm) {
+          await api.assignAgents(newId, {
+            agents: [
+              {
+                agentProfileId: pm.id,
+                roleCode: "PM",
+                llmModelId: pm.defaultLlmModel?.id,
+                displayName: pm.name,
+                displayColor: pm.defaultColor,
+                iconKey: pm.defaultIconKey,
+                isPrimaryPm: true,
+              },
+            ],
+          });
+        }
+      } catch {
+        /* project is created; PM assignment is best-effort */
+      }
+      setActiveProject(newId);
       window.dispatchEvent(new CustomEvent("companyops:projects-changed"));
       pushToast("PM 에이전트 1명이 고용되었습니다!", "success");
     } else {
