@@ -66,13 +66,15 @@ export function VelocityPod() {
                 <ul className="mt-2 space-y-1.5 rounded-lg bg-surface-high/50 p-2" aria-label={`${m.title} 현재 작업`}>
                   {active.map((t) => {
                     const agent = snapshot.agents.find((a) => a.id === t.assignedProjectAgentId);
+                    const briefBlock = t.waitReasons.find((reason) => reason.startsWith("DEMO_BLOCK:"))?.slice("DEMO_BLOCK:".length);
                     return <li key={t.id} className="text-xs">
                       <div className="flex items-center gap-1.5">
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.status === "RUNNING" ? "bg-emerald-500 motion-safe:animate-pulse" : t.status === "BLOCKED" ? "bg-red-500" : "bg-amber-500"}`} />
                         <span className="min-w-0 flex-1 truncate" title={t.title}>{t.title}</span>
-                        <span className="shrink-0 text-on-background/60">{t.status === "RUNNING" ? "개발 중" : t.status === "REVIEW" ? "검토 중" : "결정 대기"}</span>
+                        <span className="shrink-0 text-on-background/60">{t.status === "RUNNING" ? "개발 중" : t.status === "REVIEW" ? "검토 중" : briefBlock ? "일시 중단" : "결정 대기"}</span>
                       </div>
                       {agent && <div className="ml-3 mt-0.5 truncate text-on-background/50">{agent.displayName}</div>}
+                      {briefBlock && <div className="ml-3 mt-0.5 text-amber-700">{briefBlock} · 자동 재개 예정</div>}
                     </li>;
                   })}
                 </ul>
