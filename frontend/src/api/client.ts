@@ -157,6 +157,10 @@ export const api = {
       `/api/admin/tables/${table}/${encodeURIComponent(pk)}${cascade ? "?cascade=true" : ""}`,
       { method: "DELETE" },
     ),
+  adminDeletePreview: (table: string, pk: string) =>
+    request<{ total: number; counts: Record<string, number> }>(
+      `/api/admin/tables/${table}/${encodeURIComponent(pk)}/delete-preview`,
+    ),
 };
 
 export interface AdminColumn {

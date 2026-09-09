@@ -161,12 +161,23 @@ export function AdminView() {
       loadRows(selected, offset);
       loadTables();
     } catch (e) {
-      // FK 위반: 참조하는 하위 행까지 연쇄 삭제할지 확인 후 재시도한다.
+      // FK 위반: 삭제 영향 범위를 미리 조회해 보여준 뒤 연쇄 삭제 여부를 확인한다.
       if (e instanceof ApiError && e.code === "FK_CONSTRAINT") {
+        let breakdown = "";
+        try {
+          const preview = await api.adminDeletePreview(selected, rowPk);
+          const lines = Object.entries(preview.counts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([t, n]) => `  · ${t}: ${n}건`)
+            .join("\n");
+          breakdown = `\n\n함께 삭제되는 데이터 (총 ${preview.total}건):\n${lines}`;
+        } catch {
+          // 미리보기 실패 시에도 연쇄 삭제 자체는 시도할 수 있게 계속 진행한다.
+        }
         if (
           !confirm(
             `이 행을 참조하는 하위 데이터가 있어 그대로는 삭제할 수 없습니다.\n` +
-              `참조하는 모든 하위 행까지 함께 삭제할까요?\n${selected} · ${pk}=${rowPk}`,
+              `참조하는 모든 하위 행까지 함께 삭제할까요?\n${selected} · ${pk}=${rowPk}${breakdown}`,
           )
         )
           return;

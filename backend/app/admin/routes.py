@@ -35,6 +35,11 @@ def update_row(name: str, pk: str, body: dict[str, Any] = Body(...)):
     return service.update_row(name, pk, body)
 
 
+@router.get("/tables/{name}/{pk}/delete-preview")
+def delete_preview(name: str, pk: str):
+    return service.preview_delete(name, pk)
+
+
 @router.delete("/tables/{name}/{pk}")
 def delete_row(name: str, pk: str, cascade: bool = Query(False)):
     return service.delete_row(name, pk, cascade)

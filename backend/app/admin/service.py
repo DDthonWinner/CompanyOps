@@ -174,12 +174,15 @@ def _child_fks(parent: Table) -> list[tuple[Table, Any, Any]]:
     return out
 
 
-def _delete_row_cascade(conn, table: Table, row: dict, visited: set, counts: dict) -> None:
-    """Depth-first delete: remove referencing rows before the row itself.
+def _collect_cascade(
+    conn, table: Table, row: dict, visited: set, collected: list[tuple[Table, dict]]
+) -> None:
+    """Depth-first walk: append (table, row) in delete order — children first.
 
     No FK in the schema declares ON DELETE CASCADE, so a generic delete of a
     parent (e.g. a project) must clear every descendant by hand. `visited`
-    guards against FK cycles; `counts` accumulates per-table deletions.
+    guards against FK cycles; `collected` is the ordered plan that both the
+    preview and the real delete consume (so they can never diverge).
     """
     pk_cols = list(table.primary_key.columns)
     key = (table.name, tuple(row.get(c.name) for c in pk_cols))
@@ -194,10 +197,34 @@ def _delete_row_cascade(conn, table: Table, row: dict, visited: set, counts: dic
             select(child_table).where(child_col == parent_val)
         ).mappings().all()
         for child in child_rows:
-            _delete_row_cascade(conn, child_table, dict(child), visited, counts)
-    where = [c == row.get(c.name) for c in pk_cols]
-    conn.execute(delete(table).where(*where))
-    counts[table.name] = counts.get(table.name, 0) + 1
+            _collect_cascade(conn, child_table, dict(child), visited, collected)
+    collected.append((table, row))
+
+
+def _count_by_table(collected: list[tuple[Table, dict]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for table, _ in collected:
+        counts[table.name] = counts.get(table.name, 0) + 1
+    return counts
+
+
+def preview_delete(name: str, pk_value: str) -> dict:
+    """Dry-run: what a cascade delete would remove, without touching any row."""
+    table = _table(name)
+    pk = _pk_column(table)
+    pk_val = _coerce_pk(pk, pk_value)
+    with engine.connect() as conn:  # read-only; never commits
+        row = conn.execute(select(table).where(pk == pk_val)).mappings().first()
+        if row is None:
+            raise not_found(f"행을 찾을 수 없습니다: {pk_value}", code="ROW_NOT_FOUND")
+        collected: list[tuple[Table, dict]] = []
+        _collect_cascade(conn, table, dict(row), set(), collected)
+    return {
+        "table": name,
+        "id": pk_value,
+        "total": len(collected),
+        "counts": _count_by_table(collected),
+    }
 
 
 def delete_row(name: str, pk_value: str, cascade: bool = False) -> dict:
@@ -210,8 +237,12 @@ def delete_row(name: str, pk_value: str, cascade: bool = False) -> dict:
                 row = conn.execute(select(table).where(pk == pk_val)).mappings().first()
                 if row is None:
                     raise not_found(f"행을 찾을 수 없습니다: {pk_value}", code="ROW_NOT_FOUND")
-                counts: dict[str, int] = {}
-                _delete_row_cascade(conn, table, dict(row), set(), counts)
+                collected: list[tuple[Table, dict]] = []
+                _collect_cascade(conn, table, dict(row), set(), collected)
+                for tbl, r in collected:
+                    where = [c == r.get(c.name) for c in tbl.primary_key.columns]
+                    conn.execute(delete(tbl).where(*where))
+                counts = _count_by_table(collected)
                 return {
                     "deleted": True,
                     "table": name,
