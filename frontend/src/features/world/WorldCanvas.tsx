@@ -1,3 +1,5 @@
+import HiringQueue from "./HiringQueue";
+import type { HiringProfile } from "./useHiringProfiles";
 import { OfficeInterior } from "./OfficeInterior";
 import type { Snapshot } from "../../api/types";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -15,7 +17,7 @@ import { buildingPosition, segment, smooth } from "./journey";
 
 type Vec = [number, number, number];
 type Piece = { p: Vec; s: Vec; color?: string };
-type Props = { progress: MutableRefObject<number>; selectedIndex: number; projectNames: string[]; onSelect: (index: number) => void; snapshot: Snapshot | null; reducedMotion: boolean };
+type Props = { hiringProfiles: HiringProfile[]; progress: MutableRefObject<number>; selectedIndex: number; projectNames: string[]; onSelect: (index: number) => void; snapshot: Snapshot | null; reducedMotion: boolean };
 const random = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 
 function Instances({ pieces, metalness = 0.3, roughness = 0.6, emissive = false }: { pieces: Piece[]; metalness?: number; roughness?: number; emissive?: boolean }) {
@@ -175,8 +177,8 @@ function FeaturedBuilding({ index, selected, onSelect, selectable, name, snapsho
     {[0, 1, 2].map((n) => <group key={n} position={[-2 + n * 2, height + 0.5, 2]}><Box p={[0, 0, 0]} s={[1.1, 0.65, 1.2]} color="#818789" /><mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.34, 0]}><circleGeometry args={[0.38, 16]} /><meshStandardMaterial color="#182c32" /></mesh></group>)}
     {interiorEnabled && (selected || (index === 0 && !snapshot)) && <ArrivalOffice height={height} selected={selected} snapshot={snapshot} reducedMotion={reducedMotion} cutaway={cutaway} />}
     <mesh position={[0, height * 0.64 - 1.04, 3.65]}><planeGeometry args={[7.8, 0.08]} /><meshBasicMaterial color={accent} toneMapped={false} /></mesh>
-    <Box p={[0, 1.2, 4.6]} s={[4.5, 0.15, 2]} color="#aab1ac" />
-    {[-1.9, 1.9].map((dx) => <Box key={dx} p={[dx, 0.6, 5.2]} s={[0.1, 1.2, 0.1]} color="#b0b6b3" />)}
+    <Box p={[0, 3.3, 4.6]} s={[4.5, 0.15, 2]} color="#aab1ac" />
+    {[-1.9, 1.9].map((dx) => <Box key={dx} p={[dx, 1.65, 5.2]} s={[0.1, 3.3, 0.1]} color="#b0b6b3" />)}
     {selected && <mesh position={[0, 0.72, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[6.5, 6.55, 96]} /><meshBasicMaterial color="#b9f0c7" transparent opacity={0.8} /></mesh>}
   </group>;
 }
@@ -372,6 +374,7 @@ export default function WorldCanvas(props: Props) {
     <Traffic reducedMotion={props.reducedMotion} />
     {indices.map((i) => <FeaturedBuilding key={i} index={i} name={props.projectNames[i]} cutaway={props.progress.current >= 0.66 && i === Math.max(0, props.selectedIndex)} interiorEnabled={props.progress.current > 0.59} snapshot={props.snapshot} reducedMotion={props.reducedMotion} selected={i === props.selectedIndex} selectable={i < props.projectNames.length && props.progress.current >= 0.21 && props.progress.current < 0.45} onSelect={() => props.onSelect(i)} />)}
     
+    <HiringQueue profiles={props.hiringProfiles} buildingIndex={Math.max(0, props.selectedIndex)} reducedMotion={props.reducedMotion} />
     <CinematicFinish />
   </Canvas>;
 }

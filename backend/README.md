@@ -45,3 +45,22 @@ Swap via `app/orchestrator/deps.set_git_port(...)` / `set_utilization_port(...)`
 
 ## Tests
 `pytest` (executed in the Build & Test stage). Covers recommendation/assignment invariants, progress math, plan-version guards + 409, idempotency, and the full connected flow through project completion.
+
+
+## Five-role connected demo
+
+Run `venv/bin/python seed_flow_demo.py` from `backend`, then refresh the project picker
+at `http://localhost:5173` and select **데모 · 5역할 전체 개발 흐름**.
+
+- PM / Frontend / Backend / Database / QA: one assigned agent each.
+- 12 tasks with explicit agent IDs and dependencies; PM preparation is 2/12 complete.
+- In **결정 필요**, enter `샘플 데이터로 진행` and click **결정 전달** to release the
+  remaining tasks: implementation → QA → PM report. Finish with **Milestone 결과 승인**.
+- Fixture approval is recorded with actor `seed-flow-demo-v1`, not a human reviewer.
+  Tokens, QA and generated artifacts are demo data. No remote git/model operations.
+- Requires demo execution, stub git and no QA shell command. Existing projects are
+  preserved; rerunning reuses the demo, and `--new` creates a separate run.
+- Fixture tasks can finish quickly; the worker does not simulate long-running AI calls.
+
+Validation: `venv/bin/python -m pytest tests/orchestrator/test_flow_demo.py -q` uses
+an isolated test database and checks the decision-to-milestone-approval lifecycle.

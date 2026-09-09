@@ -8,7 +8,6 @@ import { CHAPTERS, chapterAt, clamp, segment } from "./journey";
 import { useHiringProfiles } from "./useHiringProfiles";
 import "./world.css";
 
-const HiringLounge = lazy(() => import("./HiringLounge"));
 const CityCanvas = lazy(() => import("./WorldCanvas"));
 const AppShell = lazy(() => import("../../app/AppShell").then((module) => ({ default: module.AppShell })));
 
@@ -38,8 +37,8 @@ export function ScrollWorld() {
   const selectedProject = projects.find((p) => p.id === activeProjectId);
   const chapter = chapterAt(progress);
   const arrived = progress >= 0.98;
-  const officeReveal = segment(progress, 0.85, 0.99);
-  const { snapshot, connection } = useWorldSnapshot(activeProjectId, progress < 0.84);
+  const officeReveal = segment(progress, 0.90, 0.99);
+  const { snapshot, connection } = useWorldSnapshot(activeProjectId, progress < 0.90);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -102,13 +101,13 @@ export function ScrollWorld() {
   }, [chapter, activeProjectId, entryTab, setActiveTab]);
 
   return (
-    <div className={`world-scroll ${arrived ? "is-in-office" : ""}`} ref={scroller} data-testid="world-scroll" tabIndex={0} aria-label="CompanyOps 도시에서 내 회사로 이어지는 스크롤 여정">
+    <div className={`world-scroll ${arrived ? "is-in-office" : ""}`} ref={scroller} data-testid="world-scroll" tabIndex={0} aria-label="CompanyOps 아이디어에서 프로젝트로 이어지는 스크롤 여정">
       <div className="world-track">
         <div className="world-stage">
           {progress < 0.995 && <div className="world-canvas" aria-hidden="true">
             {webgl && !sceneFailed && <SceneBoundary onError={() => setSceneFailed(true)}>
-              <Suspense fallback={<div className="world-loading">도시를 불러오는 중<span>●</span></div>}>
-                <CityCanvas progress={progressRef} selectedIndex={selectedIndex} projectNames={projects.map((p) => p.name)} onSelect={select} snapshot={snapshot} reducedMotion={reducedMotion} />
+              <Suspense fallback={<div className="world-loading">시작 화면을 불러오는 중<span>●</span></div>}>
+                <CityCanvas hiringProfiles={hiringProfiles} progress={progressRef} selectedIndex={selectedIndex} projectNames={projects.map((p) => p.name)} onSelect={select} snapshot={snapshot} reducedMotion={reducedMotion} />
               </Suspense>
             </SceneBoundary>}
           </div>}
@@ -119,7 +118,7 @@ export function ScrollWorld() {
             <button className="world-skip" onClick={() => go(1)}>오피스로 바로 가기 <span>↗</span></button>
           </header>}
 
-          {!arrived && <div className="world-coordinate"><span className="world-live-dot" /> COMPANYOPS CITY <span>IDEAS BECOME REALITY</span></div>}
+          {!arrived && <div className="world-coordinate"><span className="world-live-dot" /> AI-DLC &amp; COMPANYOPS <span>IDEAS BECOME REALITY</span></div>}
 
           {chapter === 0 && <section className="world-copy world-intro" aria-labelledby="world-title">
             <p className="world-eyebrow">01 / POSSIBILITY — 아이디어에서 시작</p>
@@ -136,8 +135,8 @@ export function ScrollWorld() {
             {hiringProfiles.length > 0 && <aside className="world-hiring"><p>새로운 프로젝트에서 함께할 준비가 되어 있어요.</p><span className="world-caption">이름과 역할을 확인하고, 프로젝트에서 팀을 고용하세요.</span></aside>}
             <div className="world-project-list" aria-label="프로젝트 선택">
               {listState === "loading" && <p role="status">프로젝트를 불러오는 중…</p>}
-              {listState === "error" && <div className="world-empty" role="status"><p>프로젝트 서버에 연결할 수 없습니다.</p><button className="world-text-button" onClick={() => setRetry((n) => n + 1)}>다시 불러오기 ↻</button><p className="world-caption">도시를 둘러본 뒤 오피스로 이동할 수 있어요.</p></div>}
-              {listState === "ready" && projects.length === 0 && <div className="world-empty"><p>아직 입주한 프로젝트가 없습니다.</p><button className="world-text-button" onClick={() => go(1, "dashboard")}>첫 프로젝트 만들러 가기 ↗</button></div>}
+              {listState === "error" && <div className="world-empty" role="status"><p>프로젝트 서버에 연결할 수 없습니다.</p><button className="world-text-button" onClick={() => setRetry((n) => n + 1)}>다시 불러오기 ↻</button><p className="world-caption">오피스에서 프로젝트를 시작할 수 있어요.</p></div>}
+              {listState === "ready" && projects.length === 0 && <div className="world-empty"><p>아직 생성한 프로젝트가 없습니다.</p><button className="world-text-button" onClick={() => go(1, "dashboard")}>첫 프로젝트 만들러 가기 ↗</button></div>}
               {projects.map((project, index) => <button key={project.id} onClick={() => select(index)} className={`world-project ${project.id === activeProjectId ? "is-selected" : ""}`} aria-pressed={project.id === activeProjectId}>
                 <span className="world-project-number">{String(index + 1).padStart(2, "0")}</span>
                 <span className="world-project-detail"><strong>{project.name}</strong><span>{project.assignedAgentCount}명의 AI 팀 · {project.status}</span></span>
@@ -147,7 +146,6 @@ export function ScrollWorld() {
             <button className="world-primary" onClick={() => selectedProject ? go(0.55) : go(1, "dashboard")}>프로젝트를 시작하세요<span>↗</span></button>
           </section>}
 
-          {chapter === 1 && webgl && !sceneFailed && hiringProfiles.length > 0 && <SceneBoundary onError={() => {}}><Suspense fallback={null}><HiringLounge profiles={hiringProfiles} reducedMotion={reducedMotion} /></Suspense></SceneBoundary>}
 
           {chapter === 2 && <section className="world-copy world-company-copy" aria-labelledby="company-title">
             <p className="world-eyebrow">03 / COMPANYOPS — 프로젝트가 움직이는 곳</p>
@@ -169,12 +167,13 @@ export function ScrollWorld() {
 
           {(sceneFailed || !webgl) && !arrived && <p className="world-fallback" role="status">이 환경에서는 3D 장면 대신 단계별로 이동합니다. 프로젝트 선택과 오피스는 사용할 수 있습니다.</p>}
 
-          {progress > 0.84 && <section ref={(node) => { if (node) { if (arrived) node.removeAttribute("inert"); else node.setAttribute("inert", ""); } }} className={`world-app ${arrived ? "is-arrived" : ""}`} aria-label="프로젝트 오피스" aria-hidden={!arrived} style={{ opacity: officeReveal, transform: `scale(${0.83 + 0.17 * officeReveal}) translateY(${(1 - officeReveal) * 9}%)`, borderRadius: `${(1 - officeReveal) * 30}px` }}>
+          {progress >= 0.90 && <section ref={(node) => { if (node) { if (arrived) node.removeAttribute("inert"); else node.setAttribute("inert", ""); } }} className={`world-app ${arrived ? "is-arrived" : ""}`} aria-label="프로젝트 오피스" aria-hidden={!arrived} style={{ opacity: officeReveal, transform: `scale(${0.83 + 0.17 * officeReveal}) translateY(${(1 - officeReveal) * 9}%)`, borderRadius: `${(1 - officeReveal) * 30}px` }}>
             <Suspense fallback={<div className="flex h-full items-center justify-center">오피스를 준비하는 중…</div>}><AppShell /></Suspense>
           </section>}
 
-          {arrived ? <button className="world-return" onClick={() => go(0.32)}>← 도시 · 프로젝트 선택</button> : <footer className="world-footer">
-            <span className="world-scroll-hint"><span>↓</span> SCROLL TO EXPLORE</span>
+          {chapter === 0 && <button className="world-center-scroll" onClick={() => go(0.32)}><span>스크롤하며 가능성을 만나보세요</span><span aria-hidden="true">↓</span></button>}
+          {arrived ? <button className="world-return" onClick={() => go(0.32)}>← 프로젝트 선택</button> : <footer className="world-footer">
+            <span className="world-scroll-hint" style={{ visibility: chapter === 0 ? "hidden" : "visible" }}><span>↓</span> SCROLL TO EXPLORE</span>
             <nav className="world-chapters" aria-label="여정 단계">{CHAPTERS.map((item, index) => <button key={item.label} className={chapter === index ? "is-current" : ""} aria-current={chapter === index ? "step" : undefined} onClick={() => go(item.at)}><span>{String(index + 1).padStart(2, "0")}</span>{item.label}</button>)}</nav>
             <span className="world-progress">{String(Math.round(progress * 100)).padStart(2, "0")} <span>/ 100</span></span>
           </footer>}

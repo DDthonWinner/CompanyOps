@@ -25,7 +25,7 @@ export function AgentOverview() {
       <span className="tabular text-xs text-on-background/60" aria-live="polite">전체 {agents.length}명</span>
       </div>
       {agents.length === 0 && <div className="text-xs text-on-background/50">배정된 Agent가 없습니다.</div>}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {agents.map((a) => {
           const code = rolesById[a.roleId]?.code;
           const color = a.displayColor || roleColor(code);
@@ -38,15 +38,15 @@ export function AgentOverview() {
               style={{ borderTop: `3px solid ${color}` }}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   <span
-                    className="grid h-8 w-8 place-items-center rounded-lg"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
                     style={{ background: `${color}1a`, color }}
                   >
                     <Icon name={roleIcon(code)} size={18} fill />
                   </span>
-                  <div>
-                    <div className="text-sm font-semibold" style={{ color }}>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold" style={{ color }} title={a.displayName}>
                       {a.displayName}
                     </div>
                     <div className="text-[10px] uppercase tracking-wide text-on-background/45">

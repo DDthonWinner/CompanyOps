@@ -49,13 +49,22 @@ Open **http://localhost:5173**.
 ## 3. Try the connected flow (demo mode)
 Everything below works with the defaults (deterministic fixture AI, git publishing stubbed) — no API keys needed.
 
-1. Open the app → **Dashboard** tab → click **+ 새 프로젝트 (New Project)**; give it a name, pick a Budget and Size, **create**. It becomes the active project.
-2. In **팀 매칭 (Team Matching)** click **추천 받기 (Recommend)** → **배정 확정 (Assign)**. The project goes **READY** (PM is required and auto-included).
-3. In the **command bar** (bottom), type an instruction (e.g. "Implement login API") and **보내기 (Send)** → a **Plan v1** appears in **Plan Review**.
-4. In **Plan Review**: optionally **변경 요청 (Request Changes)**, then **검토 완료 (Review Complete)**, then **최종 실행 승인 (Final Execution Approval)**. Only final approval starts execution.
-5. The in-process worker runs the task → technical QA → publish. Watch the **task board**, **Recent Commits**, and the **Tycoon Office** tab (the assigned agent’s desk/pawn reflects state) update live via SSE.
-6. When the milestone’s tasks complete, an **Milestone 결과 승인 (Milestone Result Approval)** card appears in the **Attention Center** → **승인 (Approve)**. When all milestones are approved, the project becomes **COMPLETED**.
-7. On completion, the **AI 활용 Feedback** section shows the auto-generated utilization report and **Score**.
+Create a runnable example with all five roles:
+
+```bash
+cd backend
+venv/bin/python seed_flow_demo.py
+```
+
+1. Refresh **http://localhost:5173** and use **오피스로 바로 가기** if the introduction is shown, choose **데모 · 5역할 전체 개발 흐름** in the project picker, and open **Dashboard**.
+2. PM, Frontend, Backend, Database, and QA are each assigned once. The demo includes 12 dependent tasks; 2 PM preparation tasks are already complete.
+3. In the **결정 필요** card, enter `샘플 데이터로 진행` and click **결정 전달**. The remaining 10 tasks run through FE/BE/DB implementation, QA validation, and PM result reporting using the existing worker.
+4. Inspect task progress, role tokens, QA, and artifacts. Fixture work completes quickly; it does not make real model calls or publish to a remote repository.
+5. At 12/12 tasks, approve the **Milestone 결과 승인** card. The project completes and its AI-utilization report can be reviewed.
+
+The seed preserves existing projects and reuses its previous demo. To create another independent run, use `venv/bin/python seed_flow_demo.py --new`. It requires `EXECUTION_MODE=demo`, `GIT_MODE=stub`, and an empty `QA_TEST_CMD`.
+
+The Dashboard has no bottom chat/command bar. Project creation and staffing remain available through **새 프로젝트** and **팀 매칭**; plan review and decision/result responses use their dedicated panels.
 
 Both tabs share one top bar (project picker, tabs, connection status) and stay in sync.
 

@@ -7,7 +7,6 @@ import { AgentMatchingPanel } from "./AgentMatchingPanel";
 import { AgentOverview } from "./AgentOverview";
 import { WorkspaceBrief } from "./WorkspaceBrief";
 import { AttentionCenter } from "./AttentionCenter";
-import { CommandInput } from "./CommandInput";
 import { DevelopmentFlow } from "./DevelopmentFlow";
 import { FeedbackSection } from "./FeedbackSection";
 import { DashboardDetails } from "./DashboardDetails";
@@ -23,7 +22,7 @@ export function DashboardView() {
   const needsTeam = status === "DRAFT" || status === "AGENT_MATCHING" || status === "READY";
 
   return (
-    <div data-testid="dash-view" className="h-full w-full overflow-auto px-3 pb-28 sm:px-6">
+    <div data-testid="dash-view" className="h-full w-full overflow-auto px-3 pb-6 sm:px-6">
       <div className="mx-auto max-w-[1280px] space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-2 pt-2">
           <div>
@@ -70,11 +69,6 @@ export function DashboardView() {
             {status === "COMPLETED" && <FeedbackSection />}
           </>
         )}
-      </div>
-
-      {/* bottom command bar */}
-      <div className="fixed bottom-4 left-1/2 z-30 w-[min(1100px,94vw)] -translate-x-1/2">
-        {activeProjectId && <CommandInput />}
       </div>
 
       <ProjectCreateDialog open={createOpen} onClose={() => setCreateOpen(false)} />
