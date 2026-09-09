@@ -47,10 +47,12 @@ const WALL_COLORS: Record<ProjectSize, string> = {
   LARGE: "#c79ad6",
 };
 
+// Pastel roof palette — the primary per-size cue, since walls are cream clapboard for
+// every size. Soft mint / sky / lavender to match the cream body.
 const ROOF_COLORS: Record<ProjectSize, string> = {
-  SMALL: "#d1715a",
-  MEDIUM: "#e0913f",
-  LARGE: "#5a7bbf",
+  SMALL: "#7FC8A9",
+  MEDIUM: "#7FA9D8",
+  LARGE: "#B79AD6",
 };
 
 const GRASS_LIGHT = "#93d06a";
@@ -61,7 +63,7 @@ const FOCUS: Record<GateStage, { target: THREE.Vector3; zoom: number }> = {
   // Naming happens outside, framed on the freshly-planted nameplate post.
   name: { target: new THREE.Vector3(0, 2.4, 11), zoom: 30 },
   // Then the camera pulls back to the three houses so you can pick one.
-  size: { target: new THREE.Vector3(0, 3.4, 2), zoom: 24 },
+  size: { target: new THREE.Vector3(0, 3.4, 2), zoom: 20 },
   description: { target: new THREE.Vector3(0, 3.6, 2), zoom: 30 },
   creating: { target: new THREE.Vector3(0, 3.6, 2), zoom: 34 },
 };
@@ -610,7 +612,7 @@ function HouseAnchor({
   const { camera, size } = useThree();
   const v = useMemo(() => new THREE.Vector3(), []);
   useFrame(() => {
-    v.set(position[0], 9, position[1]); // just above the roof/chimney
+    v.set(position[0], 10.3, position[1]); // just above the taller roof/chimney
     v.project(camera);
     const x = (v.x * 0.5 + 0.5) * size.width;
     const y = (1 - (v.y * 0.5 + 0.5)) * size.height;
@@ -776,15 +778,6 @@ function Tree({ position, scale = 1 }: { position: [number, number]; scale?: num
 }
 
 // A small round bush to tuck beside a house door.
-function Bush({ position }: { position: [number, number, number] }) {
-  return (
-    <mesh castShadow position={position}>
-      <icosahedronGeometry args={[0.7, 0]} />
-      <meshStandardMaterial color="#5fae4d" roughness={0.85} flatShading />
-    </mesh>
-  );
-}
-
 function GateScene({
   stage,
   projects,
@@ -880,9 +873,9 @@ function NewHouseLot({
       {/* The three houses only appear once the name is set (past STEP 1). */}
       {canPick && (
         <>
-          <ScaleHouse size="SMALL" x={-13} selected={projectSize === "SMALL"} dimmed={!canPick} onPick={onPickSize} />
+          <ScaleHouse size="SMALL" x={-10.5} selected={projectSize === "SMALL"} dimmed={!canPick} onPick={onPickSize} />
           <ScaleHouse size="MEDIUM" x={0} selected={projectSize === "MEDIUM"} dimmed={!canPick} onPick={onPickSize} />
-          <ScaleHouse size="LARGE" x={13} selected={projectSize === "LARGE"} dimmed={!canPick} onPick={onPickSize} />
+          <ScaleHouse size="LARGE" x={10.5} selected={projectSize === "LARGE"} dimmed={!canPick} onPick={onPickSize} />
         </>
       )}
     </group>
@@ -999,10 +992,29 @@ function ProjectHouse({
   const size = normalizeSize(project.projectSize);
   const scale = size === "LARGE" ? 1.26 : size === "MEDIUM" ? 1.04 : 0.86;
   const texture = useNameplateTexture(project.name);
+  const clapboard = useClapboardTexture();
   const active = isInProgress(project.status);
-  const wallColor = WALL_COLORS[size];
+  // Walls are cream clapboard for every size; per-size color survives only as a
+  // slim accent band at the base and as the roof tint.
+  const accentColor = WALL_COLORS[size];
   const roofColor = ROOF_COLORS[size];
   const { hovered, bind } = useHover((h) => onHover(h ? project : null));
+
+  // House body dimensions, shared by walls/roof/chimney so everything lines up.
+  const WALL_W = 7.6;
+  const WALL_H = 5.2;
+  const WALL_D = 6.8;
+  const wallTop = WALL_H;
+  const roofRise = 3.9;
+  const roofOverhang = 0.7;
+  // Chimney sits off-center; find the roof-surface height directly under it.
+  const cx = 1.4;
+  const cz = -1.4;
+  const halfRoofW = (WALL_W + roofOverhang * 2) / 2;
+  const roofSurfaceY = wallTop + roofRise * (1 - cx / halfRoofW);
+  const chimneyH = 2.2;
+  const chimneyCenterY = roofSurfaceY + chimneyH / 2 - 0.3;
+  const chimneyTopY = chimneyCenterY + chimneyH / 2;
 
   useFrame(({ clock }) => {
     if (!group.current) return;
@@ -1022,33 +1034,60 @@ function ProjectHouse({
 
   return (
     <group ref={group} position={[position[0], 0, position[1]]} scale={[scale, scale, scale]} onClick={click} {...bind}>
+      {/* grass lot */}
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
         <boxGeometry args={[10, 9, 0.18]} />
         <meshStandardMaterial color={selected ? "#d9ddff" : "#cdbfa0"} roughness={0.95} />
       </mesh>
-      <mesh castShadow receiveShadow position={[0, 2.6, 0]}>
-        <boxGeometry args={[7.6, 5.2, 6.8]} />
-        <meshStandardMaterial color={wallColor} roughness={0.7} />
+      {/* earthy foundation + a slim per-size accent band on top of it */}
+      <mesh castShadow receiveShadow position={[0, 0.25, 0]}>
+        <boxGeometry args={[8.0, 0.5, 7.0]} />
+        <meshStandardMaterial color="#5E3F27" roughness={0.85} />
       </mesh>
-      <GableRoof width={7.6} depth={6.8} y={5.2} rise={2.5} color={roofColor} />
-      {/* chimney */}
-      <mesh castShadow position={[2.1, 7, -1.4]}>
-        <boxGeometry args={[0.9, 2.2, 0.9]} />
-        <meshStandardMaterial color="#b9705a" roughness={0.8} />
+      <mesh position={[0, 0.66, 0]}>
+        <boxGeometry args={[7.72, 0.32, 6.92]} />
+        <meshStandardMaterial color={accentColor} roughness={0.6} />
+      </mesh>
+      {/* cream clapboard walls */}
+      <mesh castShadow receiveShadow position={[0, 2.6, 0]}>
+        <boxGeometry args={[WALL_W, WALL_H, WALL_D]} />
+        <meshStandardMaterial map={clapboard} color="#ffffff" roughness={0.75} />
+      </mesh>
+      <CottageRoof width={WALL_W} depth={WALL_D} y={wallTop} rise={roofRise} overhang={roofOverhang} color={roofColor} />
+      {/* black cylindrical chimney: flashing base, stack, crown */}
+      <mesh castShadow position={[cx, roofSurfaceY + 0.05, cz]}>
+        <cylinderGeometry args={[0.34, 0.36, 0.2, 16]} />
+        <meshStandardMaterial color="#232326" roughness={0.6} metalness={0.25} />
+      </mesh>
+      <mesh castShadow position={[cx, chimneyCenterY, cz]}>
+        <cylinderGeometry args={[0.26, 0.28, chimneyH, 16]} />
+        <meshStandardMaterial color="#2B2B2E" roughness={0.55} metalness={0.2} />
+      </mesh>
+      <mesh castShadow position={[cx, chimneyTopY, cz]}>
+        <cylinderGeometry args={[0.4, 0.4, 0.16, 16]} />
+        <meshStandardMaterial color="#1F1F22" roughness={0.5} metalness={0.25} />
       </mesh>
       {/* in-progress projects puff smoke from the chimney */}
-      {active && <ChimneySmoke position={[2.1, 8.2, -1.4]} />}
-      <mesh castShadow position={[0, 1.7, 3.48]}>
-        <boxGeometry args={[2, 3.2, 0.2]} />
-        <meshStandardMaterial color="#8a5a3c" roughness={0.6} />
-      </mesh>
-      <mesh castShadow position={[0, 3.7, 3.62]}>
-        <boxGeometry args={[6.6, 1.45, 0.2]} />
+      {active && <ChimneySmoke position={[cx, chimneyTopY + 0.4, cz]} />}
+      {/* arched wooden door with a glowing 2×2 window when the project is live */}
+      <CottageDoor active={active} phase={position[0] * 0.17 + position[1] * 0.11} />
+      {/* framed wall windows flanking the door */}
+      <CottageWindow active={active} position={[-2.5, 2.9, 3.42]} phase={position[0] * 0.17} />
+      <CottageWindow active={active} position={[2.5, 2.9, 3.42]} phase={position[1] * 0.21 + 1.4} />
+      {/* project-name signboard above the door */}
+      <mesh castShadow position={[0, 3.98, 3.6]}>
+        <boxGeometry args={[5.0, 0.95, 0.16]} />
         <meshStandardMaterial map={texture} color="#f5d57c" metalness={0.1} roughness={0.35} />
       </mesh>
-      <LiveWindow active={active} position={[2.25, 2.35, 3.58]} phase={position[0] * 0.17} />
-      <LiveWindow active={active} position={[-2.25, 2.35, 3.58]} phase={position[1] * 0.21 + 1.4} />
-      <Bush position={[-3, 0.55, 3.4]} />
+      {/* wooden porch step */}
+      <mesh castShadow receiveShadow position={[0, 0.14, 4.0]}>
+        <boxGeometry args={[2.6, 0.24, 0.9]} />
+        <meshStandardMaterial color="#7A5334" roughness={0.85} />
+      </mesh>
+      <mesh castShadow receiveShadow position={[0, 0.36, 3.85]}>
+        <boxGeometry args={[2.1, 0.2, 0.72]} />
+        <meshStandardMaterial color="#875E38" roughness={0.85} />
+      </mesh>
       {selected && (
         <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[5.8, 6.25, 36]} />
@@ -1106,32 +1145,272 @@ function GableRoof({
   );
 }
 
-function LiveWindow({ active, position, phase }: { active: boolean; position: [number, number, number]; phase: number }) {
-  const material = useRef<THREE.MeshStandardMaterial>(null);
+// A rounded-top (Roman-arch) profile: rectangle capped by a semicircle, extruded.
+function makeArch(hw: number, rectH: number, depth: number): THREE.ExtrudeGeometry {
+  const s = new THREE.Shape();
+  s.moveTo(-hw, 0);
+  s.lineTo(-hw, rectH);
+  s.absarc(0, rectH, hw, Math.PI, 0, true);
+  s.lineTo(hw, 0);
+  s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false });
+  geo.computeVertexNormals();
+  return geo;
+}
 
+// Painted clapboard: horizontal cream courses with a soft shadow line between each.
+function useClapboardTexture() {
+  return useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#F2E7D0";
+      ctx.fillRect(0, 0, 128, 256);
+      const courses = 12;
+      const step = 256 / courses;
+      for (let i = 1; i < courses; i += 1) {
+        const y = Math.round(i * step);
+        const grad = ctx.createLinearGradient(0, y - step * 0.5, 0, y);
+        grad.addColorStop(0, "rgba(196,176,138,0)");
+        grad.addColorStop(1, "rgba(196,176,138,0.38)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, y - step * 0.5, 128, step * 0.5);
+        ctx.fillStyle = "#E4D6B8";
+        ctx.fillRect(0, y - 1, 128, 2);
+        ctx.fillStyle = "rgba(255,251,238,0.55)";
+        ctx.fillRect(0, y + 1, 128, 1);
+      }
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+}
+
+// The door's window pane: warm flicker when the project is live, cool glass otherwise.
+function DoorGlass({
+  active,
+  phase,
+  geometry,
+  position,
+}: {
+  active: boolean;
+  phase: number;
+  geometry: THREE.BufferGeometry;
+  position: [number, number, number];
+}) {
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
   useFrame(({ clock }) => {
-    if (!material.current) return;
+    if (!mat.current) return;
     if (!active) {
-      material.current.emissiveIntensity = 0.1;
+      mat.current.emissiveIntensity = 0.12;
       return;
     }
-    // Layered sines create a lively, flickering "someone's working in there" glow.
     const t = clock.elapsedTime;
-    const flicker =
-      0.7 + Math.sin(t * 6 + phase) * 0.45 + Math.sin(t * 13.7 + phase * 2.3) * 0.3;
-    material.current.emissiveIntensity = Math.max(0.2, flicker);
+    const flicker = 0.7 + Math.sin(t * 6 + phase) * 0.45 + Math.sin(t * 13.7 + phase * 2.3) * 0.3;
+    mat.current.emissiveIntensity = Math.max(0.2, flicker);
   });
-
   return (
-    <mesh castShadow position={position}>
-      <boxGeometry args={[1.2, 1.2, 0.18]} />
+    <mesh geometry={geometry} position={position}>
       <meshStandardMaterial
-        ref={material}
-        color={active ? "#fff4b8" : "#eef3f8"}
-        emissive={active ? "#ffd85a" : "#d7efff"}
-        emissiveIntensity={active ? 0.45 : 0.12}
+        ref={mat}
+        color={active ? "#fff6cf" : "#BFE0E8"}
+        emissive={active ? "#ffd85a" : "#bfe0e8"}
+        emissiveIntensity={active ? 0.5 : 0.12}
+        roughness={0.25}
+        metalness={0}
       />
     </mesh>
+  );
+}
+
+// Arched wooden door: trim + leaf, two raised panels, arched glass with a 2×2 muntin grid.
+function CottageDoor({ active, phase }: { active: boolean; phase: number }) {
+  const trimGeo = useMemo(() => makeArch(1.25, 1.75, 0.16), []);
+  const leafGeo = useMemo(() => makeArch(1.0, 1.5, 0.14), []);
+  const glassGeo = useMemo(() => makeArch(0.6, 0.5, 0.08), []);
+  const MUNTIN = "#FBF6EA";
+  return (
+    <group>
+      <mesh castShadow receiveShadow geometry={trimGeo} position={[0, 0.45, 3.34]}>
+        <meshStandardMaterial color="#EAD9B6" roughness={0.6} />
+      </mesh>
+      <mesh castShadow receiveShadow geometry={leafGeo} position={[0, 0.55, 3.44]}>
+        <meshStandardMaterial color="#BE6A43" roughness={0.58} />
+      </mesh>
+      {[0.85, 1.3].map((py) => (
+        <group key={py} position={[0, py, 0]}>
+          <mesh position={[0, 0, 3.585]}>
+            <boxGeometry args={[1.0, 0.4, 0.04]} />
+            <meshStandardMaterial color="#9E5233" roughness={0.6} />
+          </mesh>
+          <mesh castShadow position={[0, 0, 3.61]}>
+            <boxGeometry args={[0.78, 0.26, 0.06]} />
+            <meshStandardMaterial color="#CE7A50" roughness={0.55} flatShading />
+          </mesh>
+        </group>
+      ))}
+      <DoorGlass active={active} phase={phase} geometry={glassGeo} position={[0, 1.55, 3.56]} />
+      {/* 2×2 muntin grid over the arched glass */}
+      <mesh position={[0, 1.55, 3.66]}>
+        <boxGeometry args={[1.28, 0.06, 0.05]} />
+        <meshStandardMaterial color={MUNTIN} roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 2.05, 3.66]}>
+        <boxGeometry args={[1.28, 0.06, 0.05]} />
+        <meshStandardMaterial color={MUNTIN} roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 2.11, 3.66]}>
+        <boxGeometry args={[0.06, 1.12, 0.05]} />
+        <meshStandardMaterial color={MUNTIN} roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 2.05, 3.665]}>
+        <ringGeometry args={[0.56, 0.66, 22, 1, 0, Math.PI]} />
+        <meshStandardMaterial color={MUNTIN} roughness={0.5} side={THREE.DoubleSide} />
+      </mesh>
+      {/* brass knob */}
+      <mesh castShadow position={[-0.78, 1.5, 3.62]}>
+        <sphereGeometry args={[0.09, 14, 14]} />
+        <meshStandardMaterial color="#C9A227" metalness={0.7} roughness={0.32} />
+      </mesh>
+    </group>
+  );
+}
+
+// Framed wall window: cream trim + sill, 2×2 muntin grid, glass that warmly glows when
+// the project is live (matching the door's behaviour) and reads as cool glass otherwise.
+function CottageWindow({
+  active,
+  phase,
+  position,
+}: {
+  active: boolean;
+  phase: number;
+  position: [number, number, number];
+}) {
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    if (!mat.current) return;
+    if (!active) {
+      mat.current.emissiveIntensity = 0.12;
+      return;
+    }
+    const t = clock.elapsedTime;
+    const flicker = 0.7 + Math.sin(t * 6 + phase) * 0.45 + Math.sin(t * 13.7 + phase * 2.3) * 0.3;
+    mat.current.emissiveIntensity = Math.max(0.2, flicker);
+  });
+  const MUNTIN = "#FBF6EA";
+  return (
+    <group position={position}>
+      {/* cream trim frame */}
+      <mesh castShadow receiveShadow position={[0, 0, 0]}>
+        <boxGeometry args={[1.5, 1.5, 0.14]} />
+        <meshStandardMaterial color="#EAD9B6" roughness={0.6} />
+      </mesh>
+      {/* glass */}
+      <mesh position={[0, 0, 0.08]}>
+        <boxGeometry args={[1.18, 1.18, 0.06]} />
+        <meshStandardMaterial
+          ref={mat}
+          color={active ? "#fff6cf" : "#BFE0E8"}
+          emissive={active ? "#ffd85a" : "#bfe0e8"}
+          emissiveIntensity={active ? 0.5 : 0.12}
+          roughness={0.25}
+          metalness={0}
+        />
+      </mesh>
+      {/* 2×2 muntin grid */}
+      <mesh position={[0, 0, 0.13]}>
+        <boxGeometry args={[1.22, 0.06, 0.04]} />
+        <meshStandardMaterial color={MUNTIN} roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 0, 0.13]}>
+        <boxGeometry args={[0.06, 1.22, 0.04]} />
+        <meshStandardMaterial color={MUNTIN} roughness={0.5} />
+      </mesh>
+      {/* sill */}
+      <mesh castShadow position={[0, -0.82, 0.06]}>
+        <boxGeometry args={[1.66, 0.14, 0.24]} />
+        <meshStandardMaterial color="#D8C49A" roughness={0.65} />
+      </mesh>
+    </group>
+  );
+}
+
+// Steep gable roof with a ridge cap, shingle-course battens, and rounded rake/eave lips.
+function CottageRoof({
+  width,
+  depth,
+  y,
+  color,
+  rise,
+  overhang = 0.7,
+}: {
+  width: number;
+  depth: number;
+  y: number;
+  color: string;
+  rise: number;
+  overhang?: number;
+}) {
+  const rw = width + overhang * 2;
+  const rd = depth + overhang * 2;
+  const half = rw / 2;
+  const peak = rise;
+  const theta = Math.atan2(peak, half);
+  const L = Math.hypot(half, peak);
+  const bodyGeom = useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(-half, 0);
+    shape.lineTo(half, 0);
+    shape.lineTo(0, peak);
+    shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: rd, bevelEnabled: false });
+    geo.translate(0, 0, -rd / 2);
+    geo.computeVertexNormals();
+    return geo;
+  }, [half, peak, rd]);
+  const shingleColor = useMemo(() => new THREE.Color(color).multiplyScalar(0.84).getStyle(), [color]);
+  const ridgeColor = useMemo(() => new THREE.Color(color).multiplyScalar(0.78).getStyle(), [color]);
+  const lipColor = useMemo(() => new THREE.Color(color).multiplyScalar(0.92).getStyle(), [color]);
+  const fracs = [0.2, 0.35, 0.5, 0.65, 0.8];
+  return (
+    <group position={[0, y, 0]}>
+      <mesh castShadow receiveShadow geometry={bodyGeom}>
+        <meshStandardMaterial color={color} roughness={0.62} flatShading />
+      </mesh>
+      <mesh castShadow position={[0, peak, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.16, 0.16, rd + 0.1, 12]} />
+        <meshStandardMaterial color={ridgeColor} roughness={0.55} />
+      </mesh>
+      {[1, -1].map((sign) => (
+        <group key={sign} position={[0, peak, 0]} rotation={[0, 0, -sign * theta]}>
+          {fracs.map((f, i) => (
+            <mesh key={i} position={[sign * f * L, 0.05, 0]}>
+              <boxGeometry args={[0.05, 0.05, rd * 0.98]} />
+              <meshStandardMaterial color={shingleColor} roughness={0.7} />
+            </mesh>
+          ))}
+          {[1, -1].map((zs) => (
+            <mesh key={zs} castShadow position={[(sign * L) / 2, 0.02, (zs * rd) / 2]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.14, 0.14, L, 12]} />
+              <meshStandardMaterial color={lipColor} roughness={0.58} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      {[1, -1].map((sign) => (
+        <mesh key={`eave${sign}`} castShadow position={[sign * half, -0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.16, 0.16, rd, 12]} />
+          <meshStandardMaterial color={lipColor} roughness={0.58} />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
