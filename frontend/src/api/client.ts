@@ -133,4 +133,51 @@ export const api = {
     request(`/api/utilization/${reportId}/feedbacks`, { method: "POST", body: JSON.stringify(body) }),
   updateFeedback: (feedbackId: string, body: Record<string, unknown>) =>
     request(`/api/feedbacks/${feedbackId}`, { method: "PUT", body: JSON.stringify(body) }),
+
+  // ---- Dev Admin: generic table CRUD (local/contest tool, no auth) ----
+  adminListTables: () => request<{ tables: AdminTable[] }>("/api/admin/tables"),
+  adminGetRows: (table: string, limit = 50, offset = 0, orderBy?: string) =>
+    request<AdminRowsResponse>(
+      `/api/admin/tables/${table}?limit=${limit}&offset=${offset}${orderBy ? `&orderBy=${orderBy}` : ""}`,
+    ),
+  adminCreateRow: (table: string, row: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/api/admin/tables/${table}`, {
+      method: "POST",
+      body: JSON.stringify(row),
+    }),
+  adminUpdateRow: (table: string, pk: string, patch: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/api/admin/tables/${table}/${encodeURIComponent(pk)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  adminDeleteRow: (table: string, pk: string) =>
+    request<{ deleted: boolean }>(`/api/admin/tables/${table}/${encodeURIComponent(pk)}`, {
+      method: "DELETE",
+    }),
 };
+
+export interface AdminColumn {
+  name: string;
+  type: string;
+  primaryKey: boolean;
+  nullable: boolean;
+  hasDefault: boolean;
+  foreignKey: string | null;
+}
+
+export interface AdminTable {
+  name: string;
+  rowCount: number;
+  primaryKey: string[];
+  columns: AdminColumn[];
+}
+
+export interface AdminRowsResponse {
+  table: string;
+  columns: AdminColumn[];
+  primaryKey: string[];
+  rows: Record<string, unknown>[];
+  total: number;
+  limit: number;
+  offset: number;
+}
