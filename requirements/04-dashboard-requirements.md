@@ -650,7 +650,7 @@ Risk는 AI의 임의적인 확률값보다는 **발견된 문제와 근거가 �
 - 화면 상단: 프로젝트 단계, Task 수 기준 진행률, 실행·대기 건수. 연결 상태는 글로벌 내비게이션 바에서 항상 확인한다.
 - 중앙: Agent 작업 영역 및 PM → Frontend / Backend → QA 개발 흐름
 - 오른쪽: Decision / Milestone 결과 승인 / 계획 최종 승인을 모은 Attention Center
-- 하단: Agent 요약, QA·Quality Gate, Activity, Artifact, 사용자 지시 입력
+- 하단: Agent 요약, QA·Quality Gate, Activity, Artifact
 - 상세: Side Panel 또는 Modal로 현재 Dashboard 문맥 유지
 
 모바일·좁은 화면에서는 Attention Center를 작업 공간보다 먼저 표시한다. 중단 범위 알림과 연결 상태도 우선 접근할 수 있어야 한다.
@@ -693,7 +693,6 @@ AppShell
     ├── TokenUsage
     ├── ActivityTimeline
     ├── RecentArtifacts / ArtifactPreview
-    └── CommandInput
 ~~~
 
 컴포넌트 이름은 구현 예시이다. 이전의 DashboardPage 로컬 ProjectHeader·ConnectionStatus는 두지 않고, 제품명·Project·연결 상태는 공용 GlobalExecutiveBar가 제공한다. 상태의 단일 기준을 공유하여 요약, 카드, 상세, 알림의 상태가 서로 달라지지 않게 한다.
@@ -717,7 +716,7 @@ AppShell
 - QA 전체 결과를 포함한 Milestone 결과 승인 / 추가 검증 여부 확인
 - 추가 검증 계획의 피드백·최종 승인
 - Quality Gate와 Milestone 결과 승인의 구분
-- Token Usage / Recent Artifact / Command Input
+- Token Usage / Recent Artifact
 - 결정·승인·의존성에 따른 조건 대기 및 실행 재개
 - 항상 보이는 실시간 연결 상태, 마지막 동기화 시각, 연결 끊김 안내
 
@@ -884,3 +883,8 @@ QA Run → Milestone Result → Human review / Additional validation plan
 - 연결선은 역할 간 조율 관계다. 고정된 순차 실행이나 실제 메시지 전송을 의미하지 않으며, 실제 실행은 Task 의존성·계획 승인·기술 QA Gate 등 기존 조건을 따른다.
 - Dashboard는 흐름도만 제공하며 3D 도시 및 보기 전환 UI는 제거한다. 흐름도의 역할 집합은 타이쿤 역할 목록을 따른다. 역할 노드는 복수 에이전트의 배정 수와 역할 작업 진행률을 집계하고, 단일 에이전트는 개인 상세, 복수 또는 미배정 역할은 부서 상세로 연결한다.
 - API 계약 조정과 타이쿤 생성·배정 및 실제 오케스트레이션 연동은 각 유닛 개발 완료 후 적용한다. 본 단계는 Dashboard 표현을 정렬한다.
+
+
+## 32. Dashboard 하단 채팅 입력 제거 (2026-09-09 보완)
+
+Dashboard에는 고정 채팅/사용자 지시 입력창과 보내기 버튼을 제공하지 않는다. 기존 문서의 Command Input 배치는 이 절로 대체한다. 계획 검토·피드백·승인, Decision 응답, Milestone 결과 승인 기능은 해당 패널에서 제공한다.
