@@ -1,4 +1,5 @@
 // HTTP client for the U1 contract (06 §4). Attaches requestId; surfaces the error envelope.
+import type { UtilizationReport, UtilizationPreview } from "./uf-types";
 import type { ProjectListItem, Snapshot, ErrorEnvelope } from "./types";
 
 const BASE = (import.meta.env?.VITE_API_BASE ?? "http://127.0.0.1:8000").replace(/\/$/, "");
@@ -59,6 +60,9 @@ export const api = {
     request(`/api/projects/${pid}/agent-recommendations`, { method: "POST", body: JSON.stringify(body) }),
   assignAgents: (pid: string, body: Record<string, unknown>) =>
     request(`/api/projects/${pid}/agents`, { method: "POST", body: JSON.stringify(body) }),
+  hireAgent: (pid: string) => request(`/api/projects/${pid}/agents/hire`, { method: "POST" }),
+  removeAgent: (pid: string, agentId: string) =>
+    request(`/api/projects/${pid}/agents/${agentId}`, { method: "DELETE" }),
   createMilestone: (pid: string, body: Record<string, unknown>) =>
     request(`/api/projects/${pid}/sprint-milestones`, { method: "POST", body: JSON.stringify(body) }),
   createTask: (pid: string, body: Record<string, unknown>) =>
@@ -116,6 +120,11 @@ export const api = {
     ),
 
   // ---- UF (02 §9.2, global paths) ----
+  createUtilization: (pid: string) =>
+    request<UtilizationReport>("/api/utilization", { method: "POST", body: JSON.stringify({ projectId: pid }) }),
+  // TEMP UF_TEST_PREVIEW
+  previewUtilization: (pid: string) =>
+    request<UtilizationPreview>("/api/utilization/preview", { method: "POST", body: JSON.stringify({ projectId: pid }) }),
   getUtilization: (pid: string) =>
     request<{ items?: unknown[] } | unknown[]>(`/api/utilization?projectId=${pid}`),
   getReportMetrics: (reportId: string) => request(`/api/utilization/${reportId}/metrics`),
@@ -124,4 +133,51 @@ export const api = {
     request(`/api/utilization/${reportId}/feedbacks`, { method: "POST", body: JSON.stringify(body) }),
   updateFeedback: (feedbackId: string, body: Record<string, unknown>) =>
     request(`/api/feedbacks/${feedbackId}`, { method: "PUT", body: JSON.stringify(body) }),
+
+  // ---- Dev Admin: generic table CRUD (local/contest tool, no auth) ----
+  adminListTables: () => request<{ tables: AdminTable[] }>("/api/admin/tables"),
+  adminGetRows: (table: string, limit = 50, offset = 0, orderBy?: string) =>
+    request<AdminRowsResponse>(
+      `/api/admin/tables/${table}?limit=${limit}&offset=${offset}${orderBy ? `&orderBy=${orderBy}` : ""}`,
+    ),
+  adminCreateRow: (table: string, row: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/api/admin/tables/${table}`, {
+      method: "POST",
+      body: JSON.stringify(row),
+    }),
+  adminUpdateRow: (table: string, pk: string, patch: Record<string, unknown>) =>
+    request<Record<string, unknown>>(`/api/admin/tables/${table}/${encodeURIComponent(pk)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  adminDeleteRow: (table: string, pk: string) =>
+    request<{ deleted: boolean }>(`/api/admin/tables/${table}/${encodeURIComponent(pk)}`, {
+      method: "DELETE",
+    }),
 };
+
+export interface AdminColumn {
+  name: string;
+  type: string;
+  primaryKey: boolean;
+  nullable: boolean;
+  hasDefault: boolean;
+  foreignKey: string | null;
+}
+
+export interface AdminTable {
+  name: string;
+  rowCount: number;
+  primaryKey: string[];
+  columns: AdminColumn[];
+}
+
+export interface AdminRowsResponse {
+  table: string;
+  columns: AdminColumn[];
+  primaryKey: string[];
+  rows: Record<string, unknown>[];
+  total: number;
+  limit: number;
+  offset: number;
+}

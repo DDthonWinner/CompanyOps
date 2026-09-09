@@ -2,12 +2,15 @@ import { Canvas } from "@react-three/fiber";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { DESK_ROLES, roleColor } from "../../lib/roles";
 import type { Agent, Snapshot } from "../../api/types";
+import { api } from "../../api/client";
+import { pushToast } from "../../components/ui/toast";
 import { useStore } from "../../store/useStore";
 import { useTycoonStore } from "./tycoonStore";
 import { CameraControls, type FocusPoint } from "./scene/CameraControls";
 import { Decor } from "./scene/Decor";
 import { DomainDesk } from "./scene/DomainDesk";
 import { DevPawn } from "./scene/DevPawn";
+import { FireDoor } from "./scene/FireDoor";
 import { FloorGrid } from "./scene/FloorGrid";
 import { Lighting } from "./scene/Lighting";
 import { OfficeDecor } from "./scene/OfficeDecor";
@@ -22,7 +25,23 @@ const DOMAIN_LAYOUT: Record<string, [number, number]> = {
   QA: [22, -16],
 };
 const PM_POS: [number, number] = [66, 0];
+const FIRE_POS: [number, number, number] = [58, 0, -40.3]; // 해고 door, set into the back wall
 const DEFAULT_TARGET: [number, number, number] = [18, 3, 0];
+
+// Spots idle agents wander to (world [x, z]); standY lifts them (e.g. onto a sofa).
+const WANDER_POINTS: Array<{ pos: [number, number]; standY?: number }> = [
+  { pos: [-32, 24] },
+  { pos: [60, -22] },
+  { pos: [-44, 10] },
+  { pos: [2, 34], standY: 1.8 },
+  { pos: [20, 33], standY: 1.8 },
+  { pos: [-14, -33] },
+  { pos: [8, -33] },
+  { pos: [26, -33] },
+  { pos: [-40, -24] },
+  { pos: [40, 26] },
+  { pos: [12, 6] },
+];
 
 // Seats spread across the desk; overflow wraps to a second row in front.
 function domainSeat([dx, dz]: [number, number], i: number): [number, number] {
@@ -39,6 +58,7 @@ function pmSeat([px, pz]: [number, number], i: number): [number, number] {
 export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
   const rolesById = useStore((s) => s.rolesById);
   const reassignments = useTycoonStore((s) => s.reassignments);
+  const applySnapshot = useStore((s) => s.applySnapshot);
   const codeOf = (roleId: string | null | undefined) => (roleId ? rolesById[roleId]?.code : undefined);
   const projectId = snapshot.project.id;
   const tier = snapshot.project.budgetLevel; // HIGH | MEDIUM | LOW
@@ -95,12 +115,27 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
   }, [layout]);
 
   const resolveDeskAt = useCallback((x: number, z: number): string | null => {
+    if (x >= 50 && x <= 66 && z <= -26 && z >= -41) return "FIRE"; // 해고 door (back wall)
     for (const [code, [dx, dz]] of Object.entries(DOMAIN_LAYOUT)) {
       if (Math.abs(x - dx) <= 17 && z >= dz - 9 && z <= dz + 13) return code;
     }
     if (Math.abs(x - PM_POS[0]) <= 11 && Math.abs(z - PM_POS[1]) <= 12) return "PM";
     return null;
   }, []);
+
+  const onFire = useCallback(
+    async (agentId: string) => {
+      try {
+        await api.removeAgent(projectId, agentId);
+        const snap = await api.getSnapshot(projectId);
+        if (snap) applySnapshot(snap);
+        pushToast("해고했습니다.", "info");
+      } catch (e) {
+        pushToast(e instanceof Error ? e.message : "해고에 실패했습니다.", "error");
+      }
+    },
+    [projectId, applySnapshot],
+  );
 
   // Smoke puffs on reassignment.
   const [puffs, setPuffs] = useState<Array<{ id: number; pos: [number, number, number] }>>([]);
@@ -156,6 +191,9 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
         outboxCount={perRole.PM.outbox}
       />
 
+      {/* 해고 (fire) door in front of the PM */}
+      <FireDoor position={FIRE_POS} />
+
       {/* All agents (flat list — stable instances survive reassignment) */}
       {layout.all.map((a) => {
         const { eff, seat } = layout.info[a.id];
@@ -174,6 +212,8 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
             tier={tier}
             resolveDeskAt={resolveDeskAt}
             onPuff={onPuff}
+            onFire={onFire}
+            wanderPoints={WANDER_POINTS}
           />
         );
       })}

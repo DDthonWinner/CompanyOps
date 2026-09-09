@@ -20,6 +20,7 @@ export function AgentList() {
   const openAgentSheet = useStore((s) => s.openAgentSheet);
   const setCamera = useStore((s) => s.setCamera);
   const reassignments = useTycoonStore((s) => s.reassignments);
+  const recallAll = useTycoonStore((s) => s.recallAll);
   if (!snapshot) return null;
 
   const effRole = (a: { id: string; roleId: string }) => reassignments[a.id] ?? rolesById[a.roleId]?.code;
@@ -40,6 +41,14 @@ export function AgentList() {
       className="pointer-events-auto w-full min-h-0 flex-1 overflow-auto p-3"
       data-testid="agent-list"
     >
+      <button
+        data-testid="recall-all"
+        onClick={recallAll}
+        className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-outline-variant/60 bg-surface-high/60 px-3 py-1.5 text-xs font-semibold text-on-background/80 transition hover:bg-surface-high active:scale-[0.98]"
+      >
+        <span className="text-sm leading-none">↩</span>
+        모두 자리로 복귀
+      </button>
       <div className="display mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-on-background/60">
         <span>Agents</span>
         <span className="tabular text-on-background/40">{agents.length}</span>

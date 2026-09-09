@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { INBOX_COLOR, OUTBOX_COLOR, ROLE_LABEL } from "../../../lib/roles";
 import { dispatchSelection } from "../selectionEvent";
+import { agentDrag, applyOpacity } from "./agentDrag";
 import { Monitor } from "./Monitor";
 
 const DESK_LENGTH = 28;
@@ -80,10 +82,24 @@ export function DomainDesk({
   outboxCount: number;
 }) {
   const [pulse, setPulse] = useState(1);
+  const group = useRef<THREE.Group>(null);
+  const dimK = useRef(1);
+  const dimApplied = useRef(1);
   const bounce = () => {
     setPulse(1.05);
     setTimeout(() => setPulse(1), 180);
   };
+
+  // Fade the desk when the dragged agent hovers it (drop-target preview).
+  useFrame(() => {
+    const target = agentDrag.activeId !== null && agentDrag.hoverRole === roleCode ? 0.4 : 1;
+    dimK.current += (target - dimK.current) * 0.25;
+    if (target === 1 && dimK.current > 0.99) dimK.current = 1;
+    if (dimK.current !== dimApplied.current) {
+      applyOpacity(group.current, dimK.current);
+      dimApplied.current = dimK.current;
+    }
+  });
   const selectDesk = (type: "desk" | "inbox" | "outbox") => {
     if (type === "desk") bounce();
     dispatchSelection({ projectId, type, roleCode });
@@ -100,7 +116,7 @@ export function DomainDesk({
   };
 
   return (
-    <group position={[position[0], 0, position[1]]} scale={pulse}>
+    <group ref={group} position={[position[0], 0, position[1]]} scale={pulse}>
       {/* Domain floor mat */}
       <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[DESK_LENGTH + 6, DESK_WIDTH + 9]} />

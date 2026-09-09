@@ -1,4 +1,8 @@
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
 import { dispatchSelection } from "../selectionEvent";
+import { agentDrag, applyOpacity } from "./agentDrag";
 import { Monitor } from "./Monitor";
 
 const STICKY = ["#f43f5e", "#fbbf24", "#10b981", "#3b82f6"];
@@ -48,8 +52,21 @@ export function PMSuite({
     onPointerOut: () => (document.body.style.cursor = "auto"),
   };
 
+  const group = useRef<THREE.Group>(null);
+  const dimK = useRef(1);
+  const dimApplied = useRef(1);
+  useFrame(() => {
+    const target = agentDrag.activeId !== null && agentDrag.hoverRole === "PM" ? 0.4 : 1;
+    dimK.current += (target - dimK.current) * 0.25;
+    if (target === 1 && dimK.current > 0.99) dimK.current = 1;
+    if (dimK.current !== dimApplied.current) {
+      applyOpacity(group.current, dimK.current);
+      dimApplied.current = dimK.current;
+    }
+  });
+
   return (
-    <group position={[position[0], 0, position[1]]}>
+    <group ref={group} position={[position[0], 0, position[1]]}>
       {/* Rose zone rug */}
       <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[18, 16]} />

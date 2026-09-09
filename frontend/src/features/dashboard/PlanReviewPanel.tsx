@@ -18,7 +18,7 @@ export function PlanReviewPanel() {
     return (
       <GlassPanel level={2} className="p-4" data-testid="plan-review-panel">
         <h3 className="display mb-1 text-sm font-semibold">Plan Review</h3>
-        <p className="text-xs text-on-background/50">아직 계획이 없습니다. 아래에서 지시를 보내세요.</p>
+        <p className="text-xs text-on-background/50">아직 등록된 계획이 없습니다. 계획이 생성되면 이곳에서 검토할 수 있습니다.</p>
       </GlassPanel>
     );
   }

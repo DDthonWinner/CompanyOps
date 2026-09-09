@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Button } from "../../components/ui/Button";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { Icon } from "../../components/ui/Icon";
@@ -15,6 +16,8 @@ import { HeaderStrip } from "./HeaderStrip";
 export function DashboardView() {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const snapshot = useStore((s) => s.snapshot);
+  const [feedbackRequest, setFeedbackRequest] = useState<{ pid: string; id: number } | null>(null);
+  useEffect(() => { setFeedbackRequest(null); }, [activeProjectId]);
   const selectPanel = useStore((s) => s.setDashboardPanel);
   const status = snapshot?.project.status;
   const needsTeam = status === "DRAFT" || status === "AGENT_MATCHING" || status === "READY";
@@ -43,7 +46,7 @@ export function DashboardView() {
           </GlassPanel>
         )}
 
-        {activeProjectId && <HeaderStrip />}
+        {activeProjectId && <HeaderStrip onFeedback={() => setFeedbackRequest({ pid: activeProjectId, id: Date.now() })} />}
 
         {activeProjectId && needsTeam && <AgentMatchingPanel />}
 
@@ -56,7 +59,7 @@ export function DashboardView() {
               </div>
               <div id="dashboard-attention" className="order-1 flex w-full flex-col gap-3 lg:order-2 lg:w-80 lg:flex-shrink-0">
                 <AttentionCenter />
-                <WorkspaceBrief />
+                <WorkspaceBrief key={activeProjectId} />
               </div>
             </div>
 
@@ -64,8 +67,12 @@ export function DashboardView() {
             <div id="dashboard-agents"><AgentOverview key={activeProjectId} /></div>
 
             <DashboardDetails key={activeProjectId} />
-            {status === "COMPLETED" && <FeedbackSection />}
           </>
+        )}
+        {activeProjectId && snapshot && (
+          <section aria-label="AI 활용 분석 및 Feedback" className="border-t border-outline-variant/70 pt-6">
+            <FeedbackSection requestId={feedbackRequest?.pid === activeProjectId ? feedbackRequest.id : undefined} />
+          </section>
         )}
       </div>
 

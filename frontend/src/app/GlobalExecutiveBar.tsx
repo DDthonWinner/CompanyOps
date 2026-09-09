@@ -71,6 +71,9 @@ export function GlobalExecutiveBar() {
         <TabButton id="dashboard" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")}>
           Dashboard
         </TabButton>
+        <TabButton id="admin" active={activeTab === "admin"} onClick={() => setActiveTab("admin")}>
+          Dev Admin
+        </TabButton>
       </nav>
 
       {/* right: connection + plan review */}
