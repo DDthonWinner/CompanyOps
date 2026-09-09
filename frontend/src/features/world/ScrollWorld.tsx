@@ -146,7 +146,7 @@ export function ScrollWorld() {
           </section>}
 
           {chapter === 0 && <div className="world-center-scroll"><span>스크롤하며 가능성을 만나보세요</span><span aria-hidden="true">↓</span></div>}
-          {arrived ? <button className="world-return" onClick={() => go(0)}>← 랜딩 페이지 다시 가기</button> : <footer className="world-footer">
+          {arrived ? <button className="world-return" onClick={() => go(0)}>← 소개 페이지로 돌아가기</button> : <footer className="world-footer">
             <span className="world-scroll-hint" style={{ visibility: chapter === 0 ? "hidden" : "visible" }}><span>↓</span> SCROLL TO EXPLORE</span>
             <nav className="world-chapters" aria-label="여정 단계">{CHAPTERS.map((item, index) => <button key={item.label} className={chapter === index ? "is-current" : ""} aria-current={chapter === index ? "step" : undefined} onClick={() => go(item.at)}><span>{String(index + 1).padStart(2, "0")}</span>{item.label}</button>)}</nav>
             <span className="world-progress">{String(Math.round(progress * 100)).padStart(2, "0")} <span>/ 100</span></span>

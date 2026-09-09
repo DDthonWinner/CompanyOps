@@ -19,11 +19,17 @@ interface StoreState {
   ui: { activeTab: "tycoon" | "dashboard" | "admin"; camera: { target?: string }; dashboardPanel?: DashboardPanel };
   // One-shot navigation intent; never persisted with the selected panel.
   dashboardScrollRequest: { panel: DashboardPanel } | null;
+  // How the project-creation gate should open: the village overview or straight
+  // into the creation flow. `gateNonce` bumps on every request so the gate reacts
+  // even when it is already mounted.
+  gateMode: "village" | "create";
+  gateNonce: number;
   openSheet: OpenSheet | null;
   rolesById: Record<string, { code: string; name: string }>;
 
   setRoles: (roles: Array<{ id: string; code: string; name: string }>) => void;
   setActiveProject: (id: string | null) => void;
+  requestGate: (mode: "village" | "create") => void;
   applySnapshot: (s: Snapshot) => void;
   setConnection: (c: ConnState) => void;
   setActiveTab: (t: "tycoon" | "dashboard" | "admin") => void;
@@ -43,12 +49,23 @@ export const useStore = create<StoreState>()(
       connection: "DISCONNECTED",
       ui: { activeTab: "tycoon", camera: {} },
       dashboardScrollRequest: null,
+      gateMode: "village",
+      gateNonce: 0,
       openSheet: null,
       rolesById: {},
 
       setRoles: (roles) =>
         set({ rolesById: Object.fromEntries(roles.map((r) => [r.id, { code: r.code, name: r.name }])) }),
       setActiveProject: (id) => set({ activeProjectId: id, snapshot: null, dashboardScrollRequest: null }),
+      requestGate: (mode) =>
+        set((st) => ({
+          activeProjectId: null,
+          snapshot: null,
+          dashboardScrollRequest: null,
+          gateMode: mode,
+          gateNonce: st.gateNonce + 1,
+          ui: { ...st.ui, activeTab: "tycoon" },
+        })),
       applySnapshot: (s) => {
         const current = get().snapshot;
         // Ignore stale/duplicate revisions (FR-TY-2).
