@@ -44,7 +44,7 @@ export function AgentList() {
       <button
         data-testid="recall-all"
         onClick={recallAll}
-        className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-outline-variant/60 bg-surface-high/60 px-3 py-1.5 text-xs font-semibold text-on-background/80 transition hover:bg-surface-high active:scale-[0.98]"
+        className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-error/50 bg-error/10 px-3 py-1.5 text-xs font-semibold text-error transition hover:bg-error/20 active:scale-[0.98]"
       >
         <span className="text-sm leading-none">↩</span>
         모두 자리로 복귀

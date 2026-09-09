@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { api } from "../api/client";
 import type { TycoonSelection } from "../api/types";
+import { BrandLogo } from "../components/ui/BrandLogo";
 import { Toaster } from "../components/ui/toast";
+import { openProjectVillage } from "../features/tycoon/projectCreationNavigation";
 import { AdminView } from "../features/admin/AdminView";
 import { DashboardView } from "../features/dashboard/DashboardView";
 import { AgentSheet } from "../features/tycoon/hud/AgentSheet";
@@ -40,8 +42,15 @@ export function AppShell() {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
+      <BrandLogo
+        onClick={openProjectVillage}
+        title="마을 뷰로 이동"
+        testId="app-brand"
+        className="fixed left-4 top-4 z-50 rounded-xl !bg-white px-5 py-3 text-on-background shadow-sm transition hover:text-primary"
+      />
       <GlobalExecutiveBar />
-      <main className="h-full w-full pt-44 sm:pt-32 lg:pt-20">
+      {/* Tycoon is full-bleed (3D fills behind the floating GNB); other tabs clear the bar. */}
+      <main className={`h-full w-full ${activeTab === "tycoon" ? "" : "pt-44 sm:pt-32 lg:pt-20"}`}>
         {activeTab === "tycoon" ? <TycoonView /> : activeTab === "admin" ? <AdminView /> : <DashboardView />}
       </main>
       <AgentSheet

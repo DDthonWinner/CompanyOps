@@ -32,7 +32,7 @@ export function DashboardView() {
 
         {!activeProjectId && (
           <GlassPanel level={2} className="p-6 text-sm text-on-background/70">
-프로젝트를 선택하세요. 새 프로젝트는 상단 바 또는 Tycoon Office에서 생성할 수 있습니다.
+            왼쪽 상단의 로고를 눌러 <b>프로젝트 마을</b>에서 프로젝트를 선택하거나 새로 만드세요.
           </GlassPanel>
         )}
 

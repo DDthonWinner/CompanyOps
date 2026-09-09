@@ -2,9 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { ProjectListItem } from "../api/types";
-import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { openProjectCreationGate, openProjectVillage } from "../features/tycoon/projectCreationNavigation";
 import { useStore } from "../store/useStore";
 
 const CONN_META: Record<string, { label: string; color: string }> = {
@@ -19,7 +17,6 @@ export function GlobalExecutiveBar() {
   const activeProjectId = useStore((s) => s.activeProjectId);
   const setActiveProject = useStore((s) => s.setActiveProject);
   const activeTab = useStore((s) => s.ui.activeTab);
-  const setDashboardPanel = useStore((s) => s.setDashboardPanel);
   const setActiveTab = useStore((s) => s.setActiveTab);
   const connection = useStore((s) => s.connection);
   const lastSyncAt = useStore((s) => s.lastSyncAt);
@@ -40,19 +37,9 @@ export function GlobalExecutiveBar() {
   const conn = CONN_META[connection] ?? CONN_META.DISCONNECTED;
 
   return (
-    <header className="glass-3 fixed left-1/2 top-4 z-40 grid w-[min(1100px,94vw)] -translate-x-1/2 items-center justify-between gap-2 rounded-2xl px-3 py-2 sm:grid-cols-2 lg:flex lg:gap-4 lg:rounded-full lg:px-5">
-      {/* left: home + current-project switcher */}
-      <div className="flex min-w-0 items-center gap-2 sm:col-span-2 lg:col-span-1 lg:justify-start">
-        <button
-          type="button"
-          onClick={openProjectVillage}
-          aria-label="마을 뷰로 이동"
-          title="마을 뷰"
-          data-testid="gebar-home"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-outline-variant bg-surface-lowest text-on-background/80 transition hover:bg-surface-high hover:text-primary"
-        >
-          <Icon name="home" size={20} />
-        </button>
+    <header className="pointer-events-none fixed inset-x-0 top-5 z-40 flex items-center justify-between pl-[13.5rem] pr-[20rem]">
+      {/* left: current-project switcher, sitting right next to the fixed brand logo */}
+      <div className="pointer-events-auto flex min-w-0 items-center">
         <ProjectSwitcher
           projects={projects}
           activeProjectId={activeProjectId}
@@ -63,8 +50,8 @@ export function GlobalExecutiveBar() {
         />
       </div>
 
-      {/* center: tabs */}
-      <nav className="flex w-fit shrink-0 items-center gap-1 rounded-full bg-surface p-1">
+      {/* center: tabs (the one pill that keeps a background) */}
+      <nav className="pointer-events-auto absolute left-1/2 flex w-fit -translate-x-1/2 items-center gap-1 rounded-full bg-surface p-1 shadow-md">
         <TabButton id="tycoon" active={activeTab === "tycoon"} onClick={() => setActiveTab("tycoon")}>
           Tycoon Office
         </TabButton>
@@ -76,11 +63,8 @@ export function GlobalExecutiveBar() {
         </TabButton>
       </nav>
 
-      {/* right: connection + plan review */}
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
-        <Button variant="ghost" onClick={openProjectCreationGate} data-testid="gebar-project-create">
-          <Icon name="add" size={16} /> 새 프로젝트
-        </Button>
+      {/* right: connection status */}
+      <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2">
         <span data-testid="gebar-connection" className="flex flex-wrap items-center gap-1.5 text-xs">
           <span aria-hidden style={{ color: conn.color }}>●</span>
           <span>{conn.label}</span>
@@ -90,9 +74,6 @@ export function GlobalExecutiveBar() {
             </span>
           )}
         </span>
-        <Button variant="ghost" onClick={() => setDashboardPanel("plan")} data-testid="gebar-plan-review">
-          계획 검토
-        </Button>
       </div>
     </header>
   );
@@ -134,7 +115,7 @@ function ProjectSwitcher({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-w-0 max-w-[220px] items-center gap-1.5 rounded-full border border-outline-variant bg-surface-lowest px-3 py-1.5 text-sm transition hover:bg-surface-high"
+        className="flex min-w-0 max-w-[240px] items-center gap-1.5 rounded-full bg-surface-high px-4 py-2 text-sm font-medium text-on-background shadow-sm transition hover:bg-surface-highest"
       >
         <span className={`truncate font-semibold ${current ? "text-on-background" : "text-on-background/55"}`}>
           {current ? current.name : "프로젝트 선택"}

@@ -39,6 +39,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   base: BASE,
+  health: () => request<{ status: string }>("/health"),
   listProjects: () => request<{ items: ProjectListItem[]; total: number } | ProjectListItem[]>("/api/projects"),
   listRoles: () => request<Array<{ id: string; code: string; name: string }>>("/api/roles"),
   getSnapshot: (projectId: string) => request<Snapshot>(`/api/projects/${projectId}/snapshot`),
@@ -151,10 +152,11 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
-  adminDeleteRow: (table: string, pk: string) =>
-    request<{ deleted: boolean }>(`/api/admin/tables/${table}/${encodeURIComponent(pk)}`, {
-      method: "DELETE",
-    }),
+  adminDeleteRow: (table: string, pk: string, cascade = false) =>
+    request<{ deleted: boolean; deletedCounts?: Record<string, number> }>(
+      `/api/admin/tables/${table}/${encodeURIComponent(pk)}${cascade ? "?cascade=true" : ""}`,
+      { method: "DELETE" },
+    ),
 };
 
 export interface AdminColumn {

@@ -128,7 +128,7 @@ def test_completion_auto_generates_report(uow):
         with uow() as db:
             reports = uf.list_reports(db, pid)
             assert len(reports) == 1
-            assert reports[0]["scoreVersion"] == "UF_MVP_V1"
+            assert reports[0]["scoreVersion"] == "UF_MVP_V2"
     finally:
         deps.set_utilization_port(NoopUtilization())
 

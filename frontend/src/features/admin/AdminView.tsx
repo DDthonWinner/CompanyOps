@@ -161,6 +161,26 @@ export function AdminView() {
       loadRows(selected, offset);
       loadTables();
     } catch (e) {
+      // FK 위반: 참조하는 하위 행까지 연쇄 삭제할지 확인 후 재시도한다.
+      if (e instanceof ApiError && e.code === "FK_CONSTRAINT") {
+        if (
+          !confirm(
+            `이 행을 참조하는 하위 데이터가 있어 그대로는 삭제할 수 없습니다.\n` +
+              `참조하는 모든 하위 행까지 함께 삭제할까요?\n${selected} · ${pk}=${rowPk}`,
+          )
+        )
+          return;
+        try {
+          const res = await api.adminDeleteRow(selected, rowPk, true);
+          const total = Object.values(res.deletedCounts ?? {}).reduce((a, b) => a + b, 0);
+          pushToast(`행과 하위 데이터 ${total}건을 삭제했습니다.`, "success");
+          loadRows(selected, offset);
+          loadTables();
+        } catch (e2) {
+          pushToast(errMsg(e2), "error");
+        }
+        return;
+      }
       pushToast(errMsg(e), "error");
     }
   };

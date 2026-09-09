@@ -57,4 +57,6 @@ async def scheduler_loop():
                 except Exception as exc:
                     log.exception("Replay stopped for %s", pid)
                     mutate(lambda db: _fail(db, pid, str(exc)))
-        await asyncio.sleep(0.5)
+        # Tight poll so the fast PM phases advance promptly and operator actions in the
+        # Attention Center are picked up within ~a second during the grace window.
+        await asyncio.sleep(0.1)

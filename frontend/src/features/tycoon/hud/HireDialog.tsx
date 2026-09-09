@@ -83,7 +83,7 @@ export function HireDialog({ open, onClose }: { open: boolean; onClose: () => vo
   const cap = snapshot ? `${snapshot.project.assignedAgentCount}/${snapshot.project.maxAgentCount}` : "";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/30" onClick={onClose} data-testid="hire-scrim" />
       <GlassPanel
         level={4}
