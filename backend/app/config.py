@@ -39,7 +39,8 @@ class Settings:
 
     cors_origins: tuple[str, ...] = tuple(origin.strip().rstrip("/") for origin in
         os.getenv("CORS_ORIGINS",
-                  "http://localhost:5173,http://127.0.0.1:5173,https://company-ops-12dj.vercel.app").split(",")
+                  "http://localhost:5173,http://127.0.0.1:5173,"
+                  "https://company-ops-12dj.vercel.app,https://company-ops-s2yh.vercel.app").split(",")
         if origin.strip())
 
     host: str = os.getenv("HOST", "127.0.0.1").strip()
