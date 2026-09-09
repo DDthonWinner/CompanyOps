@@ -66,7 +66,8 @@ def test_full_replay_two_cycles_restart_pause_and_isolation(showcase):
             assert all(x['technicalGate'] == 'PASSED' and x['demo'] for x in snap['qaRuns'])
             assert len(snap['git']) == len(snap['tasks'])
             assert snap['tokenUsage']['demo']
-            assert all(a['status'] == 'IDLE' and a['currentTaskId'] is None for a in snap['agents'])
+            assert all(a['status'] == ('WORKING' if a['isPrimaryPm'] else 'IDLE')
+                       and a['currentTaskId'] is None for a in snap['agents'])
             with unit_of_work() as db:
                 approvals = list(db.scalars(select(m.Approval).where(m.Approval.project_id == pid)))
                 assert len(approvals) == 1 + len(snap['milestones'])
@@ -108,3 +109,58 @@ def test_due_time_and_invalid_configuration(showcase, monkeypatch):
     with pytest.raises(AppError):
         mutate(replay.start)
     assert read(lambda db: build_snapshot(db, pid)) == snap
+
+
+def test_fast_pm_keeps_working_and_development_has_durable_brief_blocks(showcase):
+    from datetime import datetime, timezone
+
+    pid = mutate(lambda db: replay.start(db, 3, 15))['projectId']
+    mutate(lambda db: replay.tick(db, pid, force=True))
+    with unit_of_work() as db:
+        r = db.get(m.DemoReplay, pid)
+        assert replay._next_delay(db, r) == replay.PM_INTERVAL_SECONDS
+        assert (datetime.fromisoformat(r.next_tick_at) - datetime.now(timezone.utc)).total_seconds() <= replay.PM_INTERVAL_SECONDS
+        role = db.scalar(select(m.Role).where(m.Role.code == 'FRONTEND'))
+        task_id = list(db.scalars(select(m.ProjectTask).where(
+            m.ProjectTask.project_id == pid, m.ProjectTask.role_id == role.id)
+            .order_by(m.ProjectTask.sort_order, m.ProjectTask.id)))[1].id
+    for _ in range(80):
+        mutate(lambda db: replay.tick(db, pid, force=True))
+        snap = read(lambda db: build_snapshot(db, pid))
+        if next(t for t in snap['tasks'] if t['id'] == task_id)['status'] == 'RUNNING':
+            break
+    else:
+        pytest.fail('Development never started')
+    pm = next(a for a in snap['agents'] if a['isPrimaryPm'])
+    pm_tasks = [t for t in snap['tasks'] if t['roleId'] == pm['roleId']]
+    assert all(t['status'] == 'COMPLETED' for t in pm_tasks)
+    assert pm['status'] == 'WORKING' and pm['currentTaskId'] is None
+    assert '조율' in pm['activitySummary']
+
+    def task():
+        return read(lambda db: db.get(m.ProjectTask, task_id))
+    mutate(lambda db: replay.tick(db, pid, force=True))
+    assert task().status == 'RUNNING'  # previously it would already be in REVIEW
+    mutate(lambda db: replay.tick(db, pid, force=True))
+    assert task().status == 'BLOCKED'
+    assert task().wait_reasons == ['DEMO_BLOCK:API 응답 형식 확인 중']
+    with unit_of_work() as db:
+        plan = db.get(m.PlanVersion, db.get(m.Project, pid).active_plan_id)
+        assert plan.scope['demoPacing'][task_id] == {'workTicks': 2, 'interrupted': True}
+    showcase[0] = LocalStubGit()  # drop process-local publisher state
+    worker.recover_incomplete()
+    mutate(lambda db: replay.tick(db, pid, force=True))
+    assert task().status == 'RUNNING' and task().wait_reasons == []  # resumed; workTicks stays 2
+    # Development is durable: it keeps working for several ticks before reaching review.
+    for _ in range(replay.DEVELOPMENT_WORK_TICKS):
+        mutate(lambda db: replay.tick(db, pid, force=True))
+        if task().status == 'REVIEW':
+            break
+    else:
+        pytest.fail('Development never reached review')
+    assert task().status == 'REVIEW'
+    mutate(lambda db: replay.tick(db, pid, force=True))
+    assert task().status == 'COMPLETED'
+    with unit_of_work() as db:
+        assert db.scalar(select(func.count()).select_from(m.TaskAttempt).where(m.TaskAttempt.task_id == task_id)) == 1
+        assert db.scalar(select(func.count()).select_from(m.TokenUsage).where(m.TokenUsage.task_id == task_id)) == 1
