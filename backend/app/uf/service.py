@@ -13,6 +13,18 @@ from . import feedback_gen
 from . import repository as repo
 from .models import Feedback, UtilizationMetric, UtilizationReport
 
+SCORE_VERSION = "UF_MVP_V2"
+
+# --- UF_MVP_V2: fold human-intervention signals into the Autonomy score -------
+# Each intervention means the AI was not fully autonomous. Revisions weigh most
+# (AI output was sent back for rework), plan feedback next (plan rejected before
+# execution), decisions least (answering a question is routine collaboration).
+# These are collected already (02 §3.3) but were previously ignored by scoring.
+DECISION_WEIGHT = 1.0
+PLAN_FEEDBACK_WEIGHT = 2.0
+REVISION_WEIGHT = 3.0
+AUTONOMY_PENALTY_CAP = 0.5  # interventions cut the execution score by at most 50%
+
 
 # --------------------------------------------------------------------------- report
 def create_report(session: Session, project_id: str) -> dict:
@@ -31,7 +43,7 @@ def create_report(session: Session, project_id: str) -> dict:
     metrics, aspect_values = _aggregate(session, project_id)
     previous = _select_previous(session, project)
     report = UtilizationReport(
-        project_id=project_id, status="COMPLETED", score_version="UF_MVP_V1",
+        project_id=project_id, status="COMPLETED", score_version=SCORE_VERSION,
         source_revision=project.revision, previous_report_id=previous.id if previous else None,
     )
     session.add(report)
@@ -82,7 +94,7 @@ def preview_report(session: Session, project_id: str) -> dict:
         "testMode": True, "sourceRevision": project.revision,
         "report": {
             "reportId": report_id, "projectId": project_id, "status": "PREVIEW",
-            "utilizationScore": _overall_score(scores), "scoreVersion": "UF_MVP_V1",
+            "utilizationScore": _overall_score(scores), "scoreVersion": SCORE_VERSION,
             "aspectScores": scores, "metrics": flat,
             "previousReportId": previous.id if previous else None,
         },
@@ -112,7 +124,23 @@ def _aggregate(session: Session, project_id: str) -> tuple[list[UtilizationMetri
     tokens = repo.token_totals(session, project_id)
     ai_equiv = len(ai_completed) * 1.0 + len(mixed) * 0.5
 
-    autonomy = (100.0 * len(ai_completed) / eligible) if eligible else None
+    # Human-intervention signals (previously collected but unused in scoring).
+    decisions = repo.resolved_decision_count(session, project_id)
+    plan_fb = repo.plan_feedback_count(session, project_id)
+    revisions = repo.revision_request_count(session, project_id)
+    weighted_intervention = (
+        decisions * DECISION_WEIGHT + plan_fb * PLAN_FEEDBACK_WEIGHT + revisions * REVISION_WEIGHT
+    )
+
+    # Autonomy = AI execution ratio, discounted by how much the human had to step in.
+    base_autonomy = (100.0 * len(ai_completed) / eligible) if eligible else None
+    penalty_pct = 0.0
+    autonomy = None
+    if base_autonomy is not None:
+        rate = min(1.0, weighted_intervention / eligible)  # eligible > 0 here
+        penalty_pct = AUTONOMY_PENALTY_CAP * rate
+        autonomy = base_autonomy * (1.0 - penalty_pct)
+
     area = (100.0 * len(core_ai) / len(core_completed)) if core_completed else None
 
     metrics: list[UtilizationMetric] = [
@@ -128,12 +156,14 @@ def _aggregate(session: Session, project_id: str) -> tuple[list[UtilizationMetri
         UtilizationMetric(aspect="RESOURCE_EFFICIENCY", metric_key="aiEquivalentTasks", value=f"{ai_equiv:.2f}"),
         UtilizationMetric(aspect="RESOURCE_EFFICIENCY", metric_key="estimatedCost", value="미수집",
                           collection_status="UNCOLLECTED"),
-        UtilizationMetric(aspect="AUTONOMY", metric_key="resolvedDecisions",
-                          value=str(repo.resolved_decision_count(session, project_id))),
-        UtilizationMetric(aspect="AUTONOMY", metric_key="planFeedbacks",
-                          value=str(repo.plan_feedback_count(session, project_id))),
-        UtilizationMetric(aspect="AUTONOMY", metric_key="revisionRequests",
-                          value=str(repo.revision_request_count(session, project_id))),
+        UtilizationMetric(aspect="AUTONOMY", metric_key="resolvedDecisions", value=str(decisions)),
+        UtilizationMetric(aspect="AUTONOMY", metric_key="planFeedbacks", value=str(plan_fb)),
+        UtilizationMetric(aspect="AUTONOMY", metric_key="revisionRequests", value=str(revisions)),
+        # Transparency: show the raw execution score before the intervention discount.
+        UtilizationMetric(aspect="AUTONOMY", metric_key="autonomyBaseScore",
+                          value=str(round(base_autonomy)) if base_autonomy is not None else "N/A"),
+        UtilizationMetric(aspect="AUTONOMY", metric_key="interventionPenaltyPct",
+                          value=str(round(penalty_pct * 100))),
     ]
     aspect_values = {
         "AUTONOMY": round(autonomy) if autonomy is not None else None,
