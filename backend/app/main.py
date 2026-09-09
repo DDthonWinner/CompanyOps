@@ -6,7 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from .common.access import configure_browser_access
 
 from .admin import routes as admin_routes
 from .common.errors import AppError, app_error_handler, unhandled_handler
@@ -78,14 +78,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="CompanyOps API", version="0.1.0", lifespan=lifespan)
 
-# CORS: single-user local dev; frontend on Vite dev server.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Local browser clients must use an explicitly trusted origin.
+configure_browser_access(app, get_settings().cors_origins)
 
 app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(Exception, unhandled_handler)

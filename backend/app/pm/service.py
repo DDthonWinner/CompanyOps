@@ -306,6 +306,19 @@ def assign_agents(session: Session, project_id: str, req: dict) -> dict:
     if len(agents) > p.max_agent_count:
         raise conflict(f"정원({p.max_agent_count})을 초과했습니다.", code="CAP_EXCEEDED")
 
+    existing = list(session.execute(select(ProjectAgent).where(
+        ProjectAgent.project_id == project_id, ProjectAgent.status != "REMOVED")).scalars())
+    by_profile = {agent.agent_profile_id: agent for agent in existing}
+    requested_profiles = {agent["agentProfileId"] for agent in agents}
+    if len(set(by_profile) | requested_profiles) > p.max_agent_count:
+        raise conflict("기존 팀을 포함한 정원을 초과했습니다.", code="CAP_EXCEEDED")
+    requested_pm = {agent["agentProfileId"] for agent in agents if agent.get("roleCode") == "PM" or agent.get("isPrimaryPm")}
+    existing_pm = {agent.agent_profile_id for agent in existing if agent.is_primary_pm}
+    if len(existing_pm | requested_pm) != 1:
+        raise bad_request("기존 PM과 다른 PM을 중복 배정할 수 없습니다.", code="PM_COUNT_INVALID")
+    if p.status not in {"DRAFT", "AGENT_MATCHING", "READY"}:
+        raise conflict("팀 일괄 배정은 실행 전 준비 단계에서만 가능합니다.", code="PROJECT_NOT_READY")
+
     seen_profiles: set[str] = set()
     created: list[ProjectAgent] = []
     for a in agents:
@@ -319,6 +332,12 @@ def assign_agents(session: Session, project_id: str, req: dict) -> dict:
         if model is None or not model.is_active:
             raise bad_request("유효하지 않거나 비활성 LLM 모델입니다.", code="INVALID_MODEL")
         role = _role_by_code(session, a["roleCode"])
+        if profile.role_id != role.id:
+            raise bad_request("프로필 역할과 배정 역할이 다릅니다.", code="ROLE_MISMATCH")
+        if profile.id in by_profile:
+            created.append(by_profile[profile.id])
+            continue  # repeated setup must not duplicate the automatically hired PM
+
         color = a.get("displayColor") or profile.default_color or rec.ROLE_COLOR.get(role.code, "#4F46E5")
         if not _valid_hex(color):
             raise bad_request("displayColor는 #RRGGBB 형식이어야 합니다.", code="INVALID_COLOR")

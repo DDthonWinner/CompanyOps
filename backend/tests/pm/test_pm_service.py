@@ -101,3 +101,19 @@ def test_empty_milestone_zero(uow):
         m = service.create_milestone(db, p["id"], {"title": "empty"})["id"]
         prog = progress.milestone_progress(db, m)
         assert prog["progressPercent"] == 0 and prog["emptyLabel"] == "작업 없음"
+
+
+def test_recommending_after_auto_pm_does_not_duplicate_the_team(uow):
+    from sqlalchemy import select
+    from app.common.models import AgentProfile, ProjectAgent
+    with uow() as db:
+        p = service.create_project(db, {"name": "Setup retry", "budgetLevel": "MEDIUM", "projectSize": "SMALL"})
+        profiles = {profile.name: profile for profile in db.execute(select(AgentProfile)).scalars()}
+        pm = {"agentProfileId": profiles["PM Lead"].id, "roleCode": "PM", "isPrimaryPm": True}
+        be = {"agentProfileId": profiles["Backend Engineer"].id, "roleCode": "BACKEND"}
+        service.assign_agents(db, p["id"], {"agents": [pm]})
+        service.assign_agents(db, p["id"], {"agents": [pm, be]})
+        service.assign_agents(db, p["id"], {"agents": [pm, be]})
+        agents = list(db.execute(select(ProjectAgent).where(ProjectAgent.project_id == p["id"])).scalars())
+        assert len(agents) == 2
+        assert sum(agent.is_primary_pm for agent in agents) == 1

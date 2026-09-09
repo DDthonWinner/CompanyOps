@@ -3,9 +3,10 @@
 ## Project Information
 - **Project Type**: Greenfield
 - **Start Date**: 2026-09-08
-- **Current Stage**: INCEPTION - Requirements Analysis
+- **Current Stage**: CONSTRUCTION 완료 후 안정성·완성도 보완 (2026-09-09). 아래 "현재 상태 갱신 (2026-09-09)" 참고. 이 아래 워크스페이스 스냅샷은 2026-09-08 시작 시점 기록입니다.
 
 ## Workspace State
+_(2026-09-08 시작 시점 스냅샷 — 이후 코드가 생성되었습니다. 현재 상태는 문서 하단의 갱신 절 참고.)_
 - **Existing Code**: No
 - **Reverse Engineering Needed**: No
 - **Programming Languages**: (none yet; target = Python FastAPI backend + React/TypeScript frontend)
@@ -81,3 +82,14 @@ _Sequence: U1 Functional Design → System NFR Requirements → System NFR Desig
 ## Execution Plan Summary
 - **Stages to Execute**: Application Design, Units Generation, Functional Design, NFR Requirements, NFR Design, Code Generation, Build and Test
 - **Stages to Skip**: Reverse Engineering (greenfield), Infrastructure Design (single-node local PoC, no IaC)
+
+## 현재 상태 갱신 (2026-09-09)
+
+위쪽 "Build and Test"·"Current Status" 항목의 `backend 25/25 + frontend 19/19`는 **2026-09-08 유닛별 구축 완료 시점의 기록**입니다(이력으로 보존). 그 이후 안정성·완성도·보안 보완 작업을 진행했으며, 요구사항→설계→구현→검증 연결은 [construction/stability-review.md](construction/stability-review.md)에 정리했습니다.
+
+2026-09-09 실행 기준 최신 검증 결과:
+- 백엔드 전체 `pytest`: 49개 통과.
+- 프론트엔드 타입 검사(`tsc --noEmit`): 통과.
+- 프론트엔드 전체 `vitest`: 55개 통과, 3개 실패. 실패 3개(`GlobalExecutiveBar.test.tsx`, `ScrollWorld.test.tsx`, `flow.test.tsx`)는 안정성 개선과 무관하며, 병합된 마을 뷰 네비게이션 개편에서 컴포넌트 대비 테스트 미갱신으로 발생합니다(개선 전 베이스 커밋에서도 동일 실패). 해당 화면 담당자가 갱신하는 것이 적절합니다.
+
+이 절은 과거 승인·검증 이력을 새로 승인한 것으로 바꾸지 않으며, 현재 상태만 별도로 기록합니다.

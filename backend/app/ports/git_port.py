@@ -19,6 +19,7 @@ class ApplyResult:
     changed_files: list[str] = field(default_factory=list)
     content_hash: str | None = None
     base_commit_sha: str | None = None
+    checkout_path: str | None = None  # authoritative workspace; absent for in-memory providers
 
 
 @dataclass

@@ -136,3 +136,56 @@ def test_refuses_unrelated_staged_files(gi):
     result = gi.publish_task_changes("P-staged", None, "T1", "Task", "feat")
     assert result.status == "FAILED"
     assert "Unrelated staged" in result.error
+
+
+@pytest.mark.parametrize("answer,expected_gate,expected_task", [(42, "PASSED", "COMPLETED"), (0, "FAILED", "REVIEW")])
+def test_worker_checks_generated_project_before_publishing(uow, gi, monkeypatch, tmp_path,
+                                                         answer, expected_gate, expected_task):
+    """Validate generated files in the real checkout, never the backend process cwd."""
+    import shlex
+    import sys
+    from types import SimpleNamespace
+    from app.common.models import AgentProfile, ProjectTask, QARun, TaskPublish, TestResult
+    from app.orchestrator import deps, qa, service, worker
+    from app.orchestrator.execution.base import ExecutionResult
+    from app.pm import service as pm
+    monkeypatch.setattr(deps, "_git", gi)
+    monkeypatch.setattr(qa, "get_settings", lambda: SimpleNamespace(
+        qa_test_cmd=f"{shlex.quote(sys.executable)} validate.py"))
+    class Provider:
+        def execute_task(self, ctx):
+            return ExecutionResult(changes=[
+                {"path": "generated.py", "content": f"answer = {answer}\n"},
+                {"path": "validate.py", "content": "from generated import answer\nassert answer == 42, 'generated answer is wrong'\nprint('generated project verified')\n"},
+            ], artifact_summary="controlled generated source", demo=True)
+    monkeypatch.setattr(worker, "_provider", Provider())
+    (tmp_path / "validate.py").write_text("raise RuntimeError('wrong working directory')\n")
+    monkeypatch.chdir(tmp_path)
+    with uow() as db:
+        p = pm.create_project(db, {"name": "QA location", "budgetLevel": "MEDIUM", "projectSize": "SMALL"})
+        pid = p["id"]
+        profiles = {p.name: p for p in db.execute(select(AgentProfile)).scalars()}
+        pm.assign_agents(db, pid, {"agents": [
+            {"agentProfileId": profiles["PM Lead"].id, "roleCode": "PM", "isPrimaryPm": True},
+            {"agentProfileId": profiles["Backend Engineer"].id, "roleCode": "BACKEND"},
+        ]})
+        plan = service.create_plan(db, pid, {"requestId": "qa-plan", "instruction": "Validate generated source",
+            "steps": [{"title": "Generate", "roleCode": "BACKEND", "milestoneTitle": "M1"}]})
+        service.review_complete(db, plan["id"], {"requestId": "qa-review", "expectedVersion": 1})
+        service.approve_plan(db, plan["id"], {"requestId": "qa-approve", "expectedVersion": 1})
+    assert worker._run_one_task(pid)
+    with uow() as db:
+        task = db.execute(select(ProjectTask).where(ProjectTask.project_id == pid)).scalar_one()
+        run = db.execute(select(QARun).where(QARun.task_id == task.id)).scalar_one()
+        assert run.technical_gate == expected_gate
+        assert run.demo == 0
+        assert task.status == expected_task
+        assert "wrong working directory" not in run.evidence
+        assert db.execute(select(TestResult).where(TestResult.qa_run_id == run.id)).scalar_one()
+        publishes = list(db.execute(select(TaskPublish).where(TaskPublish.task_id == task.id)).scalars())
+        if answer == 42:
+            assert "generated project verified" in run.evidence
+            assert publishes[0].status == "PUSHED"
+        else:
+            assert "generated answer is wrong" in run.evidence
+            assert publishes == []

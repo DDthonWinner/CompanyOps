@@ -8,6 +8,7 @@ import { AttentionCenter } from "./AttentionCenter";
 import { DevelopmentFlow } from "./DevelopmentFlow";
 import { FeedbackSection } from "./FeedbackSection";
 import { DashboardDetails } from "./DashboardDetails";
+import { PlanReviewPanel } from "./PlanReviewPanel";
 import { HeaderStrip } from "./HeaderStrip";
 
 export function DashboardView() {
@@ -39,6 +40,7 @@ export function DashboardView() {
         {activeProjectId && <HeaderStrip onFeedback={() => setFeedbackRequest({ pid: activeProjectId, id: Date.now() })} />}
 
         {activeProjectId && needsTeam && <AgentMatchingPanel />}
+        {activeProjectId && status === "READY" && <PlanReviewPanel key={activeProjectId} />}
 
         {activeProjectId && !needsTeam && (
           <>

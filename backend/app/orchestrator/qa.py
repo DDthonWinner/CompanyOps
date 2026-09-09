@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import shlex
 import subprocess
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -14,7 +15,8 @@ from ..common.util import utcnow_iso
 from ..config import get_settings
 
 
-def run_qa(session: Session, project_id: str, task_id: str, artifact: ArtifactVersion) -> QARun:
+def run_qa(session: Session, project_id: str, task_id: str, artifact: ArtifactVersion,
+           *, checkout_path: str | None = None) -> QARun:
     settings = get_settings()
     run = QARun(
         project_id=project_id, task_id=task_id,
@@ -25,8 +27,10 @@ def run_qa(session: Session, project_id: str, task_id: str, artifact: ArtifactVe
     session.flush()
 
     if settings.qa_test_cmd:
-        passed, failed, evidence, gate = _run_real(settings.qa_test_cmd)
+        passed, failed, evidence, gate = _run_real(settings.qa_test_cmd, checkout_path)
         run.demo = 0
+        session.add(TestResult(qa_run_id=run.id, name="configured-command",
+                               result="PASS" if gate == "PASSED" else "FAIL", evidence=evidence))
     else:
         # Deterministic demo PASS, explicitly labeled — never presented as real (BR-Q4).
         passed, failed, evidence, gate = 1, 0, "demo QA: seeded PASS (AI 서버 미연결 / 데모 데이터)", "PASSED"
@@ -42,10 +46,13 @@ def run_qa(session: Session, project_id: str, task_id: str, artifact: ArtifactVe
     return run
 
 
-def _run_real(cmd: str) -> tuple[int, int, str, str]:
+def _run_real(cmd: str, checkout_path: str | None) -> tuple[int, int, str, str]:
+    # Never run tests against the backend working directory or a guessed checkout.
+    if not checkout_path or not Path(checkout_path).is_absolute() or not Path(checkout_path).is_dir():
+        return (0, 1, "QA workspace unavailable: a real project checkout is required.", "ERROR")
     try:
         proc = subprocess.run(
-            shlex.split(cmd), capture_output=True, text=True, timeout=300, check=False,
+            shlex.split(cmd), cwd=checkout_path, capture_output=True, text=True, timeout=300, check=False,
         )
         ok = proc.returncode == 0
         evidence = (proc.stdout or "")[-2000:] + (proc.stderr or "")[-500:]

@@ -45,7 +45,7 @@ class GitInterface:
         content_hash = stable_hash(changes)
         self._changesets[task_id] = {"paths": changed, "content_hash": content_hash, "base": base}
         return ApplyResult(task_id=task_id, applied=True, changed_files=changed,
-                           content_hash=content_hash, base_commit_sha=base)
+                           content_hash=content_hash, base_commit_sha=base, checkout_path=str(path.resolve()))
 
     def get_task_changes(self, project_id: str, task_id: str) -> ChangeSetView:
         path = self._path(project_id)

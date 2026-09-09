@@ -123,7 +123,7 @@ def _run_one_task(project_id: str) -> bool:
         platform.touch(session, project_id, "task.updated", task.id)
 
         # technical QA
-        qa_run = qa.run_qa(session, project_id, task.id, artifact)
+        qa_run = qa.run_qa(session, project_id, task.id, artifact, checkout_path=apply_res.checkout_path)
         platform.touch(session, project_id, "qa.updated", qa_run.id)
 
         if qa_run.technical_gate == "PASSED":

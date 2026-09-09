@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 from typing import Any
+import logging
+from uuid import uuid4
+
+log = logging.getLogger("companyops.errors")
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -53,8 +57,11 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(status_code=exc.status, content=exc.envelope())
 
 
-async def unhandled_handler(request: Request, exc: Exception) -> JSONResponse:  # pragma: no cover
+async def unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
+    request_id = str(uuid4())
+    log.error("Unhandled request %s: %s %s", request_id, request.method, request.url.path,
+              exc_info=(type(exc), exc, exc.__traceback__))
     return JSONResponse(
         status_code=500,
-        content={"code": "INTERNAL", "message": str(exc), "details": {}, "requestId": None},
+        content={"code": "INTERNAL", "message": "요청을 처리하지 못했습니다. 잠시 후 다시 시도하세요.", "details": {}, "requestId": request_id},
     )
