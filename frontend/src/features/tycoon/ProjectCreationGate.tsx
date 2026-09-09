@@ -1,5 +1,5 @@
 import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { api } from "../../api/client";
 import type { ProjectListItem } from "../../api/types";
@@ -24,6 +24,22 @@ const SIZE_COPY: Record<ProjectSize, string> = {
   LARGE: "장기 운영 프로젝트",
 };
 
+// Cheerful Animal-Crossing-ish palette: pastel walls with a warm contrasting roof.
+const WALL_COLORS: Record<ProjectSize, string> = {
+  SMALL: "#8ccf83",
+  MEDIUM: "#8fb7e8",
+  LARGE: "#c79ad6",
+};
+
+const ROOF_COLORS: Record<ProjectSize, string> = {
+  SMALL: "#d1715a",
+  MEDIUM: "#e0913f",
+  LARGE: "#5a7bbf",
+};
+
+const GRASS_LIGHT = "#93d06a";
+const GRASS_DARK = "#83c65e";
+
 const FOCUS: Record<GateStage, { target: THREE.Vector3; zoom: number }> = {
   select: { target: new THREE.Vector3(0, 3, -4), zoom: 18 },
   // Naming happens outside, framed on the freshly-planted nameplate post.
@@ -36,17 +52,63 @@ const FOCUS: Record<GateStage, { target: THREE.Vector3; zoom: number }> = {
 
 export function ProjectCreationGate() {
   const setActiveProject = useStore((s) => s.setActiveProject);
-  const [stage, setStage] = useState<GateStage>("select");
+  const gateMode = useStore((s) => s.gateMode);
+  const gateNonce = useStore((s) => s.gateNonce);
+  const [stage, setStage] = useState<GateStage>(() => (gateMode === "create" ? "name" : "select"));
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [listState, setListState] = useState<"loading" | "ready" | "error">("loading");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [projectSize, setProjectSize] = useState<ProjectSize | null>(null);
+  const [hoveredProject, setHoveredProject] = useState<ProjectListItem | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const pointerRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
 
   const trimmedName = name.trim();
   const canSubmit = trimmedName.length > 0 && description.trim().length > 0 && projectSize;
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
+
+  // React to home / new-project navigation: village opens the overview, create jumps
+  // straight into the nameplate step with a fresh form.
+  useEffect(() => {
+    if (gateMode === "create") {
+      setSelectedProjectId(null);
+      setName("");
+      setDescription("");
+      setProjectSize(null);
+      setStage("name");
+    } else {
+      setStage("select");
+    }
+  }, [gateNonce, gateMode]);
+
+  // Place the hover info card next to the last known cursor position. Called both on
+  // pointer move and right when the card first mounts (so it never flashes at 0,0).
+  const positionCard = () => {
+    const card = cardRef.current;
+    if (!card) return;
+    const { x, y, w, h } = pointerRef.current;
+    const flipX = x > w - 280;
+    card.style.left = `${flipX ? x - 260 : x + 20}px`;
+    card.style.top = `${Math.min(y + 20, h - 180)}px`;
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    pointerRef.current = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+      w: rect.width,
+      h: rect.height,
+    };
+    positionCard();
+  };
+
+  // Position the card immediately when it appears, before the browser paints.
+  useLayoutEffect(() => {
+    if (hoveredProject) positionCard();
+  }, [hoveredProject]);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,26 +152,30 @@ export function ProjectCreationGate() {
       return;
     }
     setStage("creating");
-    const res = await runWrite(() =>
-      api.createProject({
-        name: trimmedName,
-        description: description.trim(),
-        budgetLevel: "MEDIUM",
-        projectSize,
-        gitRepository: { repositoryUrl: "https://github.com/DDthonWinner/TestOutput" },
-      }),
-    );
+    // Keep the spinner up for a short beat so the "hiring" moment reads clearly.
+    const [res] = await Promise.all([
+      runWrite(() =>
+        api.createProject({
+          name: trimmedName,
+          description: description.trim(),
+          budgetLevel: "MEDIUM",
+          projectSize,
+          gitRepository: { repositoryUrl: "https://github.com/DDthonWinner/TestOutput" },
+        }),
+      ),
+      new Promise((resolve) => setTimeout(resolve, 1200)),
+    ]);
     if (res && (res as any).id) {
       setActiveProject((res as any).id);
       window.dispatchEvent(new CustomEvent("companyops:projects-changed"));
-      pushToast("프로젝트 문이 열렸습니다.", "success");
+      pushToast("PM 에이전트 1명이 고용되었습니다!", "success");
     } else {
       setStage("description");
     }
   };
 
   return (
-    <div className="project-gate" data-testid="project-creation-gate">
+    <div className="project-gate" data-testid="project-creation-gate" onPointerMove={handlePointerMove}>
       <Canvas
         shadows
         orthographic
@@ -127,6 +193,7 @@ export function ProjectCreationGate() {
           projectName={trimmedName}
           projectSize={projectSize}
           onSelectProject={setSelectedProjectId}
+          onHoverProject={setHoveredProject}
           onEmptyLot={startNewProject}
           onPickSize={(size) => {
             setProjectSize(size);
@@ -139,11 +206,11 @@ export function ProjectCreationGate() {
         {stage === "select" && (
           <section className="project-gate-panel project-gate-panel--intro">
             <span className="project-gate-kicker">Project Village</span>
-            <h1>프로젝트 선택</h1>
-            <p>프로젝트 마을에서 들어갈 집을 선택해서 들어가세요.</p>
-            <div className="project-gate-actions project-gate-actions--split">
-              <Button variant="ghost" onClick={startNewProject}>빈 부지 선택</Button>
-              <Button onClick={enterSelectedProject} disabled={!selectedProject}>프로젝트 들어가기</Button>
+            <h1>프로젝트 시작하기</h1>
+            <p>진행중인 프로젝트를 선택하거나, 새로운 프로젝트를 시작하세요.</p>
+            <div className="project-gate-actions project-gate-actions--pair">
+              <Button onClick={enterSelectedProject} disabled={!selectedProject} className="flex-1 justify-center">프로젝트 들어가기</Button>
+              <Button variant="ghost" onClick={startNewProject} className="flex-1 justify-center">새 프로젝트 시작</Button>
             </div>
             <div className="project-gate-project-list" aria-live="polite">
               {listState === "loading" && <span>집 목록을 불러오는 중...</span>}
@@ -153,6 +220,22 @@ export function ProjectCreationGate() {
             </div>
           </section>
         )}
+
+        {stage === "select" && hoveredProject && (() => {
+          const meta = statusMeta(hoveredProject.status);
+          return (
+            <div ref={cardRef} className="project-gate-hovercard" role="status">
+              <strong className="project-gate-hovercard-name">{hoveredProject.name}</strong>
+              <span className="project-gate-hovercard-status">{meta.label}</span>
+              <div className="project-gate-hovercard-bar"><span style={{ width: `${meta.percent}%` }} /></div>
+              <dl className="project-gate-hovercard-meta">
+                <div><dt>진행률</dt><dd>{meta.percent}%</dd></div>
+                <div><dt>에이전트</dt><dd>{hoveredProject.assignedAgentCount} / {hoveredProject.maxAgentCount}명</dd></div>
+                <div><dt>규모</dt><dd>{SIZE_LABELS[normalizeSize(hoveredProject.projectSize)]}</dd></div>
+              </dl>
+            </div>
+          );
+        })()}
 
         {stage === "name" && (
           <section className="project-gate-panel project-gate-panel--form">
@@ -182,6 +265,7 @@ export function ProjectCreationGate() {
           <section className="project-gate-panel project-gate-panel--size">
             <span className="project-gate-kicker">Step 2 · 규모 설정</span>
             <h2>부지 위에 세울 집의 크기를 선택하세요.</h2>
+            <p className="project-gate-summary">규모는 토큰 사용량 및 예산과 연동됩니다.</p>
             <div className="project-gate-size-grid">
               {(Object.keys(SIZE_LABELS) as ProjectSize[]).map((size) => (
                 <button key={size} onClick={() => { setProjectSize(size); setStage("description"); }}>
@@ -219,8 +303,13 @@ export function ProjectCreationGate() {
         {stage === "creating" && (
           <section className="project-gate-panel project-gate-panel--intro" role="status">
             <span className="project-gate-kicker">Creating</span>
-            <h2>오피스를 준비하는 중</h2>
-            <p>프로젝트 문을 열고, 기존 CompanyOps 워크스페이스에 연결하고 있습니다.</p>
+            <div className="project-gate-creating">
+              <span className="project-gate-spinner" aria-hidden />
+              <div>
+                <h2>PM 에이전트를 고용하는 중</h2>
+                <p>프로젝트를 만들고, 담당 PM 에이전트를 배치하고 있습니다.</p>
+              </div>
+            </div>
           </section>
         )}
       </div>
@@ -257,28 +346,162 @@ function normalizeSize(size: string | undefined): ProjectSize {
 function useNameplateTexture(label: string) {
   return useMemo(() => {
     const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 128;
+    canvas.width = 768;
+    canvas.height = 160;
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.fillStyle = "#f5d57c";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = "#9d793d";
-      ctx.lineWidth = 10;
-      ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+      ctx.lineWidth = 12;
+      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
       ctx.fillStyle = "#253044";
-      ctx.font = "700 34px sans-serif";
+      // Big, bold name that reads clearly from the camera distance.
+      ctx.font = "800 84px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const text = label.trim() || "EMPTY LOT";
-      const clipped = text.length > 18 ? `${text.slice(0, 17)}...` : text;
-      ctx.fillText(clipped, canvas.width / 2, canvas.height / 2 + 2, canvas.width - 52);
+      const clipped = text.length > 16 ? `${text.slice(0, 15)}…` : text;
+      ctx.fillText(clipped, canvas.width / 2, canvas.height / 2 + 4, canvas.width - 44);
     }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
     return texture;
   }, [label]);
+}
+
+// A soft two-tone grass tile (Animal-Crossing-ish) mapped across the ground plane.
+function useGrassTexture(repeatX: number, repeatY: number) {
+  return useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = GRASS_LIGHT;
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.fillStyle = GRASS_DARK;
+      ctx.fillRect(0, 0, 64, 64);
+      ctx.fillRect(64, 64, 64, 64);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(repeatX, repeatY);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    return texture;
+  }, [repeatX, repeatY]);
+}
+
+// Shared hover behaviour: track hover state and switch the cursor to a pointer so
+// every clickable object clearly reads as interactive. An optional callback lets a
+// parent react (e.g. show an info card).
+function useHover(onChange?: (hovered: boolean) => void) {
+  const [hovered, setHovered] = useState(false);
+  useEffect(() => {
+    if (!hovered) return;
+    document.body.style.cursor = "pointer";
+    return () => {
+      document.body.style.cursor = "";
+    };
+  }, [hovered]);
+  const bind = {
+    onPointerOver: (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation();
+      setHovered(true);
+      onChange?.(true);
+    },
+    onPointerOut: (event: ThreeEvent<PointerEvent>) => {
+      event.stopPropagation();
+      setHovered(false);
+      onChange?.(false);
+    },
+  };
+  return { hovered, bind };
+}
+
+// Approximate a project's progress + a friendly Korean status label from its lifecycle
+// status (the list endpoint doesn't carry a precise percentage).
+function statusMeta(status: string): { label: string; percent: number } {
+  switch (status) {
+    case "DRAFT": return { label: "초안", percent: 8 };
+    case "AGENT_MATCHING": return { label: "팀 매칭 중", percent: 20 };
+    case "READY": return { label: "준비 완료", percent: 40 };
+    case "ACTIVE":
+    case "IN_PROGRESS": return { label: "진행 중", percent: 68 };
+    case "COMPLETED": return { label: "완료", percent: 100 };
+    case "CANCELLED": return { label: "취소됨", percent: 0 };
+    case "ARCHIVED": return { label: "보관됨", percent: 100 };
+    default: return { label: status, percent: 30 };
+  }
+}
+
+function isInProgress(status: string): boolean {
+  return status !== "COMPLETED" && status !== "CANCELLED" && status !== "ARCHIVED";
+}
+
+// A single rising, fading smoke puff for an active project's chimney.
+function SmokePuff({ delay }: { delay: number }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const mat = useRef<THREE.MeshStandardMaterial>(null);
+  useFrame(({ clock }) => {
+    if (!mesh.current || !mat.current) return;
+    const t = ((clock.elapsedTime + delay) % 2.4) / 2.4; // 0..1 loop
+    mesh.current.position.y = t * 3.2;
+    mesh.current.position.x = Math.sin((t + delay) * 5) * 0.4;
+    const s = 0.45 + t * 1.1;
+    mesh.current.scale.setScalar(s);
+    // Fade in briefly, then fade out as it rises so puffs read against the sky.
+    mat.current.opacity = Math.min(t * 4, 1) * (1 - t) * 1.1;
+  });
+  return (
+    <mesh ref={mesh}>
+      <sphereGeometry args={[0.5, 8, 8]} />
+      <meshStandardMaterial ref={mat} color="#9aa8b8" transparent opacity={0} depthWrite={false} roughness={1} />
+    </mesh>
+  );
+}
+
+function ChimneySmoke({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <SmokePuff delay={0} />
+      <SmokePuff delay={0.8} />
+      <SmokePuff delay={1.6} />
+    </group>
+  );
+}
+
+// A chunky low-poly tree for a bit of village greenery.
+function Tree({ position, scale = 1 }: { position: [number, number]; scale?: number }) {
+  return (
+    <group position={[position[0], 0, position[1]]} scale={[scale, scale, scale]}>
+      <mesh castShadow position={[0, 1, 0]}>
+        <cylinderGeometry args={[0.32, 0.42, 2, 6]} />
+        <meshStandardMaterial color="#a9764c" roughness={0.9} />
+      </mesh>
+      <mesh castShadow position={[0, 2.9, 0]}>
+        <icosahedronGeometry args={[1.7, 0]} />
+        <meshStandardMaterial color="#5aa64b" roughness={0.8} flatShading />
+      </mesh>
+      <mesh castShadow position={[0.5, 3.9, 0.3]}>
+        <icosahedronGeometry args={[1.1, 0]} />
+        <meshStandardMaterial color="#67b955" roughness={0.8} flatShading />
+      </mesh>
+    </group>
+  );
+}
+
+// A small round bush to tuck beside a house door.
+function Bush({ position }: { position: [number, number, number] }) {
+  return (
+    <mesh castShadow position={position}>
+      <icosahedronGeometry args={[0.7, 0]} />
+      <meshStandardMaterial color="#5fae4d" roughness={0.85} flatShading />
+    </mesh>
+  );
 }
 
 function GateScene({
@@ -288,6 +511,7 @@ function GateScene({
   projectName,
   projectSize,
   onSelectProject,
+  onHoverProject,
   onEmptyLot,
   onPickSize,
 }: {
@@ -297,6 +521,7 @@ function GateScene({
   projectName: string;
   projectSize: ProjectSize | null;
   onSelectProject: (projectId: string) => void;
+  onHoverProject: (project: ProjectListItem | null) => void;
   onEmptyLot: () => void;
   onPickSize: (size: ProjectSize) => void;
 }) {
@@ -306,6 +531,7 @@ function GateScene({
         projects={projects}
         selectedProjectId={selectedProjectId}
         onSelectProject={onSelectProject}
+        onHoverProject={onHoverProject}
         onEmptyLot={onEmptyLot}
       />
     );
@@ -335,29 +561,37 @@ function NewHouseLot({
   onPickSize: (size: ProjectSize) => void;
 }) {
   const nameplate = useNameplateTexture(projectName || "NEW PROJECT");
+  const grass = useGrassTexture(7, 6);
   // The three houses only become pickable once the nameplate is done (past the name step).
   const canPick = stage !== "name";
   return (
     <group>
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, 4]}>
         <planeGeometry args={[52, 42]} />
-        <meshStandardMaterial color="#dbe5dc" />
+        <meshStandardMaterial map={grass} roughness={0.95} />
       </mesh>
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 4]}>
         <boxGeometry args={[38, 19, 0.16]} />
-        <meshStandardMaterial color="#e9e1c8" roughness={0.9} />
+        <meshStandardMaterial color="#cdbfa0" roughness={0.9} />
       </mesh>
-      <mesh castShadow position={[0, 1.25, 14]}>
-        <boxGeometry args={[8.6, 1.5, 0.28]} />
-        <meshStandardMaterial map={nameplate} color="#f5d57c" />
+      {/* Nameplate: post rises to the board, which is mounted just in front of it so
+          the post never pokes through the sign. */}
+      <mesh castShadow position={[0, 1.7, 14]}>
+        <boxGeometry args={[0.34, 3.4, 0.34]} />
+        <meshStandardMaterial color="#8f6844" roughness={0.8} />
       </mesh>
-      <mesh castShadow position={[0, 0.6, 14]}>
-        <boxGeometry args={[0.28, 1.35, 0.28]} />
-        <meshStandardMaterial color="#8f6844" />
+      <mesh castShadow position={[0, 3.35, 14.16]}>
+        <boxGeometry args={[8.8, 1.8, 0.24]} />
+        <meshStandardMaterial map={nameplate} color="#f5d57c" metalness={0.1} roughness={0.35} />
       </mesh>
-      <ScaleHouse size="SMALL" x={-13} selected={projectSize === "SMALL"} dimmed={!canPick} onPick={onPickSize} />
-      <ScaleHouse size="MEDIUM" x={0} selected={projectSize === "MEDIUM"} dimmed={!canPick} onPick={onPickSize} />
-      <ScaleHouse size="LARGE" x={13} selected={projectSize === "LARGE"} dimmed={!canPick} onPick={onPickSize} />
+      {/* The three houses only appear once the name is set (past STEP 1). */}
+      {canPick && (
+        <>
+          <ScaleHouse size="SMALL" x={-13} selected={projectSize === "SMALL"} dimmed={!canPick} onPick={onPickSize} />
+          <ScaleHouse size="MEDIUM" x={0} selected={projectSize === "MEDIUM"} dimmed={!canPick} onPick={onPickSize} />
+          <ScaleHouse size="LARGE" x={13} selected={projectSize === "LARGE"} dimmed={!canPick} onPick={onPickSize} />
+        </>
+      )}
     </group>
   );
 }
@@ -366,11 +600,13 @@ function ProjectVillage({
   projects,
   selectedProjectId,
   onSelectProject,
+  onHoverProject,
   onEmptyLot,
 }: {
   projects: ProjectListItem[];
   selectedProjectId: string | null;
   onSelectProject: (projectId: string) => void;
+  onHoverProject: (project: ProjectListItem | null) => void;
   onEmptyLot: () => void;
 }) {
   const lots = useMemo(() => {
@@ -378,24 +614,22 @@ function ProjectVillage({
     return projects.slice(0, 6).map((project, index) => ({ project, position: positions[index] ?? [0, 0] as [number, number] }));
   }, [projects]);
 
+  const grass = useGrassTexture(8, 7);
+
   return (
     <group>
+      {/* Bright grassy meadow, no more gray roads or crossing paths. */}
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, -8]}>
         <planeGeometry args={[64, 56]} />
-        <meshStandardMaterial color="#dbe5dc" />
+        <meshStandardMaterial map={grass} roughness={0.95} />
       </mesh>
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, -8]}>
-        <ringGeometry args={[10, 12, 4]} />
-        <meshStandardMaterial color="#bec9c1" />
-      </mesh>
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, -8]}>
-        <planeGeometry args={[9, 48]} />
-        <meshStandardMaterial color="#c6d0ca" />
-      </mesh>
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[0, -0.02, -8]}>
-        <planeGeometry args={[8, 60]} />
-        <meshStandardMaterial color="#c6d0ca" />
-      </mesh>
+      {/* A few trees around the edges for that cozy village feel. */}
+      <Tree position={[-28, 6]} scale={1.1} />
+      <Tree position={[27, 4]} scale={0.95} />
+      <Tree position={[-29, -16]} scale={1.15} />
+      <Tree position={[28, -18]} scale={1.05} />
+      <Tree position={[-6, -30]} scale={0.9} />
+      <Tree position={[20, -30]} scale={1.0} />
       {lots.map(({ project, position }) => (
         <ProjectHouse
           key={project.id}
@@ -403,9 +637,10 @@ function ProjectVillage({
           position={position}
           selected={project.id === selectedProjectId}
           onSelect={onSelectProject}
+          onHover={onHoverProject}
         />
       ))}
-      <EmptyLot position={[0, 13]} onClick={onEmptyLot} />
+      <EmptyLot position={[13, 12]} onClick={onEmptyLot} />
     </group>
   );
 }
@@ -415,22 +650,30 @@ function ProjectHouse({
   position,
   selected,
   onSelect,
+  onHover,
 }: {
   project: ProjectListItem;
   position: [number, number];
   selected: boolean;
   onSelect: (projectId: string) => void;
+  onHover: (project: ProjectListItem | null) => void;
 }) {
   const group = useRef<THREE.Group>(null);
   const size = normalizeSize(project.projectSize);
   const scale = size === "LARGE" ? 1.26 : size === "MEDIUM" ? 1.04 : 0.86;
   const texture = useNameplateTexture(project.name);
-  const active = project.status !== "COMPLETED" && project.status !== "CANCELLED";
-  const wallColor = size === "LARGE" ? "#9b789f" : size === "MEDIUM" ? "#7089ac" : "#6f9b87";
+  const active = isInProgress(project.status);
+  const wallColor = WALL_COLORS[size];
+  const roofColor = ROOF_COLORS[size];
+  const { hovered, bind } = useHover((h) => onHover(h ? project : null));
 
   useFrame(({ clock }) => {
     if (!group.current) return;
-    group.current.position.y = Math.sin(clock.elapsedTime * 1.4 + position[0]) * 0.08 + (selected ? 0.35 : 0);
+    const bob = Math.sin(clock.elapsedTime * 1.4 + position[0]) * 0.08;
+    // Lift and gently grow on hover so the house clearly reads as clickable.
+    group.current.position.y = bob + (selected ? 0.35 : 0) + (hovered ? 0.5 : 0);
+    const target = scale * (hovered ? 1.08 : 1);
+    group.current.scale.lerp(new THREE.Vector3(target, target, target), 0.2);
   });
 
   const click = (event: ThreeEvent<MouseEvent>) => {
@@ -439,26 +682,34 @@ function ProjectHouse({
   };
 
   return (
-    <group ref={group} position={[position[0], 0, position[1]]} scale={[scale, scale, scale]} onClick={click}>
+    <group ref={group} position={[position[0], 0, position[1]]} scale={[scale, scale, scale]} onClick={click} {...bind}>
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
         <boxGeometry args={[10, 9, 0.18]} />
-        <meshStandardMaterial color={selected ? "#d9ddff" : "#cad6cf"} />
+        <meshStandardMaterial color={selected ? "#d9ddff" : "#cdbfa0"} roughness={0.95} />
       </mesh>
       <mesh castShadow receiveShadow position={[0, 2.6, 0]}>
         <boxGeometry args={[7.6, 5.2, 6.8]} />
         <meshStandardMaterial color={wallColor} roughness={0.7} />
       </mesh>
-      <GableRoof width={7.6} depth={6.8} y={5.2} rise={2.5} color="#4a4d59" />
+      <GableRoof width={7.6} depth={6.8} y={5.2} rise={2.5} color={roofColor} />
+      {/* chimney */}
+      <mesh castShadow position={[2.1, 7, -1.4]}>
+        <boxGeometry args={[0.9, 2.2, 0.9]} />
+        <meshStandardMaterial color="#b9705a" roughness={0.8} />
+      </mesh>
+      {/* in-progress projects puff smoke from the chimney */}
+      {active && <ChimneySmoke position={[2.1, 8.2, -1.4]} />}
       <mesh castShadow position={[0, 1.7, 3.48]}>
         <boxGeometry args={[2, 3.2, 0.2]} />
-        <meshStandardMaterial color="#35586f" roughness={0.6} />
+        <meshStandardMaterial color="#8a5a3c" roughness={0.6} />
       </mesh>
-      <mesh castShadow position={[0, 3.6, 3.6]}>
-        <boxGeometry args={[5.9, 1.15, 0.18]} />
+      <mesh castShadow position={[0, 3.7, 3.62]}>
+        <boxGeometry args={[6.6, 1.45, 0.2]} />
         <meshStandardMaterial map={texture} color="#f5d57c" metalness={0.1} roughness={0.35} />
       </mesh>
       <LiveWindow active={active} position={[2.25, 2.35, 3.58]} phase={position[0] * 0.17} />
       <LiveWindow active={active} position={[-2.25, 2.35, 3.58]} phase={position[1] * 0.21 + 1.4} />
+      <Bush position={[-3, 0.55, 3.4]} />
       {selected && (
         <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[5.8, 6.25, 36]} />
@@ -546,15 +797,28 @@ function LiveWindow({ active, position, phase }: { active: boolean; position: [n
 }
 
 function EmptyLot({ position, onClick }: { position: [number, number]; onClick: () => void }) {
+  const root = useRef<THREE.Group>(null);
   const sign = useRef<THREE.Group>(null);
   const texture = useNameplateTexture("FOR SALE");
+  const { hovered, bind } = useHover();
   useFrame(({ clock }) => {
-    if (!sign.current) return;
-    // A gentle sway, as if the stake is planted loosely in the empty plot.
-    sign.current.rotation.z = Math.sin(clock.elapsedTime * 1.6) * 0.03;
+    if (sign.current) {
+      // A gentle sway, as if the stake is planted loosely in the empty plot.
+      sign.current.rotation.z = Math.sin(clock.elapsedTime * 1.6) * 0.03;
+    }
+    if (root.current) {
+      root.current.position.y = hovered ? 0.5 : 0;
+      const target = hovered ? 1.06 : 1;
+      root.current.scale.lerp(new THREE.Vector3(target, target, target), 0.2);
+    }
   });
   return (
-    <group position={[position[0], 0, position[1]]} onClick={(event) => { event.stopPropagation(); onClick(); }}>
+    <group
+      ref={root}
+      position={[position[0], 0, position[1]]}
+      onClick={(event) => { event.stopPropagation(); onClick(); }}
+      {...bind}
+    >
       {/* Bare dirt plot */}
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
         <boxGeometry args={[10, 9, 0.18]} />
@@ -600,13 +864,18 @@ function ScaleHouse({
   onPick: (size: ProjectSize) => void;
 }) {
   const ref = useRef<THREE.Group>(null);
-  const color = size === "SMALL" ? "#5f8f7c" : size === "MEDIUM" ? "#5c75a8" : "#8d6b9c";
+  const wallColor = WALL_COLORS[size];
+  const roofColor = ROOF_COLORS[size];
   const scale = size === "SMALL" ? 0.78 : size === "MEDIUM" ? 1 : 1.24;
   const texture = useNameplateTexture(SIZE_LABELS[size]);
+  const { hovered, bind } = useHover();
+  const interactive = hovered && !dimmed;
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const bob = dimmed ? 0.03 : 0.08;
-    ref.current.position.y = 3.2 + Math.sin(clock.elapsedTime * 1.5 + x) * bob;
+    ref.current.position.y = 3.2 + Math.sin(clock.elapsedTime * 1.5 + x) * bob + (interactive ? 0.5 : 0);
+    const target = scale * (interactive ? 1.08 : 1);
+    ref.current.scale.lerp(new THREE.Vector3(target, target, target), 0.2);
   });
   return (
     <group
@@ -618,16 +887,17 @@ function ScaleHouse({
         event.stopPropagation();
         onPick(size);
       }}
+      {...(dimmed ? {} : bind)}
     >
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -3.15, 0]}>
         <boxGeometry args={[8.6, 7.6, 0.18]} />
-        <meshStandardMaterial color={selected ? "#d9ddff" : "#e9e1c8"} roughness={0.9} />
+        <meshStandardMaterial color={selected ? "#d9ddff" : "#cdbfa0"} roughness={0.9} />
       </mesh>
       <mesh castShadow receiveShadow position={[0, 0, 0]}>
         <boxGeometry args={[5.8, 4.2, 5.2]} />
-        <meshStandardMaterial color={selected ? "#4648d4" : color} roughness={0.62} />
+        <meshStandardMaterial color={selected ? "#4648d4" : wallColor} roughness={0.62} />
       </mesh>
-      <GableRoof width={5.8} depth={5.2} y={2.1} rise={1.9} color="#4a4d59" />
+      <GableRoof width={5.8} depth={5.2} y={2.1} rise={1.9} color={roofColor} />
       <mesh castShadow position={[0, -0.85, 2.7]}>
         <boxGeometry args={[1.45, 2.35, 0.2]} />
         <meshStandardMaterial color="#35586f" roughness={0.6} />
