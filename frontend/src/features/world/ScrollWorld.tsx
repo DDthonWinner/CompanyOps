@@ -98,6 +98,7 @@ export function ScrollWorld() {
 
           {!arrived && <header className="world-header">
             <div className="world-brand"><span className="world-brand-mark">C<span>↗</span></span> CompanyOps<span className="world-brand-note">A WORLD OF POSSIBILITIES</span></div>
+            <button className="world-skip" onClick={() => go(1)}>오피스로 바로 가기 <span>↗</span></button>
           </header>}
 
           {!arrived && <div className="world-coordinate"><span className="world-live-dot" /> AI-DLC &amp; COMPANYOPS <span>IDEAS BECOME REALITY</span></div>}
