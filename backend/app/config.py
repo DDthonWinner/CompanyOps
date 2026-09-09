@@ -38,7 +38,9 @@ class Settings:
     qa_test_cmd: str = os.getenv("QA_TEST_CMD", "").strip()
 
     cors_origins: tuple[str, ...] = tuple(origin.strip().rstrip("/") for origin in
-        os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip())
+        os.getenv("CORS_ORIGINS",
+                  "http://localhost:5173,http://127.0.0.1:5173,https://company-ops-12dj.vercel.app").split(",")
+        if origin.strip())
 
     host: str = os.getenv("HOST", "127.0.0.1").strip()
     port: int = int(os.getenv("PORT", "8000"))
