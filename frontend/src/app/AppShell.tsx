@@ -42,12 +42,16 @@ export function AppShell() {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      <BrandLogo
+      {/* White plate is a bit larger than the logo so the mark sits comfortably inside. */}
+      <button
         onClick={openProjectVillage}
         title="마을 뷰로 이동"
-        testId="app-brand"
-        className="fixed left-4 top-4 z-50 rounded-none !bg-white px-7 py-4 text-on-background shadow-sm transition hover:text-primary"
-      />
+        aria-label="마을 뷰로 이동"
+        data-testid="app-brand"
+        className="fixed left-4 top-4 z-50 flex items-center justify-center !bg-white px-4.5 py-3 text-on-background shadow-sm transition hover:text-primary"
+      >
+        <BrandLogo className="pointer-events-none scale-[0.85]" />
+      </button>
       <GlobalExecutiveBar />
       {/* Tycoon is full-bleed (3D fills behind the floating GNB); other tabs clear the bar. */}
       <main className={`h-full w-full ${activeTab === "tycoon" ? "" : "pt-44 sm:pt-32 lg:pt-20"}`}>
