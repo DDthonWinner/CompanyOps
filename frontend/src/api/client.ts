@@ -163,6 +163,7 @@ export interface AdminColumn {
   nullable: boolean;
   hasDefault: boolean;
   foreignKey: string | null;
+  enum: string[] | null;
 }
 
 export interface AdminTable {

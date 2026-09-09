@@ -40,6 +40,54 @@ function errMsg(e: unknown): string {
   return e instanceof ApiError ? `${e.code}: ${e.message}` : String(e);
 }
 
+// One editable cell: a dropdown for enum (CHECK-constrained) columns, else a text input.
+function CellInput({
+  col,
+  value,
+  dirty,
+  readOnly,
+  placeholder,
+  onChange,
+}: {
+  col: AdminColumn;
+  value: string;
+  dirty?: boolean;
+  readOnly?: boolean;
+  placeholder?: string;
+  onChange: (v: string) => void;
+}) {
+  const cls = `w-full min-w-[80px] rounded border px-1.5 py-0.5 ${
+    readOnly
+      ? "border-transparent bg-transparent text-on-background/50"
+      : dirty
+        ? "border-primary bg-primary/5"
+        : "border-outline-variant bg-surface-lowest"
+  }`;
+  if (col.enum && !readOnly) {
+    return (
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={cls}>
+        <option value="">{col.hasDefault ? "(기본값)" : col.nullable ? "(null)" : "— 선택 —"}</option>
+        {/* Keep an out-of-range current value selectable so we never silently drop it. */}
+        {value !== "" && !col.enum.includes(value) && <option value={value}>{value} (현재값)</option>}
+        {col.enum.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    );
+  }
+  return (
+    <input
+      value={value}
+      readOnly={readOnly}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      className={cls}
+    />
+  );
+}
+
 export function AdminView() {
   const [tables, setTables] = useState<AdminTable[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -295,11 +343,11 @@ export function AdminView() {
                       </td>
                       {data.columns.map((c) => (
                         <td key={c.name} className="border-b border-outline-variant px-1 py-1">
-                          <input
+                          <CellInput
+                            col={c}
                             value={newRow[c.name]}
                             placeholder={c.hasDefault ? "(자동)" : c.nullable ? "null" : ""}
-                            onChange={(e) => setNewRow({ ...newRow, [c.name]: e.target.value })}
-                            className="w-full min-w-[80px] rounded border border-outline-variant bg-surface-lowest px-1.5 py-0.5"
+                            onChange={(v) => setNewRow({ ...newRow, [c.name]: v })}
                           />
                         </td>
                       ))}
@@ -331,17 +379,12 @@ export function AdminView() {
                           const value = draft !== undefined ? draft : toText(row[c.name]);
                           return (
                             <td key={c.name} className="border-b border-outline-variant px-1 py-1">
-                              <input
+                              <CellInput
+                                col={c}
                                 value={value}
                                 readOnly={c.primaryKey}
-                                onChange={(e) => setCell(rowPk, c.name, e.target.value)}
-                                className={`w-full min-w-[80px] rounded border px-1.5 py-0.5 ${
-                                  c.primaryKey
-                                    ? "border-transparent bg-transparent text-on-background/50"
-                                    : draft !== undefined
-                                      ? "border-primary bg-primary/5"
-                                      : "border-outline-variant bg-surface-lowest"
-                                }`}
+                                dirty={draft !== undefined}
+                                onChange={(v) => setCell(rowPk, c.name, v)}
                               />
                             </td>
                           );

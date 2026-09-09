@@ -7,6 +7,7 @@ list/dict. Intended as a local/contest developer tool — there is NO auth.
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from sqlalchemy import Integer, Table, delete, func, insert, select, update
@@ -36,7 +37,27 @@ def _pk_column(table: Table):
     return cols[0]
 
 
-def _column_meta(col) -> dict:
+# Matches a CHECK constraint like `status IN ('A','B','C')` to expose enum options.
+_ENUM_RE = re.compile(r"(\w+)\s+IN\s*\(([^)]*)\)", re.IGNORECASE)
+
+
+def _enum_map(table: Table) -> dict[str, list[str]]:
+    """Extract {column: [allowed values]} from the table's CHECK constraints."""
+    out: dict[str, list[str]] = {}
+    for c in table.constraints:
+        text = getattr(c, "sqltext", None)
+        if text is None:
+            continue
+        m = _ENUM_RE.search(str(text))
+        if not m:
+            continue
+        col, values = m.group(1), re.findall(r"'([^']*)'", m.group(2))
+        if col in table.columns and values:
+            out[col] = values
+    return out
+
+
+def _column_meta(col, enums: dict[str, list[str]]) -> dict:
     fks = [f"{fk.column.table.name}.{fk.column.name}" for fk in col.foreign_keys]
     return {
         "name": col.name,
@@ -45,6 +66,7 @@ def _column_meta(col) -> dict:
         "nullable": col.nullable,
         "hasDefault": col.default is not None or col.server_default is not None,
         "foreignKey": fks[0] if fks else None,
+        "enum": enums.get(col.name),
     }
 
 
@@ -53,11 +75,12 @@ def list_tables() -> list[dict]:
     with engine.connect() as conn:
         for table in Base.metadata.sorted_tables:
             count = conn.execute(select(func.count()).select_from(table)).scalar_one()
+            enums = _enum_map(table)
             out.append({
                 "name": table.name,
                 "rowCount": count,
                 "primaryKey": [c.name for c in table.primary_key.columns],
-                "columns": [_column_meta(c) for c in table.columns],
+                "columns": [_column_meta(c, enums) for c in table.columns],
             })
     return out
 
@@ -70,12 +93,13 @@ def get_rows(name: str, limit: int, offset: int, order_by: str | None) -> dict:
             raise bad_request(f"정렬 컬럼이 없습니다: {order_by}", code="BAD_ORDER_BY")
         stmt = stmt.order_by(table.columns[order_by])
     stmt = stmt.limit(limit).offset(offset)
+    enums = _enum_map(table)
     with engine.connect() as conn:
         total = conn.execute(select(func.count()).select_from(table)).scalar_one()
         rows = [dict(r._mapping) for r in conn.execute(stmt)]
     return {
         "table": name,
-        "columns": [_column_meta(c) for c in table.columns],
+        "columns": [_column_meta(c, enums) for c in table.columns],
         "primaryKey": [c.name for c in table.primary_key.columns],
         "rows": rows,
         "total": total,
