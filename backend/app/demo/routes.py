@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from ..common.models import DemoReplay
 from ..common.platform import write_locks, touch
-from ..common.txn import mutate, read
+from ..common.txn import mutate, mutate_async, read
 from . import service
 
 router = APIRouter(prefix="/api/demo/replay", tags=["demo replay"])
@@ -52,8 +52,8 @@ async def scheduler_loop():
         for pid in ids:
             async with write_locks.lock_for(pid):
                 try:
-                    # Small local transactions only; SSE published on the event-loop thread.
-                    mutate(lambda db: service.tick(db, pid))
+                    # Git clone/push may block; keep health/snapshot/SSE responsive.
+                    await mutate_async(lambda db: service.tick(db, pid))
                 except Exception as exc:
                     log.exception("Replay stopped for %s", pid)
                     mutate(lambda db: _fail(db, pid, str(exc)))

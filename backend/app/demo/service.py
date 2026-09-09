@@ -1,4 +1,4 @@
-"""Durable, paced replay over existing showcase tasks; no model or remote calls.
+"""Durable, paced fixture replay with optional real Git publishing.
 
 Ordinary production tasks never reopen. This explicit demo-only exception resets
 execution records each cycle while retaining project/team/task/milestone identities.
@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sqlite3
+import json
 
 from sqlalchemy import delete, select, update
 
@@ -20,6 +21,7 @@ from ..orchestrator.execution.base import TaskExecutionContext
 from ..orchestrator.execution.fixture import FixtureExecutionProvider
 from ..ports.git_port import LocalStubGit
 from ..uf.models import Feedback, UtilizationMetric, UtilizationReport
+from .publishing import git_port
 
 ACTOR = "demo-replay"
 
@@ -30,6 +32,8 @@ def require_demo():
         raise conflict("Replay requires EXECUTION_MODE=demo, GIT_MODE=stub and empty QA_TEST_CMD.")
     if not isinstance(deps.git_port(), LocalStubGit):
         raise conflict("Replay requires LocalStubGit.")
+    if s.demo_replay_git_mode not in ("stub", "real"):
+        raise conflict("DEMO_REPLAY_GIT_MODE must be stub or real.")
 
 
 def target(db):
@@ -44,6 +48,8 @@ def status(db):
     p = target(db)
     r = db.get(m.DemoReplay, p.id)
     return {"projectId": p.id, "projectName": p.name, "demo": True,
+            "gitMode": get_settings().demo_replay_git_mode,
+            "gitRemote": get_settings().git_remote,
             "enabled": bool(r and r.enabled), "phase": r.phase if r else "NOT_STARTED",
             "cycle": r.cycle if r else 0, "intervalSeconds": r.interval_seconds if r else None,
             "completionSeconds": r.completion_seconds if r else None,
@@ -133,6 +139,7 @@ def _reset(db, r):
     p.status, p.completed_at = "READY", None
     plan = m.PlanVersion(project_id=p.id, version=r.cycle, status="REVIEW",
                          request=f"[DEMO] Neobank development replay #{r.cycle}",
+                         scope={"gitMode": get_settings().demo_replay_git_mode},
                          steps=[{"title": t.title, "taskId": t.id} for t in tasks])
     db.add(plan)
     db.flush()
@@ -181,14 +188,26 @@ def _agents(db, pid):
 
 def _fixture(db, t):
     role = db.get(m.Role, t.role_id)
-    return FixtureExecutionProvider().execute_task(TaskExecutionContext(
+    result = FixtureExecutionProvider().execute_task(TaskExecutionContext(
         project_id=t.project_id, task_id=t.id, task_title=t.title,
         role_code=role.code, description=t.description))
+    if get_settings().demo_replay_git_mode == "real":
+        plan = db.get(m.PlanVersion, t.approved_plan_id)
+        prefix = f".companyops/demo/tasks/{t.id}"
+        # Disjoint paths: concurrent tasks (including PM's common plan-note.md) cannot mix.
+        result.changes = [{**change, "path": f"{prefix}/{change['path']}"} for change in result.changes]
+        result.changes.append({"path": f"{prefix}/replay.json", "operation": "update",
+                               "content": json.dumps({
+                                   "demo": True, "execution": "fixture", "qa": "demo PASS",
+                                   "projectId": t.project_id, "taskId": t.id, "title": t.title,
+                                   "role": role.code, "planId": plan.id, "cycle": plan.version,
+                               }, ensure_ascii=False, indent=2) + "\n"})
+    return result
 
 
 def _review_task(db, t):
     result = _fixture(db, t)
-    applied = deps.git_port().apply_file_changes(t.project_id, t.id, result.changes)
+    applied = git_port().apply_file_changes(t.project_id, t.id, result.changes)
     artifact = m.ArtifactVersion(task_id=t.id, attempt_id=t.current_attempt_id, version=1,
                                  file_paths=applied.changed_files, content_hash=applied.content_hash,
                                  base_commit_sha=applied.base_commit_sha)
@@ -225,11 +244,19 @@ def _execute(db, r):
         elif t.status == "RUNNING":
             _review_task(db, t)
         elif t.status == "REVIEW":
-            # Rehydrate in-memory stub after a backend restart; deterministic fixture hash.
-            deps.git_port().apply_file_changes(pid, t.id, _fixture(db, t).changes)
-            orchestration.publish_task(db, t.id, {})
+            # Rehydrate changeset after restart; fixture + plan ID is deterministic.
+            git_port().apply_file_changes(pid, t.id, _fixture(db, t).changes)
+            result = orchestration.publish_task(db, t.id, {}, git=git_port())
             if t.status != "COMPLETED":
-                raise conflict("Demo publish did not complete.")
+                # Commit the publish failure and any prior successful tasks in this tick.
+                # A later start retries the same changeset/commit, without declaring success.
+                r.enabled = 0
+                r.error = f"Git publish {result['status']} for {t.title}: {result.get('error') or 'No changes published'}"
+                t.wait_reasons = [f"GIT_PUBLISH:{result['status']}"]
+                _touch_task(db, t)
+                _agents(db, pid)
+                return
+            t.wait_reasons = []
             _touch_task(db, t)
     db.flush()
     milestones = list(db.scalars(select(m.SprintMilestone).where(m.SprintMilestone.project_id == pid)))
@@ -285,6 +312,10 @@ def tick(db, pid, *, force=False):
     if not force and due > datetime.now(timezone.utc):
         return
     require_demo()
+    p = db.get(m.Project, pid)
+    plan = db.get(m.PlanVersion, p.active_plan_id) if p.active_plan_id else None
+    if plan and (plan.scope or {}).get("gitMode", "stub") != get_settings().demo_replay_git_mode:
+        r.phase = "RESET"  # old stub QA/artifacts must never be used for real publish
     if r.phase in ("RESET", "COMPLETED"):
         _reset(db, r)
     elif r.phase == "PLAN_REVIEW":
@@ -298,7 +329,7 @@ def tick(db, pid, *, force=False):
         db.add(m.Approval(project_id=pid, kind="PLAN_EXECUTION", target_id=plan.id,
                           target_version=plan.version, actor=ACTOR))
         plan.status, p.status = "EXECUTING", "ACTIVE"
-        deps.git_port().initialize_project_repository(pid)
+        git_port().initialize_project_repository(pid)
         for t in db.scalars(select(m.ProjectTask).where(m.ProjectTask.project_id == pid)):
             t.approved_plan_id, t.approved_plan_version = plan.id, plan.version
             _touch_task(db, t)

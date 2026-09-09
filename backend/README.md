@@ -87,7 +87,7 @@ venv/bin/python demo_replay.py stop
 - 스케줄은 서버가 실행합니다. CLI 종료와 관계없이 반복하며, 백엔드를 재시작해도
   저장된 활성 스케줄을 이어갑니다. 처음에는 자동으로 켜지지 않습니다.
 - `EXECUTION_MODE=demo`, `GIT_MODE=stub`, 빈 `QA_TEST_CMD`가 필수입니다.
-  실제 LLM 호출, 셸 QA 실행, Git push는 발생하지 않습니다.
+  실제 LLM 호출과 셸 QA 실행은 발생하지 않습니다. Git push는 아래 전용 설정으로 켤 수 있습니다.
 
 흐름: 계획 검토 → 데모 자동 승인 → PM 준비 → 역할별 병렬 개발 →
 은행 샘플 데이터 결정 요청/자동 해결 → 태스크별 QA/모의 publish →
@@ -118,3 +118,34 @@ HTTP 제어: `GET /api/demo/replay`, `POST /api/demo/replay/start`
 검증: `venv/bin/python -m pytest tests/orchestrator/test_demo_replay.py -q`.
 격리된 DB에서 연속 두 회차 완료, QA/승인 조건, 0% 재시작, 정지/재개,
 백엔드 재시작 시 상태 보존, 백업, 다른 프로젝트 격리 및 변경 API 차단을 확인합니다.
+
+
+### 반복 시연의 실제 GitHub commit / push
+
+`backend/.env`에 `DEMO_REPLAY_GIT_MODE=real`을 설정하고 백엔드를 재시작하면
+Neobank 루프만 기존 `GitInterface`를 통해 실제 commit/push합니다.
+`EXECUTION_MODE=demo`, `GIT_MODE=stub`, 빈 `QA_TEST_CMD`는 유지합니다.
+다른 프로젝트의 GitPort는 바뀌지 않습니다. `status`에서 `gitMode`와 `gitRemote`를 확인합니다.
+
+- 대상: `GIT_REMOTE` (기본 `https://github.com/DDthonWinner/TestOutput`)
+- 브랜치: `project/<Neobank project ID>`; main 변경/merge/force-push 없음
+- 체크아웃: `CHECKOUT_ROOT/demo-replay/<project ID>`
+- 결과물: `.companyops/demo/tasks/<task ID>/` 아래 역할별 fixture 파일과 결과 문서,
+  `replay.json`(회차, 계획 ID, 태스크/역할, demo 표기). 실행 가능한 실제 은행 앱이 아닌
+  **시연 결과물**이며 QA도 데모입니다.
+- 각 태스크의 QA 통과 뒤 commit/push하고 **PUSHED를 확인한 경우에만 COMPLETED** 처리합니다.
+  실제 SHA와 브랜치 URL은 기존 snapshot/아티팩트 화면으로 전달됩니다.
+- 태스크별 경로가 분리되어 병렬 작업이 섞이지 않으며, 매 회차 manifest가 달라져 다시
+  커밋됩니다. GitHub 커밋 기록은 누적됩니다(기본 51개 태스크이면 회차당 51커밋).
+- Git 모드를 바꾸면 다음 tick에서 새 회차로 초기화합니다. 기존 stub 결과의 QA/hash를
+  실제 publish에 재사용하지 않습니다.
+- push 실패 시 완료/초기화하지 않고 루프를 정지합니다. `status.error`에 원인이 남고,
+  인증/네트워크/원격 충돌을 해결한 뒤 `demo_replay.py start --url http://127.0.0.1:8001`로
+  재개합니다. 기존 로컬 커밋의 task/hash trailer를 찾아 중복 커밋 없이 재시도합니다.
+- 서버를 실행하는 계정의 Git credential helper/SSH 등 기존 인증 설정이 필요합니다.
+  별도 토큰을 코드나 DB에 저장하지 않습니다. 네트워크 소요 시간만큼 회차가 길어질 수 있습니다.
+- 비활성화: `DEMO_REPLAY_GIT_MODE=stub`으로 변경하고 백엔드 재시작.
+
+테스트: `venv/bin/python -m pytest tests/git_interface tests/orchestrator/test_demo_real_git.py tests/common/test_async_txn.py`.
+외부 네트워크 없이 bare Git 저장소에 실제 push하여 두 회차, 태스크별 파일 분리,
+재시작/실패 후 중복 없는 재시도, 비동기 SSE 트랜잭션 처리를 검증합니다.

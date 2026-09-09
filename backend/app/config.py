@@ -32,6 +32,8 @@ class Settings:
     git_subprocess_timeout_seconds: float = float(os.getenv("GIT_SUBPROCESS_TIMEOUT_SECONDS", "120"))
     # stub (default; deterministic demo) | real (subprocess git + real push)
     git_mode: str = os.getenv("GIT_MODE", "stub").strip().lower()
+    # Dedicated showcase publisher; does not change other projects' GitPort.
+    demo_replay_git_mode: str = os.getenv("DEMO_REPLAY_GIT_MODE", "stub").strip().lower()
 
     qa_test_cmd: str = os.getenv("QA_TEST_CMD", "").strip()
 

@@ -19,7 +19,6 @@ class GitInterface:
         self.author_name = author_name
         self.author_email = author_email
         self._changesets: dict[str, dict] = {}
-        self._committed: dict[str, str] = {}
 
     # ---- helpers ----
     def _path(self, project_id: str) -> Path:
@@ -70,19 +69,28 @@ class GitInterface:
         if not cs or not cs["paths"]:
             return PublishResult(task_id=task_id, status="NO_CHANGES", published=False)
 
-        # Stage exactly this task's ChangeSet paths (03 §10.1: scoped staging, -- boundary).
-        run_git(["add", "--", *cs["paths"]], cwd=path, timeout=self.timeout, check=False)
+        # Never accidentally include another task/operator's pre-staged files.
+        already_staged = set(filter(None, run_git(
+            ["diff", "--cached", "--name-only", "-z"], cwd=path, timeout=self.timeout).split("\0")))
+        if already_staged - set(cs["paths"]):
+            return PublishResult(task_id=task_id, status="FAILED", published=False,
+                                 error="Unrelated staged files exist; refusing mixed-task commit.")
+        run_git(["add", "--", *cs["paths"]], cwd=path, timeout=self.timeout)
         staged = run_git(["diff", "--cached", "--name-only"], cwd=path, timeout=self.timeout, check=False).strip()
 
         if staged:
-            msg = f"{commit_type}({task_id}): {task_title}"
+            msg = (f"{commit_type}({task_id}): {task_title}\n\n"
+                   f"CompanyOps-Task: {task_id}\nCompanyOps-Change: {cs['content_hash']}")
             run_git(["commit", "-m", msg], cwd=path, timeout=self.timeout)
             sha = run_git(["rev-parse", "HEAD"], cwd=path, timeout=self.timeout).strip()
-            self._committed[task_id] = sha
-        elif task_id in self._committed:
-            sha = self._committed[task_id]  # idempotent retry — nothing new to commit
         else:
-            return PublishResult(task_id=task_id, status="NO_CHANGES", published=False)
+            # Survives process restart / DB rollback after commit or successful push.
+            sha = run_git(["log", "-1", "--format=%H", "--fixed-strings", "--all-match",
+                           f"--grep=CompanyOps-Task: {task_id}",
+                           f"--grep=CompanyOps-Change: {cs['content_hash']}"],
+                          cwd=path, timeout=self.timeout, check=False).strip()
+            if not sha:
+                return PublishResult(task_id=task_id, status="NO_CHANGES", published=False)
 
         # Fetch + detect divergence before pushing (no rebase/force).
         run_git_raw(["fetch", "origin"], cwd=path, timeout=self.timeout)

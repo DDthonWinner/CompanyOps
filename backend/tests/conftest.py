@@ -7,6 +7,8 @@ import tempfile
 # Must be set BEFORE importing app modules (engine is created at import time).
 os.environ.setdefault("DB_PATH", os.path.join(tempfile.gettempdir(), "companyops_test.db"))
 os.environ.setdefault("EXECUTION_MODE", "demo")
+# A developer's real replay setting must never make tests publish to GitHub.
+os.environ["DEMO_REPLAY_GIT_MODE"] = "stub"
 
 import pytest  # noqa: E402
 

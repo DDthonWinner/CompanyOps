@@ -204,7 +204,7 @@ def resolve_decision(session: Session, decision_id: str, req: dict) -> dict:
 
 
 # ------------------------------------------------------------------ publish coordination
-def publish_task(session: Session, task_id: str, req: dict) -> dict:
+def publish_task(session: Session, task_id: str, req: dict, *, git=None) -> dict:
     """Validate preconditions server-side, publish via GitPort, flip COMPLETED on push."""
     request_id = req.get("requestId")
     if request_id:
@@ -228,7 +228,7 @@ def publish_task(session: Session, task_id: str, req: dict) -> dict:
         raise conflict("QA 검증 hash와 현재 Artifact가 일치하지 않습니다.", code="HASH_MISMATCH")
 
     milestone = session.get(SprintMilestone, t.sprint_milestone_id) if t.sprint_milestone_id else None
-    res = deps.git_port().publish_task_changes(
+    res = (git if git is not None else deps.git_port()).publish_task_changes(
         t.project_id, t.sprint_milestone_id, t.id, t.title, "feat"
     )
     pub = TaskPublish(
@@ -247,7 +247,7 @@ def publish_task(session: Session, task_id: str, req: dict) -> dict:
             maybe_build_milestone_result(session, milestone.id)
     platform.touch(session, t.project_id, "git.updated", t.id)
     result = {"taskId": t.id, "status": res.status, "commitSha": res.commit_sha,
-              "branchUrl": res.branch_url, "taskStatus": t.status}
+              "branchUrl": res.branch_url, "taskStatus": t.status, "error": res.error}
     if request_id:
         platform.CommandReceiptStore.complete(session, request_id, result)
     return result

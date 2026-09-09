@@ -114,3 +114,25 @@ def test_connected_flow_with_real_git(uow, bare_remote, tmp_path):
     finally:
         deps.set_git_port(LocalStubGit())  # restore for other tests
         worker._provider = worker._provider  # no-op; keep provider
+
+
+def test_republish_survives_process_restart(gi):
+    changes = [{"path": "a.txt", "operation": "create", "content": "a"}]
+    gi.initialize_project_repository("P-restart")
+    gi.apply_file_changes("P-restart", "T1", changes)
+    first = gi.publish_task_changes("P-restart", None, "T1", "Task", "feat")
+    fresh = GitInterface(gi.remote, gi.checkout_root)
+    fresh.apply_file_changes("P-restart", "T1", changes)
+    retried = fresh.publish_task_changes("P-restart", None, "T1", "Task", "feat")
+    assert retried.status == "PUSHED"
+    assert retried.commit_sha == first.commit_sha
+
+
+def test_refuses_unrelated_staged_files(gi):
+    path = Path(gi.initialize_project_repository("P-staged")["checkoutPath"])
+    (path / "unrelated.txt").write_text("operator work")
+    subprocess.run(["git", "add", "unrelated.txt"], cwd=path, check=True)
+    gi.apply_file_changes("P-staged", "T1", [{"path": "own.txt", "content": "task"}])
+    result = gi.publish_task_changes("P-staged", None, "T1", "Task", "feat")
+    assert result.status == "FAILED"
+    assert "Unrelated staged" in result.error
