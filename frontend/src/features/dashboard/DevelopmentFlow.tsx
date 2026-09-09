@@ -1,180 +1,114 @@
-// Center "Agent workspace" — the PM → Frontend/Backend → QA development flow (04 §6, §23).
-// Node cards sit on a faint drafting grid with animated dashed connectors + a QA feedback loop.
+// Role relationships share the tycoon desk catalog; execution order belongs to Task dependencies.
+import "./developmentFlow.css";
+import { useId } from "react";
 import { GlassPanel } from "../../components/ui/GlassPanel";
 import { Icon } from "../../components/ui/Icon";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { fmtTokens } from "../../lib/format";
 import { ROLE_LABEL, roleColor, roleIcon } from "../../lib/roles";
-import type { Agent, Snapshot } from "../../api/types";
 import { useStore } from "../../store/useStore";
-import { agentMetrics } from "./agentMetrics";
+import { flowModel, type FlowNodeData, type FlowRole } from "./flowModel";
 
-const STATUS_DOT: Record<string, string> = {
-  WORKING: "#059669",
-  WAITING: "#d97706",
-  BLOCKED: "#ba1a1a",
-  IDLE: "#767586",
-  ASSIGNED: "#767586",
-};
+// Directed lanes distinguish dispatch, validation handoff, and PM feedback.
+const EXECUTION_ROLES = ["FRONTEND", "BACKEND", "DATABASE"] as const;
+const EXECUTION_X = { FRONTEND: 240, BACKEND: 500, DATABASE: 760 };
+const FLOW_EDGES = [
+  ...EXECUTION_ROLES.map((role) => ({ from: "PM", to: role, kind: "dispatch", path: `M500 178 V195 Q500 207 ${EXECUTION_X[role]} 207 V238` })),
+  ...EXECUTION_ROLES.map((role) => ({ from: role, to: "QA", kind: "handoff", path: `M${EXECUTION_X[role]} 386 V408 Q${EXECUTION_X[role]} 423 500 423 V446` })),
+  { from: "PM", to: "QA", kind: "control", path: "M620 102 H900 Q944 102 944 138 V483 Q944 520 900 520 H624" },
+  { from: "QA", to: "PM", kind: "feedback", path: "M380 520 H100 Q56 520 56 482 V140 Q56 102 100 102 H376" },
+];
+const EDGE_COLOR: Record<string, string> = { dispatch: "#6366d9", handoff: "#0284c7", control: "#e11d48", feedback: "#d97706" };
 
-const STATUS_LABEL: Record<string, string> = {
-  WORKING: "Working",
-  WAITING: "Waiting for you",
-  BLOCKED: "Blocked",
-  IDLE: "Idle",
-  ASSIGNED: "Ready",
-};
-
-// Absolute anchor per node (percent of the stage) — connectors reference the same points.
-const POS: Record<string, React.CSSProperties> = {
-  PM: { left: "50%", top: "2%", transform: "translateX(-50%)" },
-  FRONTEND: { left: "1%", top: "40%" },
-  BACKEND: { right: "1%", top: "40%" },
-  QA: { left: "50%", bottom: "2%", transform: "translateX(-50%)" },
-};
-
-function FlowNode({ role, agent, snapshot }: { role: string; agent: Agent | null; snapshot: Snapshot }) {
-  const openAgentSheet = useStore((s) => s.openAgentSheet);
-  const color = roleColor(role);
-  const m = agent ? agentMetrics(snapshot, agent) : null;
-  const status = agent?.status ?? "ASSIGNED";
-  const dot = STATUS_DOT[status] ?? "#767586";
-
+function FlowNode({ node }: { node: FlowNodeData }) {
+  const openAgent = useStore((s) => s.openAgentSheet);
+  const openDesk = useStore((s) => s.openDeskSheet);
+  const color = roleColor(node.role);
+  const status = node.blocked ? "차단/실패" : node.running ? "실행 중" : node.waiting ? "대기/검토" : "대기";
+  const single = node.agents.length === 1 ? node.agents[0] : null;
+  const working = node.agents.filter(({ agent }) => agent.status === "WORKING").length;
   return (
-    <button
-      type="button"
-      disabled={!agent}
-      onClick={() => agent && openAgentSheet(agent.id)}
-      className="card-lift w-[190px] rounded-hud border border-outline-variant bg-white p-3 text-left shadow-[0_8px_24px_rgba(11,28,48,0.10)] disabled:opacity-60"
-    >
+    <button type="button" aria-label={`${ROLE_LABEL[node.role]} 상세 보기`}
+      onClick={() => node.agents.length === 1 ? openAgent(node.agents[0].agent.id) : openDesk(node.role)}
+      className="flow-role-card card-lift w-full rounded-hud border border-outline-variant bg-white p-3 text-left shadow-[0_8px_24px_rgba(11,28,48,0.10)]"
+      style={{ borderTop: `3px solid ${color}` }}>
       <div className="flex items-center gap-2">
-        <span
-          className="grid h-8 w-8 place-items-center rounded-lg"
-          style={{ background: `${color}1a`, color }}
-        >
-          <Icon name={roleIcon(role)} size={18} fill />
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg" style={{ background: `${color}1a`, color }}>
+          <Icon name={roleIcon(node.role)} size={18} fill />
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold" style={{ color }}>
-            {ROLE_LABEL[role] ?? role}
-          </div>
-          <div className="truncate text-[11px] text-on-background/55">
-            {agent?.displayName ?? "미배정"}
-          </div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold" style={{ color }}>{ROLE_LABEL[node.role]}</div>
+          <div className="truncate text-[10px] text-on-background/55">{node.role === "PM" ? "계획 · 배정 · 결과 조율" : node.role === "QA" ? "검증 · 결과 보고" : "실행 · 결과 보고"}</div>
         </div>
-        <span className="pulse-orb h-2.5 w-2.5 rounded-full" style={{ background: dot }} />
+      </div>
+      <div className="mt-2 truncate text-[11px] text-on-background/70" title={node.agents.map(({ agent }) => agent.displayName).join(", ")}>
+        {node.agents.length ? `배정 ${node.agents.length}명 · 작업 중 ${working}명` : "미배정"}
+      </div>
+      <div className="mt-1 truncate text-[11px] text-on-background/60">
+        {single ? single.metrics.current?.title ?? single.agent.activitySummary ?? single.agent.displayName : "역할 선택으로 전체 작업 확인"}
+      </div>
+      <ProgressBar value={node.percent} color={color} height={6} className="mt-2" />
+      <div className="mt-2 flex justify-between gap-1 text-[10px] text-on-background/60">
+        <span>{status}{single ? ` · ${fmtTokens(single.metrics.tokenTotal)}` : ""}</span>
+        <span className="tabular">{node.total ? `${node.completed}/${node.total} 완료` : "작업 없음"}</span>
       </div>
 
-      <div className="mt-2 truncate text-[11px] text-on-background/70">
-        {m?.current?.title ?? agent?.activitySummary ?? "대기 중인 작업 없음"}
-      </div>
-
-      <div className="mt-2">
-        <ProgressBar value={m?.percent ?? 0} color={color} height={7} />
-      </div>
-      <div className="mt-1.5 flex items-center justify-between text-[11px]">
-        <span className="flex items-center gap-1" style={{ color: dot }}>
-          <span className="msym" style={{ fontSize: 13 }} aria-hidden>
-            fiber_manual_record
-          </span>
-          {STATUS_LABEL[status] ?? status}
-        </span>
-        <span className="tabular text-on-background/55">
-          {m ? fmtTokens(m.tokenTotal) : "미수집"}
-        </span>
-      </div>
     </button>
   );
 }
 
 export function DevelopmentFlow() {
+  const markerId = useId().replace(/:/g, "");
   const snapshot = useStore((s) => s.snapshot);
-  const rolesById = useStore((s) => s.rolesById);
+  const roles = useStore((s) => s.rolesById);
   const connection = useStore((s) => s.connection);
   if (!snapshot) return null;
-
-  const byRole: Record<string, Agent | null> = { PM: null, FRONTEND: null, BACKEND: null, QA: null };
-  for (const a of snapshot.agents) {
-    if (a.status === "REMOVED") continue;
-    const code = rolesById[a.roleId]?.code;
-    if (code && code in byRole && !byRole[code]) byRole[code] = a;
-  }
-
-  const legend = [
-    { code: "PM", label: "Project Management" },
-    { code: "FRONTEND", label: "Frontend" },
-    { code: "BACKEND", label: "Backend" },
-    { code: "QA", label: "QA" },
-  ];
-
+  const nodes = flowModel(snapshot, roles);
+  const getNode = (role: FlowRole) => nodes.find((node) => node.role === role)!;
   return (
-    <GlassPanel level={3} className="p-4" data-testid="development-flow">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h3 className="display flex items-center gap-1.5 text-sm font-semibold">
-            <Icon name="account_tree" size={18} className="text-primary" />
-            Agent workspace
-          </h3>
-          <p className="text-[11px] text-on-background/55">에이전트를 선택해 현재 작업을 확인하세요</p>
-        </div>
-        <span className="inline-flex items-center gap-1 rounded-full border border-secondary/30 bg-secondary/10 px-2 py-0.5 text-[11px] font-medium text-secondary">
-          {connection === "CONNECTED" ? "실시간 동기화" : `${connection} · 마지막 수신 상태`}
-        </span>
+    <GlassPanel level={3} className="orchestration-flow p-3" data-testid="development-flow">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="display flex items-center gap-1.5 text-sm font-semibold"><Icon name="account_tree" size={18} className="text-primary" />Development flow</h3>
+        <span className="text-[11px] text-on-background/55">{connection === "CONNECTED" ? "실시간 동기화" : `${connection} · 마지막 수신 상태`}</span>
       </div>
-
-      {/* Desktop: absolute node graph with connectors */}
-      <div className="relative mx-auto hidden h-[360px] w-full max-w-[640px] grid-faint rounded-xl md:block">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-          <defs>
-            <linearGradient id="flow-line" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#e11d48" />
-              <stop offset="50%" stopColor="#4f46e5" />
-              <stop offset="100%" stopColor="#0284c7" />
-            </linearGradient>
-          </defs>
-          {/* PM → FE, PM → BE, FE → QA, BE → QA */}
-          <path d="M50,14 L14,42" className="flow-dash" stroke="url(#flow-line)" strokeWidth="0.5" fill="none" />
-          <path d="M50,14 L86,42" className="flow-dash" stroke="url(#flow-line)" strokeWidth="0.5" fill="none" />
-          <path d="M16,62 L46,86" className="flow-dash" stroke="url(#flow-line)" strokeWidth="0.5" fill="none" />
-          <path d="M84,62 L54,86" className="flow-dash" stroke="url(#flow-line)" strokeWidth="0.5" fill="none" />
-          {/* QA feedback loop → Backend */}
-          <path
-            d="M66,82 C92,78 94,66 88,58"
-            stroke="#0284c7"
-            strokeWidth="0.4"
-            strokeDasharray="2 2"
-            fill="none"
-            opacity="0.7"
-          />
+      <div className="flex flex-wrap items-center gap-2 text-[11px] text-on-background/60">
+        <span className="rounded-full bg-primary/10 px-2 py-1 font-semibold text-primary">PM ORCHESTRATION</span>
+        <span>계획에서 실행으로, 검증에서 다음 계획으로</span>
+      </div>
+      <div className="flow-stage grid-faint">
+        <svg viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true" className="flow-connectors">
+          <defs>{Object.entries(EDGE_COLOR).map(([kind, color]) => <marker key={kind} id={`${markerId}-${kind}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill={color} /></marker>)}</defs>
+          {FLOW_EDGES.map((edge) => <g key={`${edge.from}-${edge.to}`}>
+            <path data-testid={`flow-link-${edge.from}-${edge.to}`} d={edge.path}
+              stroke={EDGE_COLOR[edge.kind]} strokeWidth="1.2" strokeOpacity="0.25" vectorEffect="non-scaling-stroke" fill="none"
+              markerEnd={`url(#${markerId}-${edge.kind})`} />
+            <path className={`flow-stream flow-stream-${edge.kind}`} d={edge.path}
+              stroke={EDGE_COLOR[edge.kind]} strokeWidth="2.2" vectorEffect="non-scaling-stroke" fill="none" />
+          </g>)}
         </svg>
-        <span className="absolute right-[6%] top-[68%] rounded-full bg-qa/10 px-2 py-0.5 text-[10px] font-medium text-qa">
-          ↻ QA FEEDBACK
-        </span>
-
-        {(["PM", "FRONTEND", "BACKEND", "QA"] as const).map((role) => (
-          <div key={role} className="absolute" style={POS[role]}>
-            <FlowNode role={role} agent={byRole[role]} snapshot={snapshot} />
-          </div>
-        ))}
+        <section className="flow-plan" aria-label="계획 및 조율">
+          <h4 className="flow-stage-title"><span>01</span> 계획 · 조율</h4>
+          <FlowNode node={getNode("PM")} />
+        </section>
+        <div className="flow-caption flow-dispatch"><Icon name="arrow_downward" size={13} /> 작업 분배</div>
+        <section className="flow-execution" aria-label="역할별 실행">
+          <h4 className="flow-stage-title"><span>02</span> 역할별 실행</h4>
+          <div className="flow-execution-cards">{EXECUTION_ROLES.map((role) => <FlowNode key={role} node={getNode(role)} />)}</div>
+        </section>
+        <div className="flow-caption flow-handoff"><Icon name="arrow_downward" size={13} /> 결과 전달 · 검증</div>
+        <section className="flow-validation" aria-label="QA 검증">
+          <h4 className="flow-stage-title"><span>03</span> 검증 · 결과 보고</h4>
+          <FlowNode node={getNode("QA")} />
+        </section>
+        <div className="flow-loop-label flow-control-label"><Icon name="south" size={13} /> 검증 지시</div>
+        <div className="flow-loop-label flow-feedback-label"><Icon name="north" size={13} /> 결과 보고 · 재계획</div>
       </div>
-
-      {/* Mobile / narrow: stacked cards, no connectors */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:hidden">
-        {(["PM", "FRONTEND", "BACKEND", "QA"] as const).map((role) => (
-          <div key={role} className="flex justify-center">
-            <FlowNode role={role} agent={byRole[role]} snapshot={snapshot} />
-          </div>
-        ))}
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-outline-variant pt-3 text-[11px] text-on-background/65" aria-label="흐름 안내">
+        <span className="flex items-center gap-1 text-primary"><Icon name="alt_route" size={14} /> PM → 역할별 작업 배정</span>
+        <span className="flex items-center gap-1 text-qa"><Icon name="merge" size={14} /> FE · BE · DB → QA</span>
+        <span className="flex items-center gap-1 text-[#b45309]"><Icon name="subdirectory_arrow_left" size={14} /> QA → PM 피드백</span>
       </div>
-
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-4 border-t border-outline-variant pt-2">
-        {legend.map((l) => (
-          <span key={l.code} className="flex items-center gap-1.5 text-[11px] text-on-background/60">
-            <span className="h-2 w-2 rounded-full" style={{ background: roleColor(l.code) }} />
-            {l.label}
-          </span>
-        ))}
-      </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-on-background/55">PM은 QA에도 직접 검증을 지시하고, 결과에 따라 후속 계획을 조율합니다. 역할 간 기본 흐름이며 실제 실행 순서는 Task 의존성과 승인 조건을 따릅니다.</p>
     </GlassPanel>
   );
 }

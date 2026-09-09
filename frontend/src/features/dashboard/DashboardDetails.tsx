@@ -9,15 +9,17 @@ import { TokenUsage } from "./TokenUsage";
 
 const TABS: [DashboardPanel, string][] = [["overview", "요약"], ["tasks", "작업"], ["plan", "계획 검토"], ["quality", "품질"], ["resources", "토큰"], ["activity", "활동"], ["artifacts", "결과물"]];
 export function DashboardDetails() {
-  const ui = useStore((s) => s.ui);
-  const selected = ui.dashboardPanel ?? "overview";
+  const selected = useStore((s) => s.ui.dashboardPanel) ?? "overview";
+  const scrollRequest = useStore((s) => s.dashboardScrollRequest);
   const select = useStore((s) => s.setDashboardPanel);
   const snapshot = useStore((s) => s.snapshot);
   const root = useRef<HTMLElement>(null);
   const panel = TABS.some(([id]) => id === selected) ? selected : "overview";
   useEffect(() => {
+    if (!scrollRequest || scrollRequest.panel !== panel) return;
     if (panel !== "overview") root.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-  }, [panel, ui]);
+    useStore.setState({ dashboardScrollRequest: null });
+  }, [panel, scrollRequest]);
   const pendingPlans = snapshot?.plans.filter((p) => p.status === "REVIEW" || p.status === "FINAL_APPROVAL_PENDING").length ?? 0;
   return <section ref={root} aria-label="프로젝트 상세 탐색" className="scroll-mb-24" data-testid="dashboard-details">
     <div role="tablist" aria-label="프로젝트 상세" className="mb-3 flex gap-1 overflow-x-auto rounded-xl border border-outline-variant/60 bg-white/70 p-1">

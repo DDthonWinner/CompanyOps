@@ -1,6 +1,7 @@
 import { GlassPanel } from "../../../components/ui/GlassPanel";
-import { DESK_ROLES, ROLE_LABEL } from "../../../lib/roles";
+import { DESK_ROLES, ROLE_LABEL, roleColor } from "../../../lib/roles";
 import { useStore } from "../../../store/useStore";
+import { useTycoonStore } from "../tycoonStore";
 
 const STATUS_COLOR: Record<string, string> = {
   WORKING: "#059669",
@@ -18,13 +19,14 @@ export function AgentList() {
   const openSheet = useStore((s) => s.openSheet);
   const openAgentSheet = useStore((s) => s.openAgentSheet);
   const setCamera = useStore((s) => s.setCamera);
+  const reassignments = useTycoonStore((s) => s.reassignments);
   if (!snapshot) return null;
 
-  const codeOf = (roleId: string) => rolesById[roleId]?.code;
+  const effRole = (a: { id: string; roleId: string }) => reassignments[a.id] ?? rolesById[a.roleId]?.code;
   const agents = snapshot.agents.filter((a) => a.status !== "REMOVED");
   const order = [...DESK_ROLES];
   const grouped = order
-    .map((code) => ({ code, list: agents.filter((a) => codeOf(a.roleId) === code) }))
+    .map((code) => ({ code, list: agents.filter((a) => effRole(a) === code) }))
     .filter((g) => g.list.length > 0);
 
   const select = (id: string) => {
@@ -51,6 +53,7 @@ export function AgentList() {
             <ul className="space-y-0.5">
               {list.map((a) => {
                 const sel = openSheet?.kind === "agent" && openSheet.id === a.id;
+                const sc = STATUS_COLOR[a.status] ?? "#767586";
                 return (
                   <li key={a.id}>
                     <button
@@ -60,13 +63,17 @@ export function AgentList() {
                         sel ? "bg-primary/15 ring-1 ring-primary/40" : "hover:bg-surface-high"
                       }`}
                     >
-                      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: a.displayColor }} />
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ background: reassignments[a.id] ? roleColor(code) : a.displayColor }}
+                      />
                       <span className="flex-1 truncate">{a.displayName}</span>
                       <span
-                        className="h-2 w-2 shrink-0 rounded-full"
-                        style={{ background: STATUS_COLOR[a.status] ?? "#767586" }}
-                        title={a.status}
-                      />
+                        className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                        style={{ backgroundColor: `${sc}22`, color: sc }}
+                      >
+                        {a.status}
+                      </span>
                     </button>
                   </li>
                 );

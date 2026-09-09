@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Snapshot } from "../../../api/types";
 import { useStore } from "../../../store/useStore";
+import { DESK_ROLES } from "../../../lib/roles";
 import { agentMetrics } from "../agentMetrics";
 import { AgentOverview } from "../AgentOverview";
 import { DevelopmentFlow } from "../DevelopmentFlow";
@@ -63,11 +64,35 @@ describe("dashboard flow components (04 §5,§6,§14)", () => {
     expect(m.percent).toBe(33); // round(100*1/3)
   });
 
-  it("DevelopmentFlow renders the four role nodes", () => {
+  it("DevelopmentFlow matches tycoon roles and connects QA and Database directly to PM", () => {
     render(<DevelopmentFlow />);
     expect(screen.getByTestId("development-flow")).toBeInTheDocument();
     expect(screen.getAllByText("Frontend").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Backend").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /상세 보기/ })).toHaveLength(DESK_ROLES.length);
+    for (const role of DESK_ROLES.filter((code) => code !== "PM")) {
+      expect(screen.getByTestId(`flow-link-PM-${role}`)).not.toHaveAttribute("marker-start");
+      expect(screen.getByTestId(`flow-link-PM-${role}`)).toHaveAttribute("marker-end");
+    }
+    expect(screen.getByTestId("flow-link-QA-PM")).toHaveAttribute("marker-end");
+    for (const role of ["FRONTEND", "BACKEND", "DATABASE"]) {
+      expect(screen.getByTestId(`flow-link-${role}-QA`)).toHaveAttribute("marker-end");
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Database 상세 보기" }));
+    expect(useStore.getState().openSheet).toEqual({ kind: "desk", id: "DATABASE" });
+  });
+
+  it("groups multiple agents per role and opens their shared department", () => {
+    const s = snap();
+    s.agents.push({ ...s.agents[0], id: "fe-2", displayName: "Second FE" });
+    useStore.setState({ snapshot: s });
+    render(<DevelopmentFlow />);
+    const fe = screen.getByRole("button", { name: "Frontend 상세 보기" });
+    expect(fe).toHaveTextContent("배정 2명");
+    fireEvent.click(fe);
+    expect(useStore.getState().openSheet).toEqual({ kind: "desk", id: "FRONTEND" });
+    fireEvent.click(screen.getByRole("button", { name: "Backend 상세 보기" }));
+    expect(useStore.getState().openSheet).toEqual({ kind: "agent", id: "a2" });
   });
 
   it("AgentOverview shows current & next step", () => {
@@ -81,6 +106,19 @@ describe("dashboard flow components (04 §5,§6,§14)", () => {
     const el = screen.getByTestId("dash-progress");
     expect(el).toHaveTextContent("67%");
     expect(el).toHaveTextContent("12개 작업 중 8개 완료");
+  });
+
+  it("counts working and assigned agents from the shared roster", () => {
+    const s = snap();
+    s.project.assignedAgentCount = 4;
+    s.project.workingAgentCount = 4;
+    useStore.setState({ snapshot: s });
+    render(<HeaderStrip />);
+    const tile = screen.getByRole("button", { name: /활성 에이전트/ });
+    expect(tile).toHaveTextContent("1/ 2");
+    const agents = [...s.agents, { ...s.agents[0], id: "new" }, { ...s.agents[0], id: "removed", status: "REMOVED" as const }];
+    act(() => useStore.setState({ snapshot: { ...s, agents } }));
+    expect(tile).toHaveTextContent("2/ 3");
   });
 
   it("TokenUsage shows total + per-role breakdown when collected", () => {
