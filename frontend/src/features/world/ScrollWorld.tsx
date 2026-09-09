@@ -28,6 +28,8 @@ export function ScrollWorld() {
   const [sceneFailed, setSceneFailed] = useState(false);
   const webgl = useMemo(isWebGLAvailable, []);
   const setActiveTab = useStore((s) => s.setActiveTab);
+  const requestGate = useStore((s) => s.requestGate);
+  const enteredRef = useRef(false);
   const chapter = chapterAt(progress);
   const arrived = progress >= 0.98;
   const officeReveal = segment(progress, 0.90, 0.98);
@@ -80,8 +82,17 @@ export function ScrollWorld() {
   };
 
   useEffect(() => {
-    if (progress >= 0.9) setActiveTab("tycoon");
-  }, [progress, setActiveTab]);
+    if (progress >= 0.9) {
+      setActiveTab("tycoon");
+      // Land on the project village (selection/creation), not straight into an office.
+      if (!enteredRef.current) {
+        enteredRef.current = true;
+        requestGate("village");
+      }
+    } else if (progress < 0.85) {
+      enteredRef.current = false; // re-arm if the user scrolls back up
+    }
+  }, [progress, setActiveTab, requestGate]);
 
   return (
     <div className={`world-scroll ${arrived ? "is-in-office" : ""}`} ref={scroller} data-testid="world-scroll" tabIndex={0} aria-label="CompanyOps 아이디어에서 프로젝트로 이어지는 스크롤 여정">
