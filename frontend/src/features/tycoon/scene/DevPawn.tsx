@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { useStore } from "../../../store/useStore";
 import { useTycoonStore } from "../tycoonStore";
 import { dispatchSelection } from "../selectionEvent";
-import { agentDrag } from "./agentDrag";
+import { agentDrag, applyOpacity } from "./agentDrag";
 import { CityMascot } from "./CityMascot";
 
 const ORB_COLOR: Record<string, string> = {
@@ -15,7 +15,7 @@ const ORB_COLOR: Record<string, string> = {
   ASSIGNED: "#4f46e5",
 };
 
-const MASCOT_SCALE = 3.0;
+const MASCOT_SCALE = 2.7;
 const FACE_CAMERA = Math.PI / 4; // idle / planning → face the viewer
 const FACE_MONITOR = Math.PI; // working → turn to the desk monitor (−z)
 const HOLD_MS = 200; // press-and-hold before an agent can be dragged
@@ -111,6 +111,8 @@ export function DevPawn({
   const armR = useRef<THREE.Group>(null);
   const bubble = useRef<THREE.Group>(null);
   const arms = useMemo(() => ({ left: armL, right: armR }), []);
+  const dimK = useRef(1);
+  const dimApplied = useRef(1);
 
   const pos = useRef(new THREE.Vector3(position[0], 0, position[1]));
   const seat = useRef(new THREE.Vector3(position[0], 0, position[1]));
@@ -155,7 +157,10 @@ export function DevPawn({
   // Window listeners (attached once) — drive drag position + handle drop.
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
-      if (agentDrag.activeId === projectAgentId) projectGround(e.clientX, e.clientY);
+      if (agentDrag.activeId === projectAgentId) {
+        projectGround(e.clientX, e.clientY);
+        agentDrag.hoverRole = latest.current.resolveDeskAt(agentDrag.ground.x, agentDrag.ground.z);
+      }
     };
     const onUp = (e: PointerEvent) => {
       if (!pressing.current) return;
@@ -171,6 +176,7 @@ export function DevPawn({
         const { resolveDeskAt: resolve, roleCode: role, onPuff: puff } = latest.current;
         const drop = resolve(agentDrag.ground.x, agentDrag.ground.z);
         agentDrag.activeId = null;
+        agentDrag.hoverRole = null;
         agentDrag.didDrag = true;
         setTimeout(() => {
           agentDrag.didDrag = false;
@@ -275,6 +281,16 @@ export function DevPawn({
       }
     }
     if (bubble.current) bubble.current.position.y = 12.0 + Math.sin(t * 1.6 + phase) * 0.18;
+
+    // Fade agents already at the desk currently under the dragged agent (drop preview).
+    const dim = agentDrag.activeId !== null && !dragging && agentDrag.hoverRole === roleCode;
+    const targetK = dim ? 0.35 : 1;
+    dimK.current += (targetK - dimK.current) * 0.25;
+    if (targetK === 1 && dimK.current > 0.99) dimK.current = 1;
+    if (dimK.current !== dimApplied.current) {
+      applyOpacity(body.current, dimK.current);
+      dimApplied.current = dimK.current;
+    }
   });
 
   const orbColor = ORB_COLOR[status] ?? "#767586";

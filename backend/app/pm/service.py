@@ -355,6 +355,56 @@ def assign_agents(session: Session, project_id: str, req: dict) -> dict:
             "assignedAgents": [agent_dict(a) for a in created]}
 
 
+_DESK_ROLE_CODES = ["FRONTEND", "BACKEND", "DATABASE", "QA"]
+
+
+def hire_one_agent(session: Session, project_id: str) -> dict:
+    """Hire one additional agent onto the least-staffed desk. Creates a fresh
+    profile so it can always add someone (Tycoon Office 'Agent 고용하기')."""
+    p = _require_project(session, project_id)
+    existing = list(session.execute(
+        select(ProjectAgent).where(ProjectAgent.project_id == project_id)
+    ).scalars())
+    active = [a for a in existing if a.status != "REMOVED"]
+    if len(active) >= p.max_agent_count:
+        raise conflict(f"정원({p.max_agent_count})에 도달했습니다.", code="CAP_REACHED")
+
+    role_by_id = {r.id: r for r in session.execute(select(Role)).scalars()}
+    counts = {code: 0 for code in _DESK_ROLE_CODES}
+    for a in active:
+        code = role_by_id[a.role_id].code if a.role_id in role_by_id else None
+        if code in counts:
+            counts[code] += 1
+    target_code = min(_DESK_ROLE_CODES, key=lambda c: counts[c])
+    role = _role_by_code(session, target_code)
+    model = session.execute(select(LlmModel).where(LlmModel.is_active == 1)).scalars().first()
+    if model is None:
+        raise conflict("사용 가능한 LLM 모델이 없습니다.", code="NO_MODEL")
+
+    seq = len(existing) + 1
+    color = rec.ROLE_COLOR.get(target_code, "#4F46E5")
+    icon = rec.ROLE_ICON.get(target_code, "cog")
+    profile = AgentProfile(
+        name=f"{target_code.title()} Recruit #{seq}", role_id=role.id,
+        default_llm_model_id=model.id, skill_level="MID",
+        default_color=color, default_icon_key=icon, is_active=1,
+    )
+    session.add(profile)
+    session.flush()
+
+    pa = ProjectAgent(
+        project_id=project_id, agent_profile_id=profile.id, role_id=role.id,
+        llm_model_id=model.id, display_name=f"Recruit {target_code.title()} #{seq}",
+        display_color=color, icon_key=icon, status="ASSIGNED", is_primary_pm=0,
+        assignment_reason="Hired from Tycoon Office",
+    )
+    session.add(pa)
+    session.flush()
+    p.updated_at = utcnow_iso()
+    platform.touch(session, project_id, "agent.updated", pa.id)
+    return {"projectId": project_id, "agent": agent_dict(pa)}
+
+
 def list_project_agents(session: Session, project_id: str) -> list[dict]:
     agents = session.execute(
         select(ProjectAgent).where(ProjectAgent.project_id == project_id)
