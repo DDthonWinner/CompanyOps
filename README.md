@@ -1,112 +1,205 @@
 # CompanyOps
 
-A tycoon-style operations app where an operator creates software **projects**, assigns a team of **AI agents**, drives a **plan → approve → execute → review** loop, and reviews an **AI-utilization score** when a project completes. Two views share one shell:
+AI 개발 팀을 구성하고 계획 승인부터 개발·검증·결과 회고까지 관리하는 타이쿤형 프로젝트 운영 서비스입니다.
 
-- **Tycoon Office** — a 2.5D isometric office (React Three Fiber) that mirrors live project state.
-- **Dashboard** — a Human–AI control center: create projects, staff teams, review/approve plans and milestone results, watch QA/activity, and read AI-utilization feedback.
+## 문제
 
-Built with the AWS **AI-DLC** methodology (process docs in `aidlc-docs/`).
+AI 코딩 도구를 활용하는 개인 개발자와 소규모 팀은 코드를 생성하는 것 외에도 여러 관리 작업을 직접 해야 합니다. 요구사항을 역할별 작업으로 나누고, 작업 순서를 조율하고, 생성된 코드의 검증 결과와 Git 반영 여부를 확인해야 합니다. 대화 기록·작업 목록·테스트 결과가 흩어져 있으면 어떤 작업이 완료되었고 어디에 사람의 결정이 필요한지 파악하기 어렵습니다.
 
-## Monorepo layout
+프로젝트가 끝난 뒤에도 AI가 얼마나 일을 수행했는지, 어떤 영역에서 활용이 부족했는지, 토큰 사용이 효율적이었는지 돌아볼 근거가 필요합니다. CompanyOps는 **AI에게 일을 맡기는 과정과 사람이 결정해야 하는 지점, 완료 후 활용 평가를 하나의 프로젝트 안에서 연결**합니다.
+
+## 해결 방법
+
+사용자는 프로젝트의 운영자가 되어 프로젝트 관리·프론트엔드·백엔드·데이터베이스·품질 검증 역할의 AI 에이전트를 배정합니다. **타이쿤 오피스**에서는 팀의 작업 상태를 오피스 형태로 살펴보고, **대시보드**에서는 계획·승인·작업·품질·결과물을 구체적으로 관리합니다. 두 화면은 같은 프로젝트 상태를 공유합니다.
+
+### 프로젝트 진행 흐름
+
+1. **프로젝트 생성과 팀 구성** — 프로젝트를 만들고 에이전트 프로필을 추천받거나 선택해 역할별 팀을 배정합니다.
+2. **계획 검토와 실행 승인** — 계획에 피드백을 전달하고, 검토를 마친 버전을 최종 승인합니다.
+3. **작업 실행과 검증** — 서버의 오케스트레이터가 의존성과 승인 조건에 따라 작업을 실행하고 기술 검증와 Git 게시를 연결합니다. 결정이 필요한 작업은 사용자의 응답을 기다립니다.
+4. **마일스톤 결과 승인** — 완료된 작업 묶음의 결과를 사람이 검토합니다. 수정이 필요하면 새 계획과 결과 검토 과정을 거칩니다.
+5. **AI 활용 피드백** — 프로젝트 완료 후 자율 수행도·토큰 효율·영역별 AI 활용을 확인하고 다음 프로젝트의 개선점을 살펴봅니다.
+
+작업 진행률 100%와 프로젝트 완료는 구분합니다. 프로젝트 완료에는 모든 대상 작업의 완료뿐 아니라 마일스톤 결과 승인도 필요합니다.
+
+### 주요 기능
+
+| 기능 | 제공하는 내용 |
+| --- | --- |
+| 프로젝트·AI 팀 관리 | 프로젝트별 에이전트 프로필, 역할 배정, 작업과 마일스톤 관리 |
+| 타이쿤 오피스 | 역할별 데스크와 에이전트, 작업 상태를 표현하는 2.5D 오피스와 선택 패널 |
+| 개발 흐름도 | 프로젝트 관리 역할 중심의 작업 배정, 개발 역할의 결과 전달, 품질 검증과 결과 보고 관계 시각화. 미배정 역할은 비활성 표시 |
+| 대시보드 | 진행률, 에이전트의 현재·다음 작업, 프로젝트 요약, 작업·계획·품질·토큰·활동·결과물 상세 탐색 |
+| 확인 요청 모음 | 결정 요청, 계획 실행 승인, 마일스톤 결과 승인 등 사용자가 처리할 항목 안내 |
+| Git 연동 | 프로젝트 브랜치와 작업별 변경·커밋·게시 상태 추적. 실제 Git 실행은 별도 환경설정으로 활성화 |
+| AI 활용 피드백 | 완료 프로젝트의 지표와 관찰·영향·개선 제안 제공. 상단 완료 카드에서 피드백 영역으로 이동·펼침·생성/조회 |
+| 상태 동기화 | SSE 알림과 프로젝트 상태 전체 조회을 통해 오피스와 대시보드 상태 갱신 |
+
+AI 활용 점수는 제품 품질 점수나 기술 검증 통과율이 아닙니다. 유효한 활용 관점 점수의 평균이며, 데이터가 부족한 항목은 `N/A`로 표시합니다. 현재 개발 확인용 **테스트 중** 토글은 진행 중인 프로젝트의 임시 피드백을 정식 리포트 저장 없이 확인하는 용도입니다.
+
+### 기술 구성
+
+| 영역 | 기술 및 역할 |
+| --- | --- |
+| 프론트엔드 | React, TypeScript, Vite, Tailwind CSS, Zustand |
+| 오피스 시각화 | React Three Fiber, Three.js |
+| 백엔드 | Python, FastAPI, SQLAlchemy, SQLite |
+| 작업 처리·동기화 | 서버 프로세스 내 작업 실행기, HTTP API, SSE |
+| 모델 실행 | 실행 제공자 인터페이스를 통한 예제 응답과 OpenAI GPT 호출 전환 |
+| 검증 | pytest, Vitest, React Testing Library, Playwright |
+
+```text
+backend/       프로젝트·오케스트레이션·Git·AI 활용 평가 API와 작업 실행기
+frontend/      타이쿤 오피스, 대시보드, 공통 상태와 사용자 화면
+requirements/  제품 요구사항·디자인·통합 계약
+aidlc-docs/    AI-DLC 요구사항 분석·설계·유닛별 구현·검증 기록
 ```
-backend/       FastAPI + SQLite + in-process task worker + SSE     (Python 3.11+)
-frontend/      React + TypeScript + Vite + Tailwind + Zustand + React Three Fiber
-aidlc-docs/    AI-DLC process docs (requirements → design → construction)
-requirements/  source product requirements
-```
 
-## Prerequisites
-- **Python 3.11+** with the venv module. On Debian/Ubuntu you may need the matching venv package, e.g. `sudo apt install python3-venv` (or `python3.14-venv`).
-- **Node.js 18+** and **npm**.
-- **git** (only needed for `GIT_MODE=real`, i.e. real pushes).
+현재는 단일 사용자·단일 서버 프로세스 기반의 로컬 최소 기능 제품입니다. 일반 작업 흐름의 프로젝트별 쓰기 작업은 순차 실행하며, 화면에 보이는 에이전트 수가 동시에 실행되는 작업 수를 뜻하지는 않습니다.
 
----
+## 실행 방법
 
-## 1. Run the backend (terminal A)
+기본 설정은 외부 모델의 인증 키 없이 실행 가능합니다. 프로젝트 최상위 폴더에서 백엔드와 프론트엔드를 각각 다른 터미널로 실행합니다. 실제 모델 호출과 원격 저장소 게시에는 별도 설정이 필요합니다.
+
+### 사전 준비
+
+- **Python 3.11 이상**과 가상환경 모듈이 필요합니다. 데비안·우분투에서는 `sudo apt install python3-venv` 등 사용 중인 파이썬 버전에 맞는 가상환경 패키지를 설치해야 할 수 있습니다.
+- **Node.js 18 이상**과 **npm**이 필요합니다.
+- 실제 저장소에 게시하는 `GIT_MODE=real` 설정에서는 **Git**과 저장소 접근 권한이 필요합니다.
+- 아래 명령은 배시 계열 셸 기준입니다. 윈도 명령 프롬프트의 가상환경 활성화 명령은 `venv\Scripts\activate`입니다.
+
+### 1. 백엔드 실행 — 첫 번째 터미널
+
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate                 # Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env                      # demo defaults are fine
-python seed.py                            # seed roles, models, doc templates, starter agent profiles
-uvicorn app.main:app --reload             # or: ./run.sh   (creates venv + seeds + serves)
+cp .env.example .env
+python seed.py
+uvicorn app.main:app --reload
 ```
-- API: **http://127.0.0.1:8000** · interactive docs: **/docs** · health: **/health**
-- On first run it creates `backend/data/companyops.db` (SQLite). Delete that file to reset all data (re-run `python seed.py` afterward).
 
-## 2. Run the frontend (terminal B)
+`python seed.py`는 역할·모델·문서 양식·기본 에이전트 프로필을 등록합니다. `./run.sh`를 사용하면 가상환경 준비·초기 데이터 등록·서버 실행을 함께 수행할 수 있습니다.
+
+- 서버 주소: **http://127.0.0.1:8000**
+- 대화형 API 문서: **http://127.0.0.1:8000/docs**
+- 서버 상태 확인: **http://127.0.0.1:8000/health**
+- 처음 실행하면 `backend/data/companyops.db`에 SQLite 데이터베이스가 생성됩니다. 전체 초기화 방법은 아래 문제 해결 항목을 참고하세요.
+
+### 2. 프론트엔드 실행 — 두 번째 터미널
+
 ```bash
 cd frontend
 npm install
-cp .env.example .env                      # VITE_API_BASE defaults to http://127.0.0.1:8000
+cp .env.example .env
 npm run dev
 ```
-Open **http://localhost:5173**.
 
----
+브라우저에서 **http://localhost:5173**에 접속합니다. `frontend/.env`의 `VITE_API_BASE` 기본값은 `http://127.0.0.1:8000`입니다.
 
-## 3. Try the connected flow (demo mode)
-Everything below works with the defaults (deterministic fixture AI, git publishing stubbed) — no API keys needed.
+### 3. 다섯 역할의 전체 작업 흐름 확인
 
-Create a runnable example with all five roles:
+기본 설정에서는 준비된 예제 응답을 사용하고 원격 저장소 게시는 모의 처리하므로 외부 모델의 인증 키가 필요하지 않습니다. 프로젝트 최상위 폴더에서 다음 명령으로 다섯 역할이 모두 배정된 예제 프로젝트를 만듭니다.
 
 ```bash
 cd backend
 venv/bin/python seed_flow_demo.py
 ```
 
-1. Refresh **http://localhost:5173** and use **오피스로 바로 가기** if the introduction is shown, choose **데모 · 5역할 전체 개발 흐름** in the project picker, and open **Dashboard**.
-2. PM, Frontend, Backend, Database, and QA are each assigned once. The demo includes 12 dependent tasks; 2 PM preparation tasks are already complete.
-3. In the **결정 필요** card, enter `샘플 데이터로 진행` and click **결정 전달**. The remaining 10 tasks run through FE/BE/DB implementation, QA validation, and PM result reporting using the existing worker.
-4. Inspect task progress, role tokens, QA, and artifacts. Fixture work completes quickly; it does not make real model calls or publish to a remote repository.
-5. At 12/12 tasks, approve the **Milestone 결과 승인** card. The project completes and its AI-utilization report can be reviewed.
+1. **http://localhost:5173**을 새로고침합니다. 소개 화면이 나오면 **오피스로 바로 가기**를 누르고, 프로젝트 선택에서 **데모 · 5역할 전체 개발 흐름**을 선택한 뒤 대시보드를 엽니다.
+2. 프로젝트 관리·프론트엔드·백엔드·데이터베이스·품질 검증 역할이 각각 한 명씩 배정됩니다. 선행 관계가 있는 작업 12개 중 프로젝트 관리 역할의 준비 작업 2개는 완료된 상태입니다.
+3. **결정 필요** 카드에 `샘플 데이터로 진행`을 입력하고 **결정 전달**을 누릅니다. 나머지 10개 작업이 구현·품질 검증·결과 보고 순서로 실행됩니다.
+4. 작업 진행률, 역할별 토큰 사용량, 검증 결과와 결과물을 확인합니다. 예제 작업은 빠르게 완료되며 실제 모델을 호출하거나 원격 저장소에 게시하지 않습니다.
+5. 작업 12개가 모두 완료되면 마일스톤 결과 승인 카드에서 결과를 승인합니다. 프로젝트가 완료된 후 AI 활용 보고서를 확인할 수 있습니다.
 
-The seed preserves existing projects and reuses its previous demo. To create another independent run, use `venv/bin/python seed_flow_demo.py --new`. It requires `EXECUTION_MODE=demo`, `GIT_MODE=stub`, and an empty `QA_TEST_CMD`.
+초기화 스크립트는 기존 프로젝트를 보존하며, 이전에 만든 같은 예제를 재사용합니다. 별도 예제를 새로 만들려면 백엔드 폴더에서 `venv/bin/python seed_flow_demo.py --new`를 실행합니다. 이 예제에는 `EXECUTION_MODE=demo`, `GIT_MODE=stub`, 값이 비어 있는 `QA_TEST_CMD` 설정이 필요합니다.
 
-The Dashboard has no bottom chat/command bar. Project creation and staffing remain available through **새 프로젝트** and **팀 매칭**; plan review and decision/result responses use their dedicated panels.
+프로젝트 생성과 팀 구성은 **새 프로젝트**와 **팀 매칭**에서 진행합니다. 계획 검토, 결정 응답, 결과 승인은 각각의 전용 영역에서 처리합니다. 오피스와 대시보드는 프로젝트 선택·탭·연결 상태를 표시하는 상단 바를 공유하며 같은 상태로 동기화됩니다.
 
-Both tabs share one top bar (project picker, tabs, connection status) and stay in sync.
+### 4. 환경설정
 
----
+백엔드 설정 파일은 `backend/.env`입니다.
 
-## 4. Configuration (`backend/.env`)
-| Var | Default | Meaning |
-|---|---|---|
-| `EXECUTION_MODE` | `demo` | `demo` = deterministic fixture AI (shows "AI 서버 미연결 / 데모 데이터"); `openai` = real GPT |
-| `OPENAI_API_KEY` / `OPENAI_MODEL` | — / `gpt-4o-mini` | used only when `EXECUTION_MODE=openai` (falls back to fixture on error) |
-| `GIT_MODE` | `stub` | `stub` = simulated publish (safe demos); `real` = real `git` clone/commit/**push** |
-| `GIT_REMOTE` | `…/DDthonWinner/TestOutput` | target remote for `real` mode (branch `project/{projectId}`) |
-| `DB_PATH` | `./data/companyops.db` | SQLite file |
-| `QA_TEST_CMD` | (empty) | real test command run in the checkout; empty ⇒ labeled demo PASS |
+| 환경변수 | 기본값 | 설명 |
+| --- | --- | --- |
+| `EXECUTION_MODE` | `demo` | `demo`는 준비된 예제 응답을 사용하며 화면에 데모 데이터임을 표시합니다. `openai`는 실제 모델을 호출합니다. |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | 미설정 / `gpt-4o-mini` | `EXECUTION_MODE=openai`에서 사용하는 인증 키와 모델입니다. 호출 오류 시 예제 응답 방식으로 전환합니다. |
+| `GIT_MODE` | `stub` | `stub`은 모의 게시, `real`은 실제 저장소 복제·커밋·원격 게시를 수행합니다. |
+| `GIT_REMOTE` | `https://github.com/DDthonWinner/TestOutput` | 실제 게시 대상 저장소입니다. 프로젝트별 `project/{projectId}` 브랜치를 사용합니다. |
+| `DB_PATH` | `./data/companyops.db` | SQLite 데이터베이스 파일 경로입니다. |
+| `QA_TEST_CMD` | 미설정 | 작업용 저장소에서 실행할 실제 테스트 명령입니다. 값이 비어 있으면 데모 검증 통과로 표시합니다. |
 
-**Real end-to-end** (optional): set `EXECUTION_MODE=openai` + `OPENAI_API_KEY`, and `GIT_MODE=real` with git credentials available in the server environment. Secrets stay in `.env` (git-ignored) and are never committed.
+실제 모델과 저장소를 연결하려면 `EXECUTION_MODE=openai`, `OPENAI_API_KEY`, `GIT_MODE=real`을 설정하고 서버 실행 계정에 저장소 접근 권한을 준비합니다. 실제 테스트를 수행하려면 `QA_TEST_CMD`도 지정해야 합니다. 인증 정보는 버전 관리에서 제외되는 `.env`에 보관합니다.
 
-Frontend: `frontend/.env` → `VITE_API_BASE` (backend URL).
+프론트엔드는 `frontend/.env`의 `VITE_API_BASE`에 백엔드 주소를 설정합니다.
 
----
+### 5. 테스트와 배포용 빌드
 
-## 5. Run the tests
+아래 명령 묶음은 각각 프로젝트 최상위 폴더에서 실행합니다.
+
+백엔드 테스트는 프로젝트·배정 규칙, 계획 승인 조건, 전체 작업 흐름, 로컬 저장소를 이용한 실제 Git 처리, AI 활용 점수 등을 검증합니다.
+
 ```bash
-# Backend (25 tests): PM invariants, plan-first 409 guards, connected flow,
-# real git against an offline file:// repo, UF scoring
 cd backend && ./venv/bin/python -m pytest -q
+```
 
-# Frontend (19 tests): store revision guard, SSE backoff, attention derivation,
-# plan-action version guards, UF gating
+프론트엔드 테스트는 상태 갱신, 재연결, 승인 제어, 화면 상호작용과 피드백 생성 조건 등을 검증합니다.
+
+```bash
 cd frontend && npm run test
+```
 
-# Frontend production build (typecheck + bundle)
+프론트엔드 배포용 빌드는 타입 검사와 파일 묶음 생성을 수행합니다.
+
+```bash
 cd frontend && npm run build
 ```
 
----
+### 6. 문제 해결
 
-## 6. Troubleshooting
-- **`ensurepip is not available` when creating the venv** → install your Python’s venv package (`sudo apt install python3-venv` / `python3.14-venv`) and recreate `backend/venv`.
-- **Frontend can’t reach the API / CORS** → confirm the backend is on `:8000` and `frontend/.env`’s `VITE_API_BASE` matches.
-- **Connection shows "연결 끊김"** → the backend isn’t running or the project isn’t selected; write actions are disabled while disconnected (by design).
-- **Reset everything** → stop the backend, delete `backend/data/companyops.db`, re-run `python seed.py`.
+- **가상환경 생성 중 `ensurepip is not available` 오류가 발생하는 경우** — 파이썬 버전에 맞는 가상환경 패키지를 설치한 뒤 `backend/venv`를 다시 만듭니다. 설치 명령의 예는 `sudo apt install python3-venv`입니다.
+- **화면에서 서버에 연결하지 못하거나 교차 출처 오류가 발생하는 경우** — 백엔드가 8000번 포트에서 실행 중인지 확인하고, `frontend/.env`의 `VITE_API_BASE`가 서버 주소와 일치하는지 확인합니다.
+- **연결 상태가 ‘연결 끊김’으로 표시되는 경우** — 백엔드 실행 상태와 프로젝트 선택 여부를 확인합니다. 연결이 끊긴 상태에서는 데이터 변경 동작이 제한됩니다.
+- **전체 데이터를 초기화하려는 경우** — 백엔드를 중지하고 `backend/data/companyops.db`를 삭제한 뒤 백엔드 폴더에서 `python seed.py`를 다시 실행합니다. 저장된 모든 프로젝트 데이터가 삭제되므로 보존할 데이터가 있다면 먼저 백업합니다.
 
-## Status
-All five units are implemented and tested (backend 25/25, frontend 19/19): `backend-pm`, `backend-git`, `backend-uf`, `frontend-tycoon`, `frontend-dashboard`. The Priority-1 connected flow works end-to-end. See `aidlc-docs/` for the full design and construction history.
+## 사용한 AI 도구
+
+### AI-DLC를 적용한 개발 과정
+
+CompanyOps는 **AWS AI-DLC(인공지능 주도 개발 생명주기)**를 활용해 개발했습니다. AI가 단계별 분석·설계·구현 산출물을 작성하고 사람이 질문에 답하고 검토·승인하며 다음 단계로 진행하는 과정을 기록했습니다.
+
+| 단계 | 이 프로젝트에서 수행한 내용 | 기록 |
+| --- | --- | --- |
+| 구상 단계 — 요구사항 분석 | 기능별 요구사항을 통합하고 모델 연결 방식, Git 게시, 기술 스택, 최소 기능 제품의 범위를 질문과 답변으로 확정 | [요구사항](aidlc-docs/inception/requirements/requirements.md), [확인 질문과 결정](aidlc-docs/inception/requirements/requirement-verification-questions.md) |
+| 구상 단계 — 사용자 흐름·설계 | 운영자 관점의 사용자 스토리, 수용 기준, 컴포넌트 책임과 API·데이터 흐름 설계 | [사용자 스토리](aidlc-docs/inception/user-stories/stories.md), [애플리케이션 설계](aidlc-docs/inception/application-design/application-design.md) |
+| 구상 단계 — 개발 단위 분리 | 프로젝트 관리·오케스트레이션, Git, AI 활용 평가, 타이쿤 오피스, 대시보드의 5개 유닛으로 나누고 의존성과 구현 순서 정의 | [개발 단위 정의](aidlc-docs/inception/application-design/unit-of-work.md) |
+| 구축 단계 — 기능·비기능 설계 | 유닛별 동작과 상태 전이, 승인 조건, 동시성 제어, 재연결과 복구 방안 구체화 | [유닛별 산출물](aidlc-docs/construction/), [비기능 설계](aidlc-docs/construction/system/nfr-design/nfr-design-patterns.md) |
+| 구축 단계 — 구현·검증 | 설계를 코드로 구현하고 유닛·통합 테스트, 프론트엔드 빌드로 동작 검증 | [빌드·테스트 기록](aidlc-docs/construction/build-and-test/build-and-test-summary.md) |
+
+이 과정에서 사람은 제품 범위와 승인 정책을 결정하고 산출물을 검토했으며, AI는 요구사항 구체화·설계 문서 작성·코드 구현·테스트 작성을 지원했습니다. 결정과 승인 이력은 [AI-DLC 감사 기록](aidlc-docs/audit.md)에 남아 있습니다. 구축 이후에는 실제 화면을 확인하며 흐름도, 에이전트 배정 표시, 정보 배치, 피드백 생성 경험을 반복적으로 개선했습니다.
+
+**AI-DLC는 CompanyOps를 개발한 방법론입니다.** 서비스가 실행될 때의 작업 배정·검증·승인·Git 처리는 FastAPI 기반 오케스트레이터와 각 모듈이 담당합니다. AI-DLC의 운영 단계는 현재 최소 기능 제품의 범위에 포함하지 않았습니다.
+
+### AI 도구 활용과 제품 내 모델 연결
+
+| 구분 | 도구·방식 | 적용 내용 |
+| --- | --- | --- |
+| 개발 지원 | Codex | 대시보드 화면과 피드백 동작 개선, API 연결 수정, 테스트 작성·실행 및 코드·문서 검토 |
+| 개발 프로세스 | AI-DLC 워크플로우와 AI 코딩 에이전트 | 요구사항 분석부터 설계·유닛 분리·구현·검증까지 단계별 산출물과 사람의 검토 기록 관리 |
+| 제품 내 실행 연동 | OpenAI API / GPT | `EXECUTION_MODE=openai`에서 역할과 작업 설명을 바탕으로 파일 내용을 생성하고 응답의 토큰 사용량 수집 |
+
+개발에 사용한 AI 도구와 제품 안에서 호출하는 모델은 구분합니다. 기본 예제 응답 방식은 외부 모델을 호출하지 않으며, 실제 모델 모드에서 오류가 발생해 예제 응답으로 전환된 경우에도 실행 모드를 기록합니다.
+
+## 팀
+
+### 팀명 : SYLKS
+
+| 이름 | 역할 |
+| --- | --- |
+| 김대혁 | 팀장/Dashboard |
+| 심대보 | API/Backend |
+| 유지수 | AI기반 평가시스템 개발 |
+| 임재욱 | 타이쿤/Design |
+| 송하윤 | 3D Rendering/Frontend |
+

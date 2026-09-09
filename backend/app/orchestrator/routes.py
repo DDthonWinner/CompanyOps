@@ -11,7 +11,7 @@ from sse_starlette.sse import EventSourceResponse
 from ..common import snapshot as snapshot_mod
 from ..common.errors import not_found
 from ..common.models import ArtifactVersion, QARun
-from ..common.platform import ActivityService
+from ..common.platform import ActivityService, write_locks
 from ..common.sse import broker
 from ..common.txn import mutate, read
 from ..config import get_settings
@@ -65,7 +65,12 @@ def plan_review_complete(project_id: str, plan_id: str, body: s.VersionedIn):
 
 
 @router.post("/projects/{project_id}/plans/{plan_id}/approve")
-def plan_approve(project_id: str, plan_id: str, body: s.VersionedIn):
+async def plan_approve(project_id: str, plan_id: str, body: s.VersionedIn):
+    from ..demo import service as demo_service
+    if read(lambda db: demo_service.replay_active(db, project_id)):
+        # Paced-replay projects: approve via the demo-safe path under the project write-lock.
+        async with write_locks.lock_for(project_id):
+            return mutate(lambda db: demo_service.manual_approve_plan(db, project_id, body.model_dump()))
     result = mutate(lambda db: service.approve_plan(db, plan_id, body.model_dump()))
     worker.enqueue_project(project_id)  # kick the worker after commit
     return result
@@ -111,7 +116,12 @@ def get_milestone_result(project_id: str, milestone_id: str):
 
 
 @router.post("/projects/{project_id}/sprint-milestones/{milestone_id}/result/reviews")
-def review_milestone_result(project_id: str, milestone_id: str, body: s.MilestoneReviewIn):
+async def review_milestone_result(project_id: str, milestone_id: str, body: s.MilestoneReviewIn):
+    from ..demo import service as demo_service
+    if read(lambda db: demo_service.replay_active(db, project_id)):
+        async with write_locks.lock_for(project_id):
+            return mutate(lambda db: demo_service.manual_review_milestone(
+                db, project_id, milestone_id, body.model_dump()))
     return mutate(lambda db: service.review_milestone_result(db, milestone_id, body.model_dump()))
 
 

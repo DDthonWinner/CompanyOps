@@ -24,6 +24,15 @@ from ..uf.models import Feedback, UtilizationMetric, UtilizationReport
 from .publishing import git_port
 
 ACTOR = "demo-replay"
+# Approval phases pause this long so the operator can approve manually; after the
+# grace window the scheduler auto-approves and advances (demo UX, not a business rule).
+APPROVAL_GRACE_SECONDS = 10
+APPROVAL_PHASES = ("PLAN_APPROVAL", "MILESTONE_REVIEW")
+
+
+def replay_active(db, pid) -> bool:
+    """True when a project is owned by demo replay (row exists, enabled or stopped)."""
+    return db.get(m.DemoReplay, pid) is not None
 
 
 def require_demo():
@@ -323,18 +332,7 @@ def tick(db, pid, *, force=False):
         orchestration.review_complete(db, p.active_plan_id, {"expectedVersion": p.active_plan_version})
         r.phase = "PLAN_APPROVAL"
     elif r.phase == "PLAN_APPROVAL":
-        p = db.get(m.Project, pid)
-        plan = db.get(m.PlanVersion, p.active_plan_id)
-        # Existing task IDs must remain stable; approve the existing plan without composing new tasks.
-        db.add(m.Approval(project_id=pid, kind="PLAN_EXECUTION", target_id=plan.id,
-                          target_version=plan.version, actor=ACTOR))
-        plan.status, p.status = "EXECUTING", "ACTIVE"
-        git_port().initialize_project_repository(pid)
-        for t in db.scalars(select(m.ProjectTask).where(m.ProjectTask.project_id == pid)):
-            t.approved_plan_id, t.approved_plan_version = plan.id, plan.version
-            _touch_task(db, t)
-        r.phase = "EXECUTING"
-        platform.touch(db, pid, "plan.updated", plan.id, {"demo": True, "actor": ACTOR})
+        _apply_plan_approval(db, r, actor=ACTOR)  # grace window elapsed → auto-approve
     elif r.phase == "EXECUTING":
         _execute(db, r)
     elif r.phase == "MILESTONE_REVIEW":
@@ -353,7 +351,71 @@ def tick(db, pid, *, force=False):
         _agents(db, pid)
     else:
         raise conflict(f"Unknown replay phase: {r.phase}")
-    delay = r.completion_seconds if r.phase == "COMPLETED" else r.interval_seconds
+    if r.phase in APPROVAL_PHASES:
+        delay = APPROVAL_GRACE_SECONDS  # pause for manual approval before auto-approving
+    elif r.phase == "COMPLETED":
+        delay = r.completion_seconds
+    else:
+        delay = r.interval_seconds
     r.next_tick_at = (datetime.now(timezone.utc) + timedelta(seconds=delay)).isoformat()
     platform.touch(db, pid, "demo.updated", pid,
                    {"demo": True, "phase": r.phase, "cycle": r.cycle, "actor": ACTOR})
+
+
+def _apply_plan_approval(db, r, *, actor):
+    """Approve the active plan without recomposing tasks (demo keeps stable task IDs).
+
+    Shared by the paced scheduler (actor=demo-replay) and manual operator approval.
+    """
+    pid = r.project_id
+    p = db.get(m.Project, pid)
+    plan = db.get(m.PlanVersion, p.active_plan_id)
+    db.add(m.Approval(project_id=pid, kind="PLAN_EXECUTION", target_id=plan.id,
+                      target_version=plan.version, actor=actor))
+    plan.status, p.status = "EXECUTING", "ACTIVE"
+    git_port().initialize_project_repository(pid)
+    for t in db.scalars(select(m.ProjectTask).where(m.ProjectTask.project_id == pid)):
+        t.approved_plan_id, t.approved_plan_version = plan.id, plan.version
+        _touch_task(db, t)
+    r.phase = "EXECUTING"
+    platform.touch(db, pid, "plan.updated", plan.id, {"demo": True, "actor": actor})
+
+
+def _resume_soon(db, r):
+    """After a manual approval, let the paced scheduler pick up the next phase promptly."""
+    if r.enabled:
+        r.next_tick_at = utcnow_iso()
+
+
+def manual_approve_plan(db, pid, req):
+    """Operator clicked the plan-approval button during the grace window."""
+    r = db.get(m.DemoReplay, pid)
+    p = db.get(m.Project, pid)
+    plan = db.get(m.PlanVersion, p.active_plan_id) if p and p.active_plan_id else None
+    if r is not None and r.phase == "PLAN_APPROVAL":
+        _apply_plan_approval(db, r, actor="operator")
+        _resume_soon(db, r)
+        platform.touch(db, pid, "demo.updated", pid,
+                       {"demo": True, "phase": r.phase, "cycle": r.cycle, "actor": "operator"})
+    return orchestration.plan_dict(db.get(m.PlanVersion, p.active_plan_id)) if plan else {"status": "OK"}
+
+
+def manual_review_milestone(db, pid, milestone_id, req):
+    """Operator reviewed a milestone result during the grace window (demo-safe path)."""
+    result = orchestration.review_milestone_result(db, milestone_id, req)
+    r = db.get(m.DemoReplay, pid)
+    if r is not None:
+        db.flush()
+        pending = db.scalars(select(m.MilestoneResult).where(
+            m.MilestoneResult.project_id == pid,
+            m.MilestoneResult.review_status == "PENDING")).first()
+        if pending is None and r.phase == "MILESTONE_REVIEW":
+            p = db.get(m.Project, pid)
+            r.phase = "COMPLETED" if p.status == "COMPLETED" else "EXECUTING"
+            if r.phase == "COMPLETED" and p.active_plan_id:
+                db.get(m.PlanVersion, p.active_plan_id).status = "COMPLETED"
+            _agents(db, pid)
+        _resume_soon(db, r)
+        platform.touch(db, pid, "demo.updated", pid,
+                       {"demo": True, "phase": r.phase, "cycle": r.cycle, "actor": "operator"})
+    return result

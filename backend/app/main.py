@@ -105,7 +105,14 @@ async def protect_replay_project(request, call_next):
     from fastapi.responses import JSONResponse
 
     parts = request.url.path.strip("/").split("/")
-    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and len(parts) >= 3 and parts[:2] == ["api", "projects"]:
+    # Operators may still approve during a replay: plan approval + milestone review are
+    # routed to the demo-safe path (they keep task IDs stable). Everything else stays locked.
+    approval_write = (
+        (len(parts) == 6 and parts[3] == "plans" and parts[5] == "approve")
+        or (len(parts) == 7 and parts[3] == "sprint-milestones" and parts[5:7] == ["result", "reviews"])
+    )
+    if (request.method in {"POST", "PUT", "PATCH", "DELETE"} and len(parts) >= 3
+            and parts[:2] == ["api", "projects"] and not approval_write):
         if read(lambda db: db.get(DemoReplay, parts[2]) is not None):
             return JSONResponse(status_code=409, content={
                 "code": "DEMO_REPLAY_MANAGED", "message": "This project is controlled by demo replay.",

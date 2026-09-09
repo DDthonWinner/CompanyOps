@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "../../components/ui/Button";
 import { GlassPanel } from "../../components/ui/GlassPanel";
-import { Icon } from "../../components/ui/Icon";
 import { useStore } from "../../store/useStore";
-import { openProjectCreationGate } from "../tycoon/projectCreationNavigation";
 import { AgentMatchingPanel } from "./AgentMatchingPanel";
 import { AgentOverview } from "./AgentOverview";
 import { WorkspaceBrief } from "./WorkspaceBrief";
@@ -18,7 +15,6 @@ export function DashboardView() {
   const snapshot = useStore((s) => s.snapshot);
   const [feedbackRequest, setFeedbackRequest] = useState<{ pid: string; id: number } | null>(null);
   useEffect(() => { setFeedbackRequest(null); }, [activeProjectId]);
-  const selectPanel = useStore((s) => s.setDashboardPanel);
   const status = snapshot?.project.status;
   const needsTeam = status === "DRAFT" || status === "AGENT_MATCHING" || status === "READY";
 
@@ -32,17 +28,11 @@ export function DashboardView() {
             </div>
             <h1 className="display text-2xl font-bold">프로젝트 워크스페이스</h1>
           </div>
-          <div className="flex flex-wrap gap-2">
-          {activeProjectId && <Button variant="ghost" onClick={() => selectPanel("tasks")}>작업 살펴보기 ↗</Button>}
-          <Button onClick={openProjectCreationGate} data-testid="project-create-open">
-            <Icon name="add" size={16} /> 새 프로젝트
-          </Button>
-          </div>
         </div>
 
         {!activeProjectId && (
           <GlassPanel level={2} className="p-6 text-sm text-on-background/70">
-            프로젝트를 선택하거나 <b>새 프로젝트</b>를 눌러 Tycoon Office에서 생성 흐름을 시작하세요.
+프로젝트를 선택하세요. 새 프로젝트는 상단 바 또는 Tycoon Office에서 생성할 수 있습니다.
           </GlassPanel>
         )}
 
