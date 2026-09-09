@@ -243,6 +243,7 @@ def publish_task(session: Session, task_id: str, req: dict) -> dict:
         platform.touch(session, t.project_id, "task.updated", t.id)
         if milestone:
             platform.touch(session, t.project_id, "milestone.updated", milestone.id)
+            session.flush()  # milestone result must include this final publish/commit
             maybe_build_milestone_result(session, milestone.id)
     platform.touch(session, t.project_id, "git.updated", t.id)
     result = {"taskId": t.id, "status": res.status, "commitSha": res.commit_sha,

@@ -4,7 +4,6 @@ import { api } from "../../api/client";
 import { useStore } from "../../store/useStore";
 import { ScrollWorld } from "./ScrollWorld";
 
-vi.mock("./useWorldSnapshot", () => ({ useWorldSnapshot: () => ({ snapshot: null, connection: "DISCONNECTED" }) }));
 vi.mock("../tycoon/WebGLFallback", () => ({ isWebGLAvailable: () => false }));
 vi.mock("../../app/AppShell", () => ({ AppShell: () => {
   const id = useStore((state) => state.activeProjectId);
@@ -43,18 +42,23 @@ describe("scroll world project-to-office journey", () => {
   });
   afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-  it("selects the actual project and reveals the existing Tycoon app on the final scroll", async () => {
-    render(<ScrollWorld />);
+  it("shows projects without selecting them and reveals the existing Tycoon app on the final scroll", async () => {
+    const { container } = render(<ScrollWorld />);
     const node = setupScroll();
+    expect(screen.queryByRole("button", { name: "가능성을 확인하세요" })).not.toBeInTheDocument();
     await moveTo(node, 0.32);
-    const second = await screen.findByRole("button", { name: /Seoul Studio/ });
-    fireEvent.click(second);
-    expect(second).toHaveAttribute("aria-pressed", "true");
-    expect(useStore.getState().activeProjectId).toBe("p2");
+    expect(await screen.findByText("Seoul Studio")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Seoul Studio/ })).not.toBeInTheDocument();
+    expect(useStore.getState().activeProjectId).toBeNull();
     expect(useStore.getState().snapshot).toBeNull();
+    await moveTo(node, 0.55);
+    expect(screen.getByRole("heading", { name: /당신의 Project/ })).toBeInTheDocument();
     await moveTo(node, 1);
-    expect(await screen.findByTestId("existing-office")).toHaveTextContent("p2:tycoon");
-    expect(screen.getByRole("region", { name: "프로젝트 오피스" })).not.toHaveAttribute("inert");
+    expect(await screen.findByTestId("existing-office")).toHaveTextContent("empty:tycoon");
+    const office = screen.getByRole("region", { name: "프로젝트 오피스" });
+    expect(office).not.toHaveAttribute("inert");
+    expect(office).toHaveStyle({ opacity: "1", transform: "scale(1) translateY(0%)", borderRadius: "0px" });
+    expect(container.querySelector(".world-vignette")).not.toBeInTheDocument();
     expect(node).toHaveClass("is-in-office");
   });
 
@@ -72,29 +76,28 @@ describe("scroll world project-to-office journey", () => {
     expect(screen.queryByTestId("existing-office")).not.toBeInTheDocument();
   });
 
-  it("handles an empty project list without inventing projects or blocking the office", async () => {
+  it("handles an empty project list without adding a functional creation action", async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ items: [] })));
     render(<ScrollWorld />);
     const node = setupScroll();
     await moveTo(node, 0.32);
-    expect(await screen.findByText("아직 생성한 프로젝트가 없습니다.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /첫 프로젝트 만들러/ }));
-    expect(await screen.findByTestId("existing-office")).toHaveTextContent("empty:dashboard");
+    expect(await screen.findByText("새로운 프로젝트가 준비되고 있습니다.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /첫 프로젝트/ })).not.toBeInTheDocument();
   });
 
-  it("offers retry after a failed project request and displays recovered projects", async () => {
+  it("keeps a failed project request presentational", async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error("offline"));
     render(<ScrollWorld />);
     const node = setupScroll();
     await moveTo(node, 0.32);
-    expect(await screen.findByText("프로젝트 서버에 연결할 수 없습니다.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /다시 불러오기/ }));
-    expect(await screen.findByRole("button", { name: /AI Commerce/ })).toBeInTheDocument();
+    expect(await screen.findByText("프로젝트 목록을 불러오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /다시 불러오기/ })).not.toBeInTheDocument();
   });
 
-  it("clears a deleted persisted project only after a successful list response", async () => {
+  it("does not mutate the persisted project from the landing page", async () => {
     useStore.setState({ activeProjectId: "deleted-project" });
     render(<ScrollWorld />);
-    await waitFor(() => expect(useStore.getState().activeProjectId).toBeNull());
+    await waitFor(() => expect(fetch).toHaveBeenCalled());
+    expect(useStore.getState().activeProjectId).toBe("deleted-project");
   });
 });

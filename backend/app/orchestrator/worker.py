@@ -10,7 +10,7 @@ import logging
 from sqlalchemy import select
 
 from ..common import platform
-from ..common.models import ArtifactVersion, Project, ProjectAgent, ProjectTask, Role, TaskAttempt, TokenUsage
+from ..common.models import ArtifactVersion, DemoReplay, Project, ProjectAgent, ProjectTask, Role, TaskAttempt, TokenUsage
 from ..common.sse import broker
 from ..common.util import utcnow_iso
 from ..db import unit_of_work
@@ -34,6 +34,8 @@ def _publish_events(events: list[dict]) -> None:
 
 
 def _next_executable(session, project_id: str) -> ProjectTask | None:
+    if session.get(DemoReplay, project_id) is not None:
+        return None  # paced simulator owns this project, including while stopped
     project = session.get(Project, project_id)
     if project is None or project.status != "ACTIVE":
         return None
@@ -148,6 +150,8 @@ def recover_incomplete() -> None:
 
     with unit_of_work() as session:
         for t in session.execute(select(ProjectTask).where(ProjectTask.status == "RUNNING")).scalars():
+            if session.get(DemoReplay, t.project_id) is not None:
+                continue  # deterministic replay resumes its durable phase
             t.status = "BLOCKED"
             t.wait_reasons = list(t.wait_reasons or []) + ["ADDITIONAL_VALIDATION:restart-recovery"]
         for q in session.execute(select(QARun).where(QARun.run_status == "RUNNING")).scalars():

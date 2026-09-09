@@ -16,15 +16,30 @@ export function useConnection(): void {
     }
     let latest = 0;
     let cancelled = false;
+    let inFlight = false;
+    let requestedRevision = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const schedule = () => {
+      if (cancelled || timer || inFlight) return;
+      timer = setTimeout(() => { timer = undefined; void resync(); }, 80);
+    };
 
     const resync = async () => {
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      let succeeded = false;
       try {
         const snap = await api.getSnapshot(projectId);
         if (cancelled) return;
         applySnapshot(snap);
-        latest = snap.revision;
+        latest = Math.max(latest, snap.revision);
+        succeeded = true;
       } catch {
         /* transient; SSE state reflects connectivity */
+      } finally {
+        inFlight = false;
+        if (succeeded && requestedRevision > latest) schedule();
       }
     };
 
@@ -32,7 +47,8 @@ export function useConnection(): void {
       onState: setConnection,
       onResync: resync,
       onEvent: (rev) => {
-        if (rev > latest) resync();
+        requestedRevision = Math.max(requestedRevision, rev);
+        if (rev > latest) schedule();
       },
     });
     client.connect();
@@ -40,6 +56,7 @@ export function useConnection(): void {
 
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
       client.disconnect();
     };
   }, [projectId, setConnection, applySnapshot]);

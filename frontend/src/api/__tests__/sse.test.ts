@@ -7,6 +7,10 @@ class FakeEventSource {
   onmessage: ((e: MessageEvent) => void) | null = null;
   onerror: (() => void) | null = null;
   closed = false;
+  listeners = new Map<string, (e: MessageEvent) => void>();
+  addEventListener(type: string, listener: (e: MessageEvent) => void) {
+    this.listeners.set(type, listener);
+  }
   constructor(public url: string) {
     FakeEventSource.instances.push(this);
   }
@@ -67,5 +71,22 @@ describe("SseClient (06 §5)", () => {
     expect(FakeEventSource.instances.length).toBe(2); // reconnected
     client.disconnect();
     expect(states[states.length - 1]).toBe("DISCONNECTED");
+  });
+
+  it("receives the backend's named project.updated events and keeps the connection alive", () => {
+    const onEvent = vi.fn();
+    const client = new SseClient("http://x/events", {
+      onState: () => {}, onResync: () => {}, onEvent,
+    }, FakeEventSource as unknown as new (u: string) => EventSource);
+    client.connect();
+    const es = FakeEventSource.instances[0];
+    es.onopen!();
+    for (let revision = 1; revision <= 4; revision++) {
+      vi.advanceTimersByTime(30000);
+      es.listeners.get("project.updated")!({ data: JSON.stringify({ revision }) } as MessageEvent);
+    }
+    expect(onEvent).toHaveBeenLastCalledWith(4);
+    expect(FakeEventSource.instances).toHaveLength(1);
+    client.disconnect();
   });
 });

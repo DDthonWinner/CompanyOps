@@ -438,6 +438,20 @@ class TokenUsage(Base):
 
 
 # ------------------------------------------------------------------ Platform
+class DemoReplay(Base):
+    """Durable cursor for the explicitly enrolled showcase project."""
+    __tablename__ = "demo_replays"
+    project_id = Column(String, ForeignKey("projects.id"), primary_key=True)
+    enabled = Column(Integer, nullable=False, default=1)
+    phase = Column(String, nullable=False, default="RESET")
+    cycle = Column(Integer, nullable=False, default=0)
+    interval_seconds = Column(Integer, nullable=False, default=3)
+    completion_seconds = Column(Integer, nullable=False, default=15)
+    next_tick_at = Column(String, nullable=False, default=utcnow_iso)
+    backup_path = Column(Text)
+    error = Column(Text)
+
+
 class ActivityEvent(Base):
     __tablename__ = "activity_events"
     id = _id()

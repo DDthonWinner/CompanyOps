@@ -35,7 +35,7 @@ export class SseClient {
       this.handlers.onResync();
       this.resetWatchdog();
     };
-    this.es.onmessage = (ev: MessageEvent) => {
+    const receive = (ev: MessageEvent) => {
       this.resetWatchdog();
       try {
         const data = JSON.parse(ev.data);
@@ -44,6 +44,8 @@ export class SseClient {
         /* ignore malformed */
       }
     };
+    this.es.onmessage = receive;
+    this.es.addEventListener("project.updated", receive);
     this.es.onerror = () => {
       if (this.closed) return;
       this.handlers.onState("RECONNECTING");

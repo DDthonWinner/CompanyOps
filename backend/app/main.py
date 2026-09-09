@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .common.errors import AppError, app_error_handler, unhandled_handler
 from .config import get_settings
 from .db import init_db
+from .demo import routes as demo_routes
 from .orchestrator import routes as orch_routes
 from .orchestrator import worker
 from .pm import routes as pm_routes
@@ -56,14 +57,20 @@ async def lifespan(app: FastAPI):
     _wire_utilization_port()
     worker.recover_incomplete()  # RUNNING → BLOCKED after restart (06 §5.2)
     task = asyncio.create_task(worker.worker_loop())
+    replay_task = asyncio.create_task(demo_routes.scheduler_loop())
     log.info("CompanyOps backend started (execution_mode=%s, git_mode=%s).",
              get_settings().execution_mode, get_settings().git_mode)
     try:
         yield
     finally:
         task.cancel()
+        replay_task.cancel()
         try:
             await task
+        except asyncio.CancelledError:
+            pass
+        try:
+            await replay_task
         except asyncio.CancelledError:
             pass
 
@@ -85,6 +92,23 @@ app.add_exception_handler(Exception, unhandled_handler)
 app.include_router(pm_routes.router)
 app.include_router(orch_routes.router)
 app.include_router(uf_routes.router)
+app.include_router(demo_routes.router)
+
+
+@app.middleware("http")
+async def protect_replay_project(request, call_next):
+    # Paused replays remain reserved: ordinary APIs must not invalidate the cursor.
+    from .common.models import DemoReplay
+    from .common.txn import read
+    from fastapi.responses import JSONResponse
+
+    parts = request.url.path.strip("/").split("/")
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and len(parts) >= 3 and parts[:2] == ["api", "projects"]:
+        if read(lambda db: db.get(DemoReplay, parts[2]) is not None):
+            return JSONResponse(status_code=409, content={
+                "code": "DEMO_REPLAY_MANAGED", "message": "This project is controlled by demo replay.",
+                "details": {}, "requestId": None})
+    return await call_next(request)
 
 
 @app.get("/health", tags=["platform"])

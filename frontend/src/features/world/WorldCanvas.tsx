@@ -1,7 +1,6 @@
 import HiringQueue from "./HiringQueue";
 import type { HiringProfile } from "./useHiringProfiles";
 import { OfficeInterior } from "./OfficeInterior";
-import type { Snapshot } from "../../api/types";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import * as THREE from "three";
@@ -17,7 +16,7 @@ import { buildingPosition, segment, smooth } from "./journey";
 
 type Vec = [number, number, number];
 type Piece = { p: Vec; s: Vec; color?: string };
-type Props = { hiringProfiles: HiringProfile[]; progress: MutableRefObject<number>; selectedIndex: number; projectNames: string[]; onSelect: (index: number) => void; snapshot: Snapshot | null; reducedMotion: boolean };
+type Props = { hiringProfiles: HiringProfile[]; progress: MutableRefObject<number>; projectNames: string[]; reducedMotion: boolean };
 const random = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 
 function Instances({ pieces, metalness = 0.3, roughness = 0.6, emissive = false }: { pieces: Piece[]; metalness?: number; roughness?: number; emissive?: boolean }) {
@@ -138,16 +137,16 @@ function BuildingSign({ name, index, height, selected }: { name: string; index: 
   return <sprite position={[0, height + 4, 0]} scale={[12, 2, 1]}><spriteMaterial map={texture} depthTest={false} toneMapped={false} /></sprite>;
 }
 
-function ArrivalOffice({ height, selected, snapshot, reducedMotion, cutaway }: { cutaway: boolean; height: number; selected: boolean; snapshot?: Snapshot | null; reducedMotion: boolean }) {
+function ArrivalOffice({ height, reducedMotion, cutaway }: { cutaway: boolean; height: number; reducedMotion: boolean }) {
   const level = height * 0.64;
   return <group position={[0, level - 0.97, 0]}>
-    <group scale={0.29}><OfficeInterior snapshot={selected ? snapshot : null} preview={!snapshot} reducedMotion={reducedMotion} compact /></group>
+    <group scale={0.29}><OfficeInterior preview reducedMotion={reducedMotion} compact /></group>
     {!cutaway && <mesh position={[0, 1.89, 0]} receiveShadow><boxGeometry args={[7.9, 0.08, 7]} /><meshStandardMaterial color="#a6aaa0" /></mesh>}
     <pointLight position={[0, 1.4, 1]} color="#ffe5bd" intensity={18} distance={10} decay={2} />
   </group>;
 }
 
-function FeaturedBuilding({ index, selected, onSelect, selectable, name, snapshot, reducedMotion, interiorEnabled, cutaway }: { cutaway: boolean; interiorEnabled: boolean; snapshot?: Snapshot | null; reducedMotion: boolean; index: number; selected: boolean; onSelect: () => void; selectable: boolean; name?: string }) {
+function FeaturedBuilding({ index, featured, showSign, name, reducedMotion, interiorEnabled, cutaway }: { cutaway: boolean; interiorEnabled: boolean; reducedMotion: boolean; index: number; featured: boolean; showSign: boolean; name?: string }) {
   const [x, height, z] = buildingPosition(index);
   const width = 8, depth = 7;
   const { trim, glazing } = useMemo(() => {
@@ -165,9 +164,9 @@ function FeaturedBuilding({ index, selected, onSelect, selectable, name, snapsho
   }, [height, index]);
   const shells = useMemo(() => [new RoundedBoxGeometry(width, height * 0.64 - 1, depth, 2, 0.15), new RoundedBoxGeometry(width, height * 0.36 - 1, depth, 2, 0.15)], [height]);
   useEffect(() => () => shells.forEach((shell) => shell.dispose()), [shells]);
-  const accent = selected ? "#c4f7cf" : "#557f87";
-  return <group position={[x, 0, z]} onClick={(event) => { if (selectable) { event.stopPropagation(); onSelect(); } }} onPointerOver={(e) => { if (selectable) { e.stopPropagation(); document.body.style.cursor = "pointer"; } }} onPointerOut={() => { document.body.style.cursor = ""; }}>
-    {selectable && name && <BuildingSign name={name} index={index} height={height} selected={selected} />}
+  const accent = featured ? "#c4f7cf" : "#557f87";
+  return <group position={[x, 0, z]}>
+    {showSign && name && <BuildingSign name={name} index={index} height={height} selected={false} />}
     <mesh position={[0, (height * 0.64 - 1) / 2, 0]} geometry={shells[0]}><meshPhysicalMaterial color="#365762" metalness={0.78} roughness={0.2} clearcoat={1} clearcoatRoughness={0.15} /></mesh>
     <mesh visible={!cutaway} position={[0, (height * 1.64 + 1) / 2, 0]} geometry={shells[1]}><meshPhysicalMaterial color="#365762" metalness={0.78} roughness={0.2} clearcoat={1} clearcoatRoughness={0.15} /></mesh>
     <group visible={!cutaway}><Instances pieces={trim} metalness={0.8} roughness={0.26} /><Instances pieces={glazing} emissive /></group>
@@ -175,11 +174,10 @@ function FeaturedBuilding({ index, selected, onSelect, selectable, name, snapsho
     <Box p={[0, height + 0.15, 0]} s={[8.5, 0.3, 7.5]} color="#8c9796" />
     <Box p={[0, height + 1, -0.6]} s={[4.5, 1.7, 3.8]} color="#34474e" />
     {[0, 1, 2].map((n) => <group key={n} position={[-2 + n * 2, height + 0.5, 2]}><Box p={[0, 0, 0]} s={[1.1, 0.65, 1.2]} color="#818789" /><mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.34, 0]}><circleGeometry args={[0.38, 16]} /><meshStandardMaterial color="#182c32" /></mesh></group>)}
-    {interiorEnabled && (selected || (index === 0 && !snapshot)) && <ArrivalOffice height={height} selected={selected} snapshot={snapshot} reducedMotion={reducedMotion} cutaway={cutaway} />}
+    {interiorEnabled && featured && <ArrivalOffice height={height} reducedMotion={reducedMotion} cutaway={cutaway} />}
     <mesh position={[0, height * 0.64 - 1.04, 3.65]}><planeGeometry args={[7.8, 0.08]} /><meshBasicMaterial color={accent} toneMapped={false} /></mesh>
     <Box p={[0, 3.3, 4.6]} s={[4.5, 0.15, 2]} color="#aab1ac" />
     {[-1.9, 1.9].map((dx) => <Box key={dx} p={[dx, 1.65, 5.2]} s={[0.1, 3.3, 0.1]} color="#b0b6b3" />)}
-    {selected && <mesh position={[0, 0.72, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[6.5, 6.55, 96]} /><meshBasicMaterial color="#b9f0c7" transparent opacity={0.8} /></mesh>}
   </group>;
 }
 
@@ -258,7 +256,7 @@ function Landmark() {
   </group>;
 }
 
-function CameraRig({ progress, selectedIndex, reducedMotion }: Pick<Props, "progress" | "selectedIndex" | "reducedMotion">) {
+function CameraRig({ progress, reducedMotion }: Pick<Props, "progress" | "reducedMotion">) {
   const { camera, size } = useThree();
   const current = useRef(0);
   const look = useRef(new THREE.Vector3(0, 10, -28));
@@ -267,7 +265,7 @@ function CameraRig({ progress, selectedIndex, reducedMotion }: Pick<Props, "prog
   useFrame((_, delta) => {
     current.current = THREE.MathUtils.damp(current.current, progress.current, 7, Math.min(delta, 0.05));
     const p = reducedMotion ? [0, 0.32, 0.55, 0.78, 1][progress.current < 0.21 ? 0 : progress.current < 0.45 ? 1 : progress.current < 0.67 ? 2 : progress.current < 0.9 ? 3 : 4] : current.current;
-    const [x, height, z] = buildingPosition(selectedIndex);
+    const [x, height, z] = buildingPosition(0);
     const stops: { at: number; pos: Vec; look: Vec }[] = [
       { at: 0, pos: [76, 61, size.width < 700 ? 192 : 139], look: [0, 10, -28] },
       { at: 0.2, pos: [29, 28, 40], look: [0, 11, -12] },
@@ -350,7 +348,7 @@ function CinematicFinish() {
 }
 
 export default function WorldCanvas(props: Props) {
-  const pageStart = Math.floor(Math.max(0, props.selectedIndex) / 12) * 12;
+  const pageStart = 0;
   const count = Math.max(3, Math.min(12, props.projectNames.length - pageStart));
   const indices = Array.from({ length: count }, (_, i) => pageStart + i);
   return <Canvas shadows dpr={[1, 1.75]} camera={{ position: [76, 61, 139], fov: 48, near: 0.1, far: 650 }} gl={{ antialias: true, powerPreference: "high-performance", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.25 }}>
@@ -361,7 +359,7 @@ export default function WorldCanvas(props: Props) {
     <hemisphereLight args={["#accbda", "#162326", 1.5]} />
     <directionalLight position={[-35, 65, 20]} color="#ffe2b7" intensity={2.7} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-65} shadow-camera-right={65} shadow-camera-top={60} shadow-camera-bottom={-65} shadow-camera-far={180} shadow-normalBias={0.06} />
     <directionalLight position={[45, 20, -40]} color="#7db8cf" intensity={1.5} />
-    <CameraRig {...props} selectedIndex={Math.max(0, props.selectedIndex)} />
+    <CameraRig {...props} />
     <Box p={[0, -0.5, -180]} s={[520, 0.9, 380]} color="#243033" roughness={0.95} />
     <Box p={[0, -0.5, 120]} s={[520, 0.9, 170]} color="#17292a" roughness={0.95} />
     <Box p={[0, 0.04, 6]} s={[520, 0.12, 3.7]} color="#192429" roughness={0.96} />
@@ -372,9 +370,9 @@ export default function WorldCanvas(props: Props) {
     <Landmark />
     <Bridge x={-26} /><Bridge x={36} />
     <Traffic reducedMotion={props.reducedMotion} />
-    {indices.map((i) => <FeaturedBuilding key={i} index={i} name={props.projectNames[i]} cutaway={props.progress.current >= 0.66 && i === Math.max(0, props.selectedIndex)} interiorEnabled={props.progress.current > 0.59} snapshot={props.snapshot} reducedMotion={props.reducedMotion} selected={i === props.selectedIndex} selectable={i < props.projectNames.length && props.progress.current >= 0.21 && props.progress.current < 0.45} onSelect={() => props.onSelect(i)} />)}
+    {indices.map((i) => <FeaturedBuilding key={i} index={i} name={props.projectNames[i]} cutaway={props.progress.current >= 0.66 && i === 0} interiorEnabled={props.progress.current > 0.59} reducedMotion={props.reducedMotion} featured={i === 0} showSign={i < props.projectNames.length && props.progress.current >= 0.21 && props.progress.current < 0.45} />)}
     
-    <HiringQueue profiles={props.hiringProfiles} buildingIndex={Math.max(0, props.selectedIndex)} reducedMotion={props.reducedMotion} />
+    <HiringQueue profiles={props.hiringProfiles} buildingIndex={0} reducedMotion={props.reducedMotion} />
     <CinematicFinish />
   </Canvas>;
 }
