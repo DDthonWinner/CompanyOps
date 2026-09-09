@@ -11,8 +11,17 @@ export function useConnection(): void {
 
   useEffect(() => {
     if (!projectId) {
-      setConnection("DISCONNECTED");
-      return;
+      // No active project (e.g. village view): connectivity reflects backend health.
+      let stopped = false;
+      const ping = () => {
+        api
+          .health()
+          .then((h) => { if (!stopped) setConnection(h.status === "ok" ? "CONNECTED" : "DISCONNECTED"); })
+          .catch(() => { if (!stopped) setConnection("DISCONNECTED"); });
+      };
+      ping();
+      const iv = setInterval(ping, 15000);
+      return () => { stopped = true; clearInterval(iv); };
     }
     let latest = 0;
     let cancelled = false;

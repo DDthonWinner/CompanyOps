@@ -4,7 +4,7 @@ import { api } from "../api/client";
 import type { ProjectListItem } from "../api/types";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
-import { openProjectCreationGate, openProjectVillage } from "../features/tycoon/projectCreationNavigation";
+import { openProjectCreationGate } from "../features/tycoon/projectCreationNavigation";
 import { useStore } from "../store/useStore";
 
 const CONN_META: Record<string, { label: string; color: string }> = {
@@ -40,19 +40,9 @@ export function GlobalExecutiveBar() {
   const conn = CONN_META[connection] ?? CONN_META.DISCONNECTED;
 
   return (
-    <header className="glass-3 fixed left-1/2 top-4 z-40 grid w-[min(1100px,94vw)] -translate-x-1/2 items-center justify-between gap-2 rounded-2xl px-3 py-2 sm:grid-cols-2 lg:flex lg:gap-4 lg:rounded-full lg:px-5">
-      {/* left: home + current-project switcher */}
-      <div className="flex min-w-0 items-center gap-2 sm:col-span-2 lg:col-span-1 lg:justify-start">
-        <button
-          type="button"
-          onClick={openProjectVillage}
-          aria-label="마을 뷰로 이동"
-          title="마을 뷰"
-          data-testid="gebar-home"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-outline-variant bg-surface-lowest text-on-background/80 transition hover:bg-surface-high hover:text-primary"
-        >
-          <Icon name="home" size={20} />
-        </button>
+    <header className="glass-3 fixed left-1/2 top-5 z-40 grid w-[min(1000px,calc(100vw-360px))] -translate-x-1/2 items-center justify-between gap-2 rounded-2xl px-3 py-2 sm:grid-cols-2 lg:flex lg:gap-4 lg:rounded-full lg:px-5">
+      {/* left: current-project switcher (brand logo moved to the fixed top-left corner) */}
+      <div className="flex min-w-0 items-center gap-3 sm:col-span-2 lg:col-span-1 lg:justify-start">
         <ProjectSwitcher
           projects={projects}
           activeProjectId={activeProjectId}
@@ -90,9 +80,11 @@ export function GlobalExecutiveBar() {
             </span>
           )}
         </span>
-        <Button variant="ghost" onClick={() => setDashboardPanel("plan")} data-testid="gebar-plan-review">
-          계획 검토
-        </Button>
+        {activeProjectId && (
+          <Button variant="ghost" onClick={() => setDashboardPanel("plan")} data-testid="gebar-plan-review">
+            계획 검토
+          </Button>
+        )}
       </div>
     </header>
   );
@@ -134,7 +126,9 @@ function ProjectSwitcher({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-w-0 max-w-[220px] items-center gap-1.5 rounded-full border border-outline-variant bg-surface-lowest px-3 py-1.5 text-sm transition hover:bg-surface-high"
+        className={`flex min-w-0 max-w-[240px] items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-on-background transition hover:bg-surface-high ${
+          current ? "bg-transparent" : "bg-surface"
+        }`}
       >
         <span className={`truncate font-semibold ${current ? "text-on-background" : "text-on-background/55"}`}>
           {current ? current.name : "프로젝트 선택"}

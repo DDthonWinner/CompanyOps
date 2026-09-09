@@ -1,5 +1,5 @@
 import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import { api } from "../../api/client";
 import type { ProjectListItem } from "../../api/types";
@@ -11,6 +11,10 @@ import "./projectCreationGate.css";
 
 type GateStage = "select" | "name" | "size" | "description" | "creating";
 type ProjectSize = "SMALL" | "MEDIUM" | "LARGE";
+// Shared between the camera controls (writer) and house/lot click handlers (readers):
+// true while a camera drag is in progress so the drag doesn't also fire a click.
+type DragRef = MutableRefObject<{ moved: boolean }>;
+type FocusRef = MutableRefObject<{ pos: [number, number] | null; nonce: number }>;
 
 const SIZE_LABELS: Record<ProjectSize, string> = {
   SMALL: "S",
@@ -62,8 +66,17 @@ export function ProjectCreationGate() {
   const [description, setDescription] = useState("");
   const [projectSize, setProjectSize] = useState<ProjectSize | null>(null);
   const [hoveredProject, setHoveredProject] = useState<ProjectListItem | null>(null);
+  // The project whose glass info card is pinned open (set by clicking a house).
+  const [pinnedProject, setPinnedProject] = useState<ProjectListItem | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const pinnedCardRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  // Shared with the 3D controls: set true while the camera is being dragged so a
+  // drag doesn't also register as a house click on pointer-up.
+  const dragRef = useRef({ moved: false });
+  // Shared with the 3D controls: the world position of the just-pinned house, so the
+  // camera can recenter on it and its glass card never renders clipped at a screen edge.
+  const focusRef = useRef<{ pos: [number, number] | null; nonce: number }>({ pos: null, nonce: 0 });
 
   const trimmedName = name.trim();
   const canSubmit = trimmedName.length > 0 && description.trim().length > 0 && projectSize;
@@ -72,6 +85,7 @@ export function ProjectCreationGate() {
   // React to home / new-project navigation: village opens the overview, create jumps
   // straight into the nameplate step with a fresh form.
   useEffect(() => {
+    setPinnedProject(null);
     if (gateMode === "create") {
       setSelectedProjectId(null);
       setName("");
@@ -110,6 +124,17 @@ export function ProjectCreationGate() {
     if (hoveredProject) positionCard();
   }, [hoveredProject]);
 
+  // The pinned card follows its house in 3D: an anchor inside the canvas projects the
+  // house's world position to screen space each frame and calls this to move the card.
+  const positionPinned = (x: number, y: number, visible: boolean) => {
+    const el = pinnedCardRef.current;
+    if (!el) return;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.opacity = visible ? "1" : "0";
+    el.style.pointerEvents = visible ? "auto" : "none";
+  };
+
   useEffect(() => {
     let cancelled = false;
     setListState("loading");
@@ -127,6 +152,7 @@ export function ProjectCreationGate() {
 
   const startNewProject = () => {
     setSelectedProjectId(null);
+    setPinnedProject(null);
     setStage("name");
   };
 
@@ -185,16 +211,25 @@ export function ProjectCreationGate() {
         <color attach="background" args={["#eef3f8"]} />
         <ambientLight intensity={0.82} />
         <directionalLight position={[12, 20, 10]} intensity={1.2} castShadow />
-        <GateCamera stage={stage} />
+        {/* Village lets you fly the camera around freely; the creation flow keeps the
+            scripted cinematic camera. */}
+        {stage === "select" ? <VillageControls dragRef={dragRef} focusRef={focusRef} /> : <GateCamera stage={stage} />}
         <GateScene
           stage={stage}
           projects={projects}
           selectedProjectId={selectedProjectId}
           projectName={trimmedName}
           projectSize={projectSize}
-          onSelectProject={setSelectedProjectId}
+          pinnedProjectId={pinnedProject?.id ?? null}
+          dragRef={dragRef}
+          focusRef={focusRef}
+          onSelectProject={(id) => {
+            setSelectedProjectId(id);
+            setPinnedProject(projects.find((p) => p.id === id) ?? null);
+          }}
           onHoverProject={setHoveredProject}
           onEmptyLot={startNewProject}
+          onPinnedAnchor={positionPinned}
           onPickSize={(size) => {
             setProjectSize(size);
             setStage("description");
@@ -221,7 +256,7 @@ export function ProjectCreationGate() {
           </section>
         )}
 
-        {stage === "select" && hoveredProject && (() => {
+        {stage === "select" && hoveredProject && hoveredProject.id !== pinnedProject?.id && (() => {
           const meta = statusMeta(hoveredProject.status);
           return (
             <div ref={cardRef} className="project-gate-hovercard" role="status">
@@ -233,6 +268,28 @@ export function ProjectCreationGate() {
                 <div><dt>에이전트</dt><dd>{hoveredProject.assignedAgentCount} / {hoveredProject.maxAgentCount}명</dd></div>
                 <div><dt>규모</dt><dd>{SIZE_LABELS[normalizeSize(hoveredProject.projectSize)]}</dd></div>
               </dl>
+            </div>
+          );
+        })()}
+
+        {/* Pinned info card: clicking a house opens this glass panel above the house and
+            keeps it on screen (tracking the house as the camera moves) with an Enter CTA. */}
+        {stage === "select" && pinnedProject && (() => {
+          const meta = statusMeta(pinnedProject.status);
+          return (
+            <div ref={pinnedCardRef} className="project-gate-pincard" role="dialog" aria-label={`${pinnedProject.name} 정보`}>
+              <button className="project-gate-pincard-close" onClick={() => setPinnedProject(null)} aria-label="닫기">×</button>
+              <strong className="project-gate-hovercard-name">{pinnedProject.name}</strong>
+              <span className="project-gate-hovercard-status">{meta.label}</span>
+              <div className="project-gate-hovercard-bar"><span style={{ width: `${meta.percent}%` }} /></div>
+              <dl className="project-gate-hovercard-meta">
+                <div><dt>진행률</dt><dd>{meta.percent}%</dd></div>
+                <div><dt>에이전트</dt><dd>{pinnedProject.assignedAgentCount} / {pinnedProject.maxAgentCount}명</dd></div>
+                <div><dt>규모</dt><dd>{SIZE_LABELS[normalizeSize(pinnedProject.projectSize)]}</dd></div>
+              </dl>
+              <Button className="project-gate-pincard-enter w-full justify-center" onClick={() => setActiveProject(pinnedProject.id)}>
+                이 프로젝트 들어가기 →
+              </Button>
             </div>
           );
         })()}
@@ -335,6 +392,139 @@ function GateCamera({ stage }: { stage: GateStage }) {
     camera.lookAt(lookAt);
   });
 
+  return null;
+}
+
+// Lightweight orbit/pan/zoom for the orthographic village camera (no drei dependency):
+// left-drag pans across the meadow, right-drag (or shift-drag) rotates the viewpoint,
+// and the wheel zooms. State lives in a ref and is applied to the camera each frame.
+function VillageControls({ dragRef, focusRef }: { dragRef: DragRef; focusRef: FocusRef }) {
+  const { camera, gl } = useThree();
+  const st = useRef({
+    target: new THREE.Vector3(0, 3, -8),
+    azimuth: Math.PI / 4,
+    polar: 1.05,
+    radius: 58,
+    zoom: 15,
+  });
+  // When a house is pinned, ease the target here; cleared once reached or on drag.
+  const ease = useRef<[number, number] | null>(null);
+  const seenNonce = useRef(0);
+
+  useEffect(() => {
+    const el = gl.domElement;
+    let active = false;
+    let mode: "pan" | "rotate" = "pan";
+    let lastX = 0;
+    let lastY = 0;
+
+    const onDown = (e: PointerEvent) => {
+      active = true;
+      ease.current = null; // a manual drag cancels any in-progress recenter
+      dragRef.current.moved = false;
+      mode = e.button === 2 || e.shiftKey ? "rotate" : "pan";
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!active) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      if (Math.abs(dx) + Math.abs(dy) > 3) dragRef.current.moved = true;
+      const s = st.current;
+      if (mode === "rotate") {
+        s.azimuth -= dx * 0.005;
+        s.polar = THREE.MathUtils.clamp(s.polar - dy * 0.005, 0.35, 1.45);
+      } else {
+        // Grab-and-drag the ground: move the target opposite the pointer, along the
+        // camera's screen-right and (ground-projected) screen-forward directions, so
+        // the spot under the cursor stays under the cursor as you drag (both axes).
+        const wpp = 1 / s.zoom;
+        const cos = Math.cos(s.azimuth);
+        const sin = Math.sin(s.azimuth);
+        s.target.x += (-dx * cos - dy * sin) * wpp;
+        s.target.z += (dx * sin - dy * cos) * wpp;
+        s.target.x = THREE.MathUtils.clamp(s.target.x, -90, 90);
+        s.target.z = THREE.MathUtils.clamp(s.target.z, -120, 40);
+      }
+    };
+    const onUp = () => { active = false; };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const s = st.current;
+      s.zoom = THREE.MathUtils.clamp(s.zoom * (1 - e.deltaY * 0.0012), 6, 80);
+    };
+    const onContext = (e: Event) => e.preventDefault();
+
+    el.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("contextmenu", onContext);
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("contextmenu", onContext);
+    };
+  }, [gl, dragRef]);
+
+  useFrame(() => {
+    const s = st.current;
+    // Pick up a newly pinned house and start easing the camera toward it.
+    const f = focusRef.current;
+    if (f.nonce !== seenNonce.current) {
+      seenNonce.current = f.nonce;
+      if (f.pos) ease.current = f.pos;
+    }
+    if (ease.current) {
+      // Aim slightly "up-scene" of the house (along screen-up on the ground) so the
+      // house settles in the lower-middle of the view, leaving headroom for its card.
+      const [hx, hz] = ease.current;
+      const D = 9;
+      const tx = hx - Math.sin(s.azimuth) * D;
+      const tz = hz - Math.cos(s.azimuth) * D;
+      s.target.x += (tx - s.target.x) * 0.14;
+      s.target.z += (tz - s.target.z) * 0.14;
+      if (Math.hypot(tx - s.target.x, tz - s.target.z) < 0.15) ease.current = null;
+    }
+    const sinP = Math.sin(s.polar);
+    camera.position.set(
+      s.target.x + s.radius * sinP * Math.sin(s.azimuth),
+      s.target.y + s.radius * Math.cos(s.polar),
+      s.target.z + s.radius * sinP * Math.cos(s.azimuth),
+    );
+    if (camera instanceof THREE.OrthographicCamera && Math.abs(camera.zoom - s.zoom) > 0.0005) {
+      camera.zoom = s.zoom;
+      camera.updateProjectionMatrix();
+    }
+    camera.lookAt(s.target);
+  });
+
+  return null;
+}
+
+// Projects a house's world position to screen pixels every frame so the pinned info
+// card (a DOM element) can be positioned above it as the camera moves.
+function HouseAnchor({
+  position,
+  onProject,
+}: {
+  position: [number, number];
+  onProject: (x: number, y: number, visible: boolean) => void;
+}) {
+  const { camera, size } = useThree();
+  const v = useMemo(() => new THREE.Vector3(), []);
+  useFrame(() => {
+    v.set(position[0], 9, position[1]); // just above the roof/chimney
+    v.project(camera);
+    const x = (v.x * 0.5 + 0.5) * size.width;
+    const y = (1 - (v.y * 0.5 + 0.5)) * size.height;
+    onProject(x, y, v.z < 1);
+  });
   return null;
 }
 
@@ -510,9 +700,13 @@ function GateScene({
   selectedProjectId,
   projectName,
   projectSize,
+  pinnedProjectId,
+  dragRef,
+  focusRef,
   onSelectProject,
   onHoverProject,
   onEmptyLot,
+  onPinnedAnchor,
   onPickSize,
 }: {
   stage: GateStage;
@@ -520,9 +714,13 @@ function GateScene({
   selectedProjectId: string | null;
   projectName: string;
   projectSize: ProjectSize | null;
+  pinnedProjectId: string | null;
+  dragRef: DragRef;
+  focusRef: FocusRef;
   onSelectProject: (projectId: string) => void;
   onHoverProject: (project: ProjectListItem | null) => void;
   onEmptyLot: () => void;
+  onPinnedAnchor: (x: number, y: number, visible: boolean) => void;
   onPickSize: (size: ProjectSize) => void;
 }) {
   if (stage === "select") {
@@ -530,9 +728,13 @@ function GateScene({
       <ProjectVillage
         projects={projects}
         selectedProjectId={selectedProjectId}
+        pinnedProjectId={pinnedProjectId}
+        dragRef={dragRef}
+        focusRef={focusRef}
         onSelectProject={onSelectProject}
         onHoverProject={onHoverProject}
         onEmptyLot={onEmptyLot}
+        onPinnedAnchor={onPinnedAnchor}
       />
     );
   }
@@ -599,48 +801,90 @@ function NewHouseLot({
 function ProjectVillage({
   projects,
   selectedProjectId,
+  pinnedProjectId,
+  dragRef,
+  focusRef,
   onSelectProject,
   onHoverProject,
   onEmptyLot,
+  onPinnedAnchor,
 }: {
   projects: ProjectListItem[];
   selectedProjectId: string | null;
+  pinnedProjectId: string | null;
+  dragRef: DragRef;
+  focusRef: FocusRef;
   onSelectProject: (projectId: string) => void;
   onHoverProject: (project: ProjectListItem | null) => void;
   onEmptyLot: () => void;
+  onPinnedAnchor: (x: number, y: number, visible: boolean) => void;
 }) {
-  const lots = useMemo(() => {
-    const positions: Array<[number, number]> = [[-17, -8], [0, -9], [17, -8], [-12, -23], [12, -23], [-25, -22]];
-    return projects.slice(0, 6).map((project, index) => ({ project, position: positions[index] ?? [0, 0] as [number, number] }));
+  // Lay every project out on a centered grid (plus one trailing "for sale" plot) so the
+  // village grows to fit any number of houses instead of capping at six.
+  const layout = useMemo(() => {
+    const SPACING_X = 17;
+    const SPACING_Z = 16;
+    const CENTER_Z = -8;
+    const cellCount = projects.length + 1; // + the empty lot
+    const cols = Math.max(3, Math.ceil(Math.sqrt(cellCount)));
+    const rows = Math.ceil(cellCount / cols);
+    const cell = (index: number): [number, number] => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const x = (col - (cols - 1) / 2) * SPACING_X;
+      const z = CENTER_Z - (row - (rows - 1) / 2) * SPACING_Z;
+      return [x, z];
+    };
+    // Reserve the second row's third cell for the empty "for sale" plot; projects fill the rest.
+    const reserved = Math.min(cols + 2, cellCount - 1);
+    const projIndices: number[] = [];
+    for (let i = 0; i < cellCount; i += 1) if (i !== reserved) projIndices.push(i);
+    const lots = projects.map((project, k) => ({ project, position: cell(projIndices[k]) }));
+    const emptyLot = cell(reserved);
+    return { lots, emptyLot, width: cols * SPACING_X, depth: rows * SPACING_Z, centerZ: CENTER_Z };
   }, [projects]);
 
-  const grass = useGrassTexture(8, 7);
+  const { lots, emptyLot, width, depth, centerZ } = layout;
+  const groundW = width + 30;
+  const groundD = depth + 34;
+  const grass = useGrassTexture(Math.max(6, Math.round(groundW / 8)), Math.max(6, Math.round(groundD / 8)));
+  const edgeX = groundW / 2 - 3;
+  const frontZ = centerZ + depth / 2 + 4;
+  const backZ = centerZ - depth / 2 - 4;
+  const pinnedPos = pinnedProjectId ? lots.find((l) => l.project.id === pinnedProjectId)?.position ?? null : null;
+
+  // Tell the camera controls to recenter on a freshly pinned house so its glass card
+  // always lands in the visible area (never clipped at a screen edge).
+  useEffect(() => {
+    if (pinnedPos) focusRef.current = { pos: pinnedPos, nonce: focusRef.current.nonce + 1 };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinnedProjectId]);
 
   return (
     <group>
-      {/* Bright grassy meadow, no more gray roads or crossing paths. */}
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, -8]}>
-        <planeGeometry args={[64, 56]} />
+      {/* Bright grassy meadow that grows with the village. */}
+      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, centerZ]}>
+        <planeGeometry args={[groundW, groundD]} />
         <meshStandardMaterial map={grass} roughness={0.95} />
       </mesh>
-      {/* A few trees around the edges for that cozy village feel. */}
-      <Tree position={[-28, 6]} scale={1.1} />
-      <Tree position={[27, 4]} scale={0.95} />
-      <Tree position={[-29, -16]} scale={1.15} />
-      <Tree position={[28, -18]} scale={1.05} />
-      <Tree position={[-6, -30]} scale={0.9} />
-      <Tree position={[20, -30]} scale={1.0} />
+      {/* A few trees hugging the meadow edges for that cozy village feel. */}
+      <Tree position={[-edgeX + 1, frontZ]} scale={1.1} />
+      <Tree position={[edgeX - 2, frontZ - 2]} scale={0.95} />
+      <Tree position={[-edgeX + 2, backZ]} scale={1.15} />
+      <Tree position={[edgeX - 1, backZ - 1]} scale={1.05} />
       {lots.map(({ project, position }) => (
         <ProjectHouse
           key={project.id}
           project={project}
           position={position}
           selected={project.id === selectedProjectId}
+          dragRef={dragRef}
           onSelect={onSelectProject}
           onHover={onHoverProject}
         />
       ))}
-      <EmptyLot position={[13, 12]} onClick={onEmptyLot} />
+      <EmptyLot position={emptyLot} dragRef={dragRef} onClick={onEmptyLot} />
+      {pinnedPos && <HouseAnchor position={pinnedPos} onProject={onPinnedAnchor} />}
     </group>
   );
 }
@@ -649,12 +893,14 @@ function ProjectHouse({
   project,
   position,
   selected,
+  dragRef,
   onSelect,
   onHover,
 }: {
   project: ProjectListItem;
   position: [number, number];
   selected: boolean;
+  dragRef: DragRef;
   onSelect: (projectId: string) => void;
   onHover: (project: ProjectListItem | null) => void;
 }) {
@@ -678,6 +924,8 @@ function ProjectHouse({
 
   const click = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
+    // Ignore the click that ends a camera drag so panning never selects a house.
+    if (dragRef.current.moved) return;
     onSelect(project.id);
   };
 
@@ -796,7 +1044,7 @@ function LiveWindow({ active, position, phase }: { active: boolean; position: [n
   );
 }
 
-function EmptyLot({ position, onClick }: { position: [number, number]; onClick: () => void }) {
+function EmptyLot({ position, dragRef, onClick }: { position: [number, number]; dragRef: DragRef; onClick: () => void }) {
   const root = useRef<THREE.Group>(null);
   const sign = useRef<THREE.Group>(null);
   const texture = useNameplateTexture("FOR SALE");
@@ -816,13 +1064,22 @@ function EmptyLot({ position, onClick }: { position: [number, number]; onClick: 
     <group
       ref={root}
       position={[position[0], 0, position[1]]}
-      onClick={(event) => { event.stopPropagation(); onClick(); }}
+      onClick={(event) => { event.stopPropagation(); if (dragRef.current.moved) return; onClick(); }}
       {...bind}
     >
       {/* Bare dirt plot */}
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
         <boxGeometry args={[10, 9, 0.18]} />
         <meshStandardMaterial color="#e9e1c8" roughness={0.95} />
+      </mesh>
+      {/* A '+' etched into the dirt — "add a new project here". */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.16, 0]}>
+        <planeGeometry args={[5.4, 1.5]} />
+        <meshStandardMaterial color="#b89a63" roughness={1} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.161, 0]}>
+        <planeGeometry args={[1.5, 5.4]} />
+        <meshStandardMaterial color="#b89a63" roughness={1} />
       </mesh>
       {/* FOR SALE stake driven into the front edge of the plot */}
       <group ref={sign} position={[0, 0, 3.4]}>
@@ -836,8 +1093,9 @@ function EmptyLot({ position, onClick }: { position: [number, number]; onClick: 
           <boxGeometry args={[0.3, 3.1, 0.3]} />
           <meshStandardMaterial color="#8f6844" roughness={0.8} />
         </mesh>
-        {/* FOR SALE board mounted near the top */}
-        <mesh castShadow position={[0, 2.7, 0.06]}>
+        {/* FOR SALE board mounted near the top, in front of the stake so the pole
+            never pokes over the nameplate. */}
+        <mesh castShadow position={[0, 2.7, 0.3]}>
           <boxGeometry args={[5.4, 1.7, 0.16]} />
           <meshStandardMaterial map={texture} color="#f3e4c4" roughness={0.6} />
         </mesh>

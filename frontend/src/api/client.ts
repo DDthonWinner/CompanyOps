@@ -39,6 +39,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   base: BASE,
+  health: () => request<{ status: string }>("/health"),
   listProjects: () => request<{ items: ProjectListItem[]; total: number } | ProjectListItem[]>("/api/projects"),
   listRoles: () => request<Array<{ id: string; code: string; name: string }>>("/api/roles"),
   getSnapshot: (projectId: string) => request<Snapshot>(`/api/projects/${projectId}/snapshot`),
