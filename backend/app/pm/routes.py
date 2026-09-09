@@ -105,6 +105,11 @@ def assign(project_id: str, body: s.AssignIn):
     return mutate(lambda db: service.assign_agents(db, project_id, body.model_dump()))
 
 
+@router.post("/projects/{project_id}/agents/hire")
+def hire(project_id: str):
+    return mutate(lambda db: service.hire_one_agent(db, project_id))
+
+
 @router.get("/projects/{project_id}/agents")
 def list_agents(project_id: str):
     return read(lambda db: service.list_project_agents(db, project_id))
