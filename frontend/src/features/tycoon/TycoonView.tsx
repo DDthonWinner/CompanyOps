@@ -37,7 +37,7 @@ export function TycoonView() {
         <AgentList />
       </div>
       {/* Right column: hire CTA + sprint milestones, hugging the top-right corner */}
-      <div className="pointer-events-none absolute bottom-4 right-4 top-4 flex w-72 flex-col gap-3">
+      <div className="pointer-events-none fixed bottom-4 right-4 top-4 z-50 flex w-72 flex-col gap-3">
         <HireButton />
         <VelocityPod />
       </div>
