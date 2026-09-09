@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
 import type { ProjectListItem } from "../api/types";
 import { Icon } from "../components/ui/Icon";
+import { pushToast } from "../components/ui/toast";
 import { useStore } from "../store/useStore";
+
+// Demo gating: during the demo only the flagship Neobank project can be entered.
+const DEMO_UNLOCKED_PROJECT = "Neobank Super App";
+const LOCKED_TOOLTIP = "해당 프로젝트는 잠겨있습니다.";
 
 const CONN_META: Record<string, { label: string; color: string }> = {
   CONNECTING: { label: "연결 중", color: "#d97706" },
@@ -130,20 +135,34 @@ function ProjectSwitcher({
           {projects.length === 0 && (
             <p className="px-3 py-2 text-sm text-on-background/60">아직 프로젝트가 없습니다.</p>
           )}
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              role="option"
-              aria-selected={p.id === activeProjectId}
-              onClick={() => { onSelect(p.id); setOpen(false); }}
-              className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-surface-high ${
-                p.id === activeProjectId ? "bg-surface-high text-primary" : "text-on-background/85"
-              }`}
-            >
-              <span className="min-w-0 truncate font-medium">{p.name}</span>
-              <span className="shrink-0 text-xs text-on-background/50">{p.projectSize ?? p.budgetLevel}</span>
-            </button>
-          ))}
+          {projects.map((p) => {
+            const locked = p.name !== DEMO_UNLOCKED_PROJECT;
+            return (
+              <button
+                key={p.id}
+                role="option"
+                aria-selected={p.id === activeProjectId}
+                aria-disabled={locked}
+                title={locked ? LOCKED_TOOLTIP : undefined}
+                onClick={() => {
+                  if (locked) { pushToast(LOCKED_TOOLTIP, "error"); return; }
+                  onSelect(p.id);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition ${
+                  locked
+                    ? "cursor-not-allowed text-on-background/40"
+                    : `hover:bg-surface-high ${p.id === activeProjectId ? "bg-surface-high text-primary" : "text-on-background/85"}`
+                }`}
+              >
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="min-w-0 truncate font-medium">{p.name}</span>
+                  {locked && <Icon name="lock" size={14} />}
+                </span>
+                <span className="shrink-0 text-xs text-on-background/50">{p.projectSize ?? p.budgetLevel}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
