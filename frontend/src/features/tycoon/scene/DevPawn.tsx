@@ -88,6 +88,7 @@ export function DevPawn({
   name,
   position,
   roleCode,
+  tier,
   resolveDeskAt,
   onPuff,
 }: {
@@ -98,9 +99,11 @@ export function DevPawn({
   name: string;
   position: [number, number]; // [x, z] target seat on the floor
   roleCode: string; // effective desk role (for drop comparison)
+  tier: string; // budget tier → badge material (gold / silver / bronze)
   resolveDeskAt: (x: number, z: number) => string | null;
   onPuff: (pos: [number, number, number]) => void;
 }) {
+  const badge = tier === "HIGH" ? "#f5c542" : tier === "MEDIUM" ? "#c9ccd6" : "#cd8f5a";
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const mascot = useRef<THREE.Group>(null);
@@ -301,7 +304,7 @@ export function DevPawn({
       <group ref={body}>
         {/* Explorer mascot with a per-agent uniform color + animatable arms */}
         <group ref={mascot} scale={MASCOT_SCALE} rotation={[0, FACE_CAMERA, 0]}>
-          <CityMascot uniform={color} arms={arms} />
+          <CityMascot uniform={color} badge={badge} arms={arms} />
         </group>
 
         {/* Floating status orb */}

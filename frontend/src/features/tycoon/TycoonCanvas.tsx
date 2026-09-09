@@ -10,6 +10,7 @@ import { DomainDesk } from "./scene/DomainDesk";
 import { DevPawn } from "./scene/DevPawn";
 import { FloorGrid } from "./scene/FloorGrid";
 import { Lighting } from "./scene/Lighting";
+import { OfficeDecor } from "./scene/OfficeDecor";
 import { PMSuite } from "./scene/PMSuite";
 import { SmokePuff } from "./scene/SmokePuff";
 
@@ -40,6 +41,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
   const reassignments = useTycoonStore((s) => s.reassignments);
   const codeOf = (roleId: string | null | undefined) => (roleId ? rolesById[roleId]?.code : undefined);
   const projectId = snapshot.project.id;
+  const tier = snapshot.project.budgetLevel; // HIGH | MEDIUM | LOW
 
   const perRole = useMemo(() => {
     const out: Record<string, { percent: number; total: number; inbox: number; outbox: number }> = {};
@@ -121,7 +123,8 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
       <Lighting />
       <CameraControls focusPoints={focusPoints} defaultTarget={DEFAULT_TARGET} />
       <FloorGrid />
-      <Decor />
+      {tier !== "LOW" && <Decor />}
+      <OfficeDecor tier={tier} />
 
       {/* Domain desks */}
       {(Object.keys(DOMAIN_LAYOUT) as Array<keyof typeof DOMAIN_LAYOUT>).map((code) => {
@@ -168,6 +171,7 @@ export function TycoonCanvas({ snapshot }: { snapshot: Snapshot }) {
             name={a.displayName}
             position={seat}
             roleCode={eff}
+            tier={tier}
             resolveDeskAt={resolveDeskAt}
             onPuff={onPuff}
           />
