@@ -44,3 +44,8 @@
 @media (prefers-reduced-motion: reduce) {
   .flow-stream { animation: none; }
 }
+
+.flow-role-inactive { cursor: default; border-style: dashed; box-shadow: none; }
+.flow-role-inactive > div { opacity: .65; }
+
+.flow-direction-arrow { writing-mode: horizontal-tb; text-orientation: mixed; font-size: 15px; line-height: 1; }

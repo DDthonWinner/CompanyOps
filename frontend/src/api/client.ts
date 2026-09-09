@@ -1,4 +1,5 @@
 // HTTP client for the U1 contract (06 §4). Attaches requestId; surfaces the error envelope.
+import type { UtilizationReport, UtilizationPreview } from "./uf-types";
 import type { ProjectListItem, Snapshot, ErrorEnvelope } from "./types";
 
 const BASE = (import.meta.env?.VITE_API_BASE ?? "http://127.0.0.1:8000").replace(/\/$/, "");
@@ -116,6 +117,11 @@ export const api = {
     ),
 
   // ---- UF (02 §9.2, global paths) ----
+  createUtilization: (pid: string) =>
+    request<UtilizationReport>("/api/utilization", { method: "POST", body: JSON.stringify({ projectId: pid }) }),
+  // TEMP UF_TEST_PREVIEW
+  previewUtilization: (pid: string) =>
+    request<UtilizationPreview>("/api/utilization/preview", { method: "POST", body: JSON.stringify({ projectId: pid }) }),
   getUtilization: (pid: string) =>
     request<{ items?: unknown[] } | unknown[]>(`/api/utilization?projectId=${pid}`),
   getReportMetrics: (reportId: string) => request(`/api/utilization/${reportId}/metrics`),

@@ -66,6 +66,31 @@ def create_report(session: Session, project_id: str) -> dict:
     return report_dict(session, report)
 
 
+# TEMP UF_TEST_PREVIEW: remove with the Dashboard test toggle after integration.
+def preview_report(session: Session, project_id: str) -> dict:
+    """Use the production scoring/generator with current data, without persisting a report."""
+    project = session.get(Project, project_id)
+    if project is None:
+        raise not_found("프로젝트를 찾을 수 없습니다.")
+    metrics, aspects = _aggregate(session, project_id)
+    previous = _select_previous(session, project)
+    aspects["RESOURCE_EFFICIENCY"] = _resource_efficiency(session, aspects, previous)
+    scores = {key: aspects.get(key) for key in ("AUTONOMY", "RESOURCE_EFFICIENCY", "AREA_DISTRIBUTION")}
+    flat = {metric.metric_key: metric.value for metric in metrics}
+    report_id = f"preview:{project_id}:{project.revision}"
+    return {
+        "testMode": True, "sourceRevision": project.revision,
+        "report": {
+            "reportId": report_id, "projectId": project_id, "status": "PREVIEW",
+            "utilizationScore": _overall_score(scores), "scoreVersion": "UF_MVP_V1",
+            "aspectScores": scores, "metrics": flat,
+            "previousReportId": previous.id if previous else None,
+        },
+        "feedbacks": [{"feedbackId": f"{report_id}:{fb['aspect']}", "reportId": report_id,
+                       "source": "SYSTEM", **fb} for fb in feedback_gen.generate(scores, flat)],
+    }
+
+
 def _aggregate(session: Session, project_id: str) -> tuple[list[UtilizationMetric], dict]:
     role_of = repo.role_code_map(session)
     tasks = repo.eligible_tasks(session, project_id)

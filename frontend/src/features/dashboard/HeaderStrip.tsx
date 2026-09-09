@@ -15,7 +15,7 @@ const STATUS_BADGE: Record<string, { label: string; color: string }> = {
   ARCHIVED: { label: "Archived", color: "#767586" },
 };
 
-export function HeaderStrip() {
+export function HeaderStrip({ onFeedback }: { onFeedback?: () => void }) {
   const selectPanel = useStore((s) => s.setDashboardPanel);
   const snapshot = useStore((s) => s.snapshot);
   const rolesById = useStore((s) => s.rolesById);
@@ -48,8 +48,9 @@ export function HeaderStrip() {
           </span>
           <h2 className="display mt-1.5 truncate text-xl font-bold">{p.name}</h2>
           <div className="mt-0.5 flex items-center gap-1 text-xs text-on-background/55">
-            <Icon name="bolt" size={13} /> 현재 단계: {phaseLabel}
+            <Icon name="bolt" size={13} /> {p.status === "COMPLETED" ? "프로젝트 완료 · AI 활용 분석 준비" : `현재 단계: ${phaseLabel}`}
           </div>
+          {p.status === "COMPLETED" && onFeedback && <button type="button" onClick={onFeedback} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:brightness-110 focus-visible:outline-primary" data-testid="header-feedback-generate"><Icon name="insights" size={16} />AI Feedback 생성<Icon name="arrow_downward" size={14} /></button>}
         </div>
 
         {/* Middle: progress */}
