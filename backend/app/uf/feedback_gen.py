@@ -45,6 +45,10 @@ def generate(aspect_scores: dict, metrics: dict) -> list[dict]:
     rr = _int(metrics, "revisionRequests")
     obs = (f"AI 자동 수행 Task {ai}/{eligible}건(비율 {ratio_pct}%, MIXED {mixed}건). "
            f"사용자 개입: 결정 {rd}건·계획 피드백 {pf}건·재작업 요청 {rr}건.")
+    penalty = _int(metrics, "interventionPenaltyPct")
+    base = _int(metrics, "autonomyBaseScore")
+    if penalty > 0:
+        obs += f" 개입으로 실행 점수 {base} → 자율성 {a}점 (−{penalty}%)."
     if a is None:
         out.append(_fb("AUTONOMY", "LOW", obs,
                        "완료된 대상 Task가 없어 자동화 수준을 평가할 수 없습니다.",
