@@ -94,6 +94,7 @@ app.include_router(pm_routes.router)
 app.include_router(orch_routes.router)
 app.include_router(uf_routes.router)
 app.include_router(demo_routes.router)
+app.include_router(admin_routes.router)
 
 
 @app.middleware("http")
