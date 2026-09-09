@@ -17,8 +17,10 @@ dist/
 .vite/
 
 # Data & runtime
+*.db
 *.sqlite
 *.sqlite3
+backend/data/
 backups/
 checkouts/
 
